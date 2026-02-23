@@ -1,8 +1,53 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>me.simonegazza</groupId>
-  <artifactId>mzn-parser</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>Parameter lifting parser</name>
-  <description>MiniZinc to MiniZinc parser for parameter lifting</description>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>me.simonegazza</groupId>
+	<artifactId>mzn-parser</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>Parameter lifting parser</name>
+	<description>MiniZinc to MiniZinc parser for parameter lifting</description>
+	<dependencies>
+		<dependency>
+			<groupId>org.antlr</groupId>
+			<artifactId>antlr4-runtime</artifactId>
+			<version>4.13.1</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<!-- exec:java -->
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<mainClass>me.simonegazza.lifting.Main</mainClass>
+				</configuration>
+			</plugin>
+			<plugin>
+				<!-- ANTLR4 -->
+				<groupId>org.antlr</groupId>
+				<artifactId>antlr4-maven-plugin</artifactId>
+				<version>4.13.2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>antlr4</goal>
+						</goals>
+						<configuration>
+							<sourceDirectory>${project.basedir}/grammars</sourceDirectory>
+							<outputDirectory>
+								${project.basedir}/src/main/java/me/simonegazza/antlr/minizinc</outputDirectory>
+							<visitor>true</visitor>
+							<arguments>
+								<argument>-package</argument>
+								<argument>me.simonegazza.antlr.minizinc</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
