@@ -19,6 +19,9 @@ public class Main implements Callable<Integer> {
     @Parameters(index = "0", description = "MZN model file path")
     private String filePath;
 
+    @Parameters(index = "1", description = "Parameter to lift the model with")
+    private String parameter;
+
     @Option(names = {"-o", "--output"}, description = "Output file path (default prints to console)")
     private Optional<File> outputFile = Optional.empty();
 
@@ -35,8 +38,9 @@ public class Main implements Callable<Integer> {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniZincParser parser = new MiniZincParser(tokens);
 
-        LiftingVisitor visitor = new LiftingVisitor(tokens);
-        String lifted = visitor.visitModel(parser.model());
+        LiftingVisitor visitor = new LiftingVisitor(tokens, parameter);
+        visitor.visitModel(parser.model());
+        String lifted = visitor.getTranspiled();
 
         if (outputFile.isEmpty()) {
             System.out.println(lifted);

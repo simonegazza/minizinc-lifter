@@ -7,6 +7,9 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Parameter lifting parser</name>
 	<description>MiniZinc to MiniZinc parser for parameter lifting</description>
+	<properties>
+        <maven.compiler.release>17</maven.compiler.release>
+    </properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.antlr</groupId>
