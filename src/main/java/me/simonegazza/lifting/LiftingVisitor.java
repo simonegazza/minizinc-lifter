@@ -1,9 +1,9 @@
 package me.simonegazza.lifting;
 
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
+import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
-import org.antlr.v4.runtime.tree.ParseTree;
 
 public class LiftingVisitor extends MiniZincBaseVisitor<String> {
     private final TokenStreamRewriter rewriter;
@@ -13,7 +13,7 @@ public class LiftingVisitor extends MiniZincBaseVisitor<String> {
     }
 
     @Override
-    public String visit(ParseTree tree) {
-        return rewriter.getText();
+    public String visitModel(ModelContext ctx) {
+        return rewriter.getText(ctx.getSourceInterval());
     }
 }

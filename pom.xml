@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="https://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.simonegazza</groupId>
@@ -19,6 +19,12 @@
 	        <version>5.10.0</version>
 	        <scope>test</scope>
     	</dependency>
+    	<!-- Command line options -->
+    	<dependency>
+		    <groupId>info.picocli</groupId>
+		    <artifactId>picocli</artifactId>
+		    <version>4.7.7</version>
+		</dependency> 
 	</dependencies>
 	<build>
 		<plugins>
@@ -34,7 +40,6 @@
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>2.43.0</version>
 				<configuration>
-				
 					<java>
 						<eclipse>
 							<version>4.26</version>
@@ -49,7 +54,6 @@
 						    <spacesPerTab>4</spacesPerTab>
 						</indent>
 					</java>
-
 				</configuration>
 				<executions>
 					<execution>
@@ -68,9 +72,6 @@
 				<version>3.1.0</version>
 				<configuration>
 					<mainClass>me.simonegazza.lifting.Main</mainClass>
-					<arguments>
-			         	<argument>${file}</argument>
-			        </arguments>
 				</configuration>
 			</plugin>
 			<plugin>
