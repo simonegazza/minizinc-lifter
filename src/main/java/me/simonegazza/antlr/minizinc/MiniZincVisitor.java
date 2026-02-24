@@ -1,6 +1,5 @@
 // Generated from MiniZinc.g4 by ANTLR 4.13.2
 package me.simonegazza.antlr.minizinc;
-
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -20,7 +19,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitModel(MiniZincParser.ModelContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#item}.
      *
@@ -29,7 +27,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitItem(MiniZincParser.ItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#includeItem}.
      *
@@ -38,7 +35,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIncludeItem(MiniZincParser.IncludeItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#varDeclItem}.
      *
@@ -47,7 +43,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitVarDeclItem(MiniZincParser.VarDeclItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#enumItem}.
      *
@@ -56,7 +51,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitEnumItem(MiniZincParser.EnumItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#enumCasesList}.
      *
@@ -65,7 +59,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#enumCases}.
      *
@@ -74,7 +67,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitEnumCases(MiniZincParser.EnumCasesContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#typeInstSynItem}.
      *
@@ -83,7 +75,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitTypeInstSynItem(MiniZincParser.TypeInstSynItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#assignItem}.
      *
@@ -92,7 +83,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAssignItem(MiniZincParser.AssignItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#constraintItem}.
      *
@@ -101,7 +91,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitConstraintItem(MiniZincParser.ConstraintItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#solveItem}.
      *
@@ -110,7 +99,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitSolveItem(MiniZincParser.SolveItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#outputItem}.
      *
@@ -119,7 +107,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitOutputItem(MiniZincParser.OutputItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#annotationItem}.
      *
@@ -128,7 +115,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAnnotationItem(MiniZincParser.AnnotationItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#predicateItem}.
      *
@@ -137,7 +123,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitPredicateItem(MiniZincParser.PredicateItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#testItem}.
      *
@@ -146,7 +131,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitTestItem(MiniZincParser.TestItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#functionItem}.
      *
@@ -155,7 +139,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitFunctionItem(MiniZincParser.FunctionItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#operationItemTail}.
      *
@@ -164,7 +147,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitOperationItemTail(MiniZincParser.OperationItemTailContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#params}.
      *
@@ -173,7 +155,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitParams(MiniZincParser.ParamsContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#tiExprAndId}.
      *
@@ -182,7 +163,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitTiExprAndId(MiniZincParser.TiExprAndIdContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#tiExpr}.
      *
@@ -191,7 +171,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitTiExpr(MiniZincParser.TiExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#baseTiExpr}.
      *
@@ -200,7 +179,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitBaseTiExpr(MiniZincParser.BaseTiExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#baseTiExprTail}.
      *
@@ -209,7 +187,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitBaseTiExprTail(MiniZincParser.BaseTiExprTailContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#baseType}.
      *
@@ -218,7 +195,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitBaseType(MiniZincParser.BaseTypeContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#arrayTiExpr}.
      *
@@ -227,7 +203,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitArrayTiExpr(MiniZincParser.ArrayTiExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#arrayAccessTail}.
      *
@@ -236,7 +211,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitArrayAccessTail(MiniZincParser.ArrayAccessTailContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#fieldAccessTail}.
      *
@@ -245,7 +219,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitFieldAccessTail(MiniZincParser.FieldAccessTailContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#annotations}.
      *
@@ -254,7 +227,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAnnotations(MiniZincParser.AnnotationsContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#annotation}.
      *
@@ -263,7 +235,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAnnotation(MiniZincParser.AnnotationContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#exprAtomHead}.
      *
@@ -272,7 +243,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitExprAtomHead(MiniZincParser.ExprAtomHeadContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#annLiteral}.
      *
@@ -281,7 +251,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAnnLiteral(MiniZincParser.AnnLiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#exprAtomTail}.
      *
@@ -290,7 +259,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitExprAtomTail(MiniZincParser.ExprAtomTailContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#expr}.
      *
@@ -299,7 +267,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitExpr(MiniZincParser.ExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#iffExpr}.
      *
@@ -308,7 +275,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIffExpr(MiniZincParser.IffExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#implExpr}.
      *
@@ -317,7 +283,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitImplExpr(MiniZincParser.ImplExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#orExpr}.
      *
@@ -326,7 +291,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitOrExpr(MiniZincParser.OrExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#xorExpr}.
      *
@@ -335,7 +299,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitXorExpr(MiniZincParser.XorExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#andExpr}.
      *
@@ -344,7 +307,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAndExpr(MiniZincParser.AndExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#compareExpr}.
      *
@@ -353,7 +315,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitCompareExpr(MiniZincParser.CompareExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#setExpr}.
      *
@@ -362,7 +323,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitSetExpr(MiniZincParser.SetExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#rangeExpr}.
      *
@@ -371,7 +331,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitRangeExpr(MiniZincParser.RangeExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#addExpr}.
      *
@@ -380,7 +339,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitAddExpr(MiniZincParser.AddExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#multExpr}.
      *
@@ -389,7 +347,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitMultExpr(MiniZincParser.MultExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#powExpr}.
      *
@@ -398,7 +355,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitPowExpr(MiniZincParser.PowExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#unaryExpr}.
      *
@@ -407,7 +363,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitUnaryExpr(MiniZincParser.UnaryExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#primary}.
      *
@@ -416,7 +371,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitPrimary(MiniZincParser.PrimaryContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#postfix}.
      *
@@ -425,7 +379,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitPostfix(MiniZincParser.PostfixContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#quantifierExpr}.
      *
@@ -434,7 +387,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitQuantifierExpr(MiniZincParser.QuantifierExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#callSuffix}.
      *
@@ -443,7 +395,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitCallSuffix(MiniZincParser.CallSuffixContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#literal}.
      *
@@ -452,7 +403,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitLiteral(MiniZincParser.LiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#setLiteral}.
      *
@@ -461,7 +411,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitSetLiteral(MiniZincParser.SetLiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#arrayLiteral}.
      *
@@ -470,7 +419,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitArrayLiteral(MiniZincParser.ArrayLiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#arrayLiteral2d}.
      *
@@ -479,7 +427,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitArrayLiteral2d(MiniZincParser.ArrayLiteral2dContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#arrayRow}.
      *
@@ -488,7 +435,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitArrayRow(MiniZincParser.ArrayRowContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#tupleLiteral}.
      *
@@ -497,7 +443,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitTupleLiteral(MiniZincParser.TupleLiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#recordLiteral}.
      *
@@ -506,7 +451,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitRecordLiteral(MiniZincParser.RecordLiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#ifThenElseExpr}.
      *
@@ -515,7 +459,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIfThenElseExpr(MiniZincParser.IfThenElseExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#letExpr}.
      *
@@ -524,7 +467,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitLetExpr(MiniZincParser.LetExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#letItem}.
      *
@@ -533,7 +475,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitLetItem(MiniZincParser.LetItemContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#compTail}.
      *
@@ -542,7 +483,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitCompTail(MiniZincParser.CompTailContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#generatorList}.
      *
@@ -551,7 +491,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitGeneratorList(MiniZincParser.GeneratorListContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#generator}.
      *
@@ -560,7 +499,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitGenerator(MiniZincParser.GeneratorContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#indexedArrayLiteral}.
      *
@@ -569,7 +507,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIndexedArrayLiteral(MiniZincParser.IndexedArrayLiteralContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#indexedArrayLiteral2d}.
      *
@@ -578,7 +515,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIndexedArrayLiteral2d(MiniZincParser.IndexedArrayLiteral2dContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#indexedArrayRow}.
      *
@@ -587,7 +523,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIndexedArrayRow(MiniZincParser.IndexedArrayRowContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#indexTuple}.
      *
@@ -596,7 +531,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIndexTuple(MiniZincParser.IndexTupleContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#arrayComp}.
      *
@@ -605,7 +539,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitArrayComp(MiniZincParser.ArrayCompContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#indexedArrayComp}.
      *
@@ -614,7 +547,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitIndexedArrayComp(MiniZincParser.IndexedArrayCompContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#callExpr}.
      *
@@ -623,7 +555,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitCallExpr(MiniZincParser.CallExprContext ctx);
-
     /**
      * Visit a parse tree produced by {@link MiniZincParser#genCallExpr}.
      *

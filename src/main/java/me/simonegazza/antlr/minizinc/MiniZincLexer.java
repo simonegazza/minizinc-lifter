@@ -1,6 +1,5 @@
 // Generated from MiniZinc.g4 by ANTLR 4.13.2
 package me.simonegazza.antlr.minizinc;
-
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
@@ -41,7 +40,6 @@ public class MiniZincLexer extends Lexer {
                 "T__77", "EQ", "INT_LITERAL", "FLOAT_LITERAL", "DOLLAR_IDENT", "IDENT", "STRING_LITERAL", "COMMENT",
                 "WS"};
     }
-
     public static final String[] ruleNames = makeRuleNames();
 
     private static String[] makeLiteralNames() {
@@ -54,9 +52,7 @@ public class MiniZincLexer extends Lexer {
                 "'..'", "'+'", "'-'", "'*'", "'/'", "'div'", "'mod'", "'pow'", "'not'", "'|'", "'[|'", "'|]'", "'if'",
                 "'then'", "'elseif'", "'else'", "'endif'", "'let'", "'where'"};
     }
-
     private static final String[] _LITERAL_NAMES = makeLiteralNames();
-
     private static String[] makeSymbolicNames() {
         return new String[]{null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
@@ -65,7 +61,6 @@ public class MiniZincLexer extends Lexer {
                 null, null, null, null, null, null, null, null, null, null, null, null, null, "EQ", "INT_LITERAL",
                 "FLOAT_LITERAL", "DOLLAR_IDENT", "IDENT", "STRING_LITERAL", "COMMENT", "WS"};
     }
-
     private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
     public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -74,7 +69,6 @@ public class MiniZincLexer extends Lexer {
      */
     @Deprecated
     public static final String[] tokenNames;
-
     static {
         tokenNames = new String[_SYMBOLIC_NAMES.length];
         for (int i = 0; i < tokenNames.length; i++) {
@@ -96,6 +90,7 @@ public class MiniZincLexer extends Lexer {
     }
 
     @Override
+
     public Vocabulary getVocabulary() {
         return VOCABULARY;
     }
@@ -510,9 +505,8 @@ public class MiniZincLexer extends Lexer {
             + "\u026a\u0001\u0000\u0000\u0000\u026c\u026d\u0001\u0000\u0000\u0000\u026d"
             + "\u026e\u0001\u0000\u0000\u0000\u026e\u026f\u0006U\u0000\u0000\u026f\u00ac"
             + "\u0001\u0000\u0000\u0000\u0010\u0000\u021c\u0221\u0226\u022c\u0230\u0235"
-            + "\u0237\u023e\u0242\u0248\u0255\u0259\u025b\u0264\u026c\u0001\u0006\u0000" + "\u0000";
+            + "\u0237\u023e\u0242\u0248\u0255\u0259\u025b\u0264\u026c\u0001\u0000\u0001" + "\u0000";
     public static final ATN _ATN = new ATNDeserializer().deserialize(_serializedATN.toCharArray());
-
     static {
         _decisionToDFA = new DFA[_ATN.getNumberOfDecisions()];
         for (int i = 0; i < _ATN.getNumberOfDecisions(); i++) {

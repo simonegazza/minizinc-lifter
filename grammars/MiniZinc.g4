@@ -1,20 +1,20 @@
 grammar MiniZinc;
 
-model: (item ';')* EOF;
+model: (item)* EOF;
 
 item
-    : includeItem
-    | varDeclItem
-    | enumItem
-    | typeInstSynItem
-    | assignItem
-    | constraintItem
-    | solveItem
-    | outputItem
-    | predicateItem
-    | testItem
-    | functionItem
-    | annotationItem
+    : includeItem ';'
+    | varDeclItem ';'
+    | enumItem ';'
+    | typeInstSynItem ';'
+    | assignItem ';'
+    | constraintItem ';'
+    | solveItem ';'
+    | outputItem ';'
+    | predicateItem ';'
+    | testItem ';'
+    | functionItem ';'
+    | annotationItem ';'
     ;
 
 includeItem: 'include' STRING_LITERAL;
@@ -263,6 +263,6 @@ STRING_LITERAL
       )* '"'
     ;
 
-COMMENT: '%' ~[\r\n]* -> skip;
+COMMENT: '%' ~[\r\n]* -> channel(HIDDEN);
 
-WS: [ \t\r\n]+ -> skip;
+WS: [ \t\r\n]+ -> channel(HIDDEN);
