@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.junit.jupiter.api.Test;
 
-class NaiveLiftTest {
+class NaiveLift {
     private class VerifierVisitor extends MiniZincBaseVisitor<Void> {
         private final String parameter;
         private boolean verified;

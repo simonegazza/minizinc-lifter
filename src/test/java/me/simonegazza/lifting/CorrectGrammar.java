@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
-class CorrectGrammarTest {
+class CorrectGrammar {
     private final Path resourcesFolder = Paths.get("resources");
 
     private String parse(String model) throws IOException {

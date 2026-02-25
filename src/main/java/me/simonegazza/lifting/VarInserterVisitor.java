@@ -8,14 +8,14 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprAndIdContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 
 public class VarInserterVisitor extends MiniZincBaseVisitor<Void> {
     private final Set<String> parameters;
     private final TokenStreamRewriter rewriter;
 
-    public VarInserterVisitor(CommonTokenStream tokens, Set<String> parameters) {
+    public VarInserterVisitor(TokenStream tokens, Set<String> parameters) {
         this.parameters = new HashSet<String>(parameters);
         this.rewriter = new TokenStreamRewriter(tokens);
     }
@@ -49,7 +49,7 @@ public class VarInserterVisitor extends MiniZincBaseVisitor<Void> {
 
     public String getTranspiled() {
         for (String param : parameters)
-            System.out.println("WARNING: parameter \"" + param + "\" was not found");
+            System.out.println("WARNING: declaration for parameter \"" + param + "\" was not found");
 
         return rewriter.getText();
     }

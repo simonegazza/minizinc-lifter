@@ -8,12 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import me.simonegazza.antlr.minizinc.MiniZincLexer;
-import me.simonegazza.antlr.minizinc.MiniZincParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.Lexer;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -39,14 +33,8 @@ public class Main implements Callable<Integer> {
         for (String fp : filePaths)
             sb.append(Files.readString(Path.of(fp)) + "\n");
 
-        CharStream input = CharStreams.fromString(sb.toString());
-        Lexer lexer = new MiniZincLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniZincParser parser = new MiniZincParser(tokens);
-
-        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameters);
-        visitor.visitModel(parser.model());
-        String lifted = visitor.getTranspiled();
+        LiftingPipeline pipeline = new LiftingPipeline(parameters);
+        String lifted = pipeline.start(sb.toString());
 
         if (outputFile.isEmpty()) {
             System.out.println(lifted);
