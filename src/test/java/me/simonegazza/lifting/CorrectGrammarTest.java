@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import org.antlr.v4.runtime.CharStream;
@@ -21,8 +20,8 @@ import org.junit.jupiter.api.Test;
 class CorrectGrammarTest {
     private final Path resourcesFolder = Paths.get("resources");
 
-    private String parse(Path path) throws IOException {
-        CharStream input = CharStreams.fromFileName(path.toString());
+    private String parse(String model) throws IOException {
+        CharStream input = CharStreams.fromString(model);
 
         Lexer lexer = new MiniZincLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -35,19 +34,23 @@ class CorrectGrammarTest {
         return visitor.visit(tree);
     }
 
-    private String readModel(Path path) throws IOException {
-        return new String(Files.readAllBytes(path));
-    }
-
     @Test
     void correctGrammarTest() throws IOException {
-        try (Stream<Path> stream = Files.walk(resourcesFolder)) {
-            List<Path> files = stream.filter(Files::isRegularFile).filter(p -> p.toString().endsWith("mzn"))
+        List<Path> directories = Files.list(resourcesFolder).filter(Files::isDirectory).collect(Collectors.toList());
+
+        for (Path dir : directories) {
+            List<Path> files = Files.list(dir).filter(Files::isRegularFile)
+                    .filter(p -> p.toString().endsWith(".mzn") || p.toString().endsWith(".dzn"))
                     .collect(Collectors.toList());
 
-            for (Path file : files)
-                assertEquals(parse(file), readModel(file));
-        }
-    }
+            StringBuilder sb = new StringBuilder();
 
+            for (Path file : files)
+                sb.append(Files.readString(file) + "\n");
+
+            String model = sb.toString();
+            assertEquals(parse(model), model);
+        }
+
+    }
 }

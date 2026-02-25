@@ -2,7 +2,11 @@ package me.simonegazza.lifting;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
@@ -12,15 +16,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
 public class Main implements Callable<Integer> {
-    @Parameters(index = "0", description = "MZN model file path")
-    private String filePath;
+    @Option(names = {"-m", "--models"}, arity = "1..*", description = "MZN and MDN file paths")
+    private List<String> filePaths;
 
-    @Parameters(index = "1", description = "Parameter to lift the model with")
-    private String parameter;
+    @Option(names = {"-p", "--parameters"}, arity = "1..*", description = "Parameter to lift the model with")
+    private Set<String> parameters;
 
     @Option(names = {"-o", "--output"}, description = "Output file path (default prints to console)")
     private Optional<File> outputFile = Optional.empty();
@@ -32,13 +35,16 @@ public class Main implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        CharStream input = CharStreams.fromFileName(filePath);
+        StringBuilder sb = new StringBuilder();
+        for (String fp : filePaths)
+            sb.append(Files.readString(Path.of(fp)) + "\n");
 
+        CharStream input = CharStreams.fromString(sb.toString());
         Lexer lexer = new MiniZincLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniZincParser parser = new MiniZincParser(tokens);
 
-        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameter);
+        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameters);
         visitor.visitModel(parser.model());
         String lifted = visitor.getTranspiled();
 

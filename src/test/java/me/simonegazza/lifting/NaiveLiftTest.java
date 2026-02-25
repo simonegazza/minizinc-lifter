@@ -3,6 +3,7 @@ package me.simonegazza.lifting;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.util.Set;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
@@ -56,14 +57,14 @@ class NaiveLiftTest {
 
     }
 
-    private String naiveLift(String modelPath, String parameter) throws IOException {
+    private String naiveLift(String modelPath, Set<String> parameters) throws IOException {
         CharStream input = CharStreams.fromFileName(modelPath);
 
         Lexer lexer = new MiniZincLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniZincParser parser = new MiniZincParser(tokens);
 
-        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameter);
+        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameters);
         visitor.visitModel(parser.model());
         return visitor.getTranspiled();
     }
@@ -83,7 +84,7 @@ class NaiveLiftTest {
     @Test
     void simpleParameterTest() throws IOException {
         String parameter = "capacity";
-        String liftedModel = naiveLift("resources/knapsack.mzn", parameter);
+        String liftedModel = naiveLift("resources/knapsack/original.mzn", Set.of(parameter));
 
         assertTrue(verify(liftedModel, parameter));
     }
@@ -91,7 +92,7 @@ class NaiveLiftTest {
     @Test
     void arrayParameterTest() throws IOException {
         String parameter = "profit";
-        String liftedModel = naiveLift("resources/knapsack.mzn", parameter);
+        String liftedModel = naiveLift("resources/knapsack/original.mzn", Set.of(parameter));
 
         assertTrue(verify(liftedModel, parameter));
     }
