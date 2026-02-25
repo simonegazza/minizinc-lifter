@@ -563,4 +563,12 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitGenCallExpr(MiniZincParser.GenCallExprContext ctx);
+    /**
+     * Visit a parse tree produced by {@link MiniZincParser#ident}.
+     *
+     * @param ctx
+     *            the parse tree
+     * @return the visitor result
+     */
+    T visitIdent(MiniZincParser.IdentContext ctx);
 }

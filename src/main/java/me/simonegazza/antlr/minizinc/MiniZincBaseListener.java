@@ -1392,6 +1392,26 @@ public class MiniZincBaseListener implements MiniZincListener {
     @Override
     public void exitGenCallExpr(MiniZincParser.GenCallExprContext ctx) {
     }
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation does nothing.
+     * </p>
+     */
+    @Override
+    public void enterIdent(MiniZincParser.IdentContext ctx) {
+    }
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation does nothing.
+     * </p>
+     */
+    @Override
+    public void exitIdent(MiniZincParser.IdentContext ctx) {
+    }
 
     /**
      * {@inheritDoc}

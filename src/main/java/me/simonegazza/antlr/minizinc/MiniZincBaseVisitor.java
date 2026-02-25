@@ -841,4 +841,16 @@ public class MiniZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
     public T visitGenCallExpr(MiniZincParser.GenCallExprContext ctx) {
         return visitChildren(ctx);
     }
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
+     */
+    @Override
+    public T visitIdent(MiniZincParser.IdentContext ctx) {
+        return visitChildren(ctx);
+    }
 }

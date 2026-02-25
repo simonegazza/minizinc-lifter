@@ -21,23 +21,23 @@ includeItem: 'include' STRING_LITERAL;
 
 varDeclItem
     : tiExprAndId annotations (EQ expr)?
-    | 'any' ':' IDENT annotations (EQ expr)?
+    | 'any' ':' ident annotations (EQ expr)?
     ;
 
-enumItem: 'enum' IDENT annotations (EQ enumCasesList)?;
+enumItem: 'enum' ident annotations (EQ enumCasesList)?;
 
 enumCasesList: enumCases ('++' enumCases)*;
 
 enumCases
-    : '{' IDENT (',' IDENT)* '}'
+    : '{' ident (',' ident)* '}'
     | '_' '(' expr ')'
-    | IDENT '(' IDENT ')'
+    | ident '(' ident ')'
     | 'anon_enum' '(' expr ')'
     ;
 
-typeInstSynItem: 'type' IDENT annotations EQ tiExpr;
+typeInstSynItem: 'type' ident annotations EQ tiExpr;
 
-assignItem: IDENT EQ expr;
+assignItem: ident EQ expr;
 
 constraintItem: 'constraint' ('::' STRING_LITERAL)? expr;
 
@@ -49,7 +49,7 @@ solveItem
 
 outputItem: 'output' ('::' STRING_LITERAL)? expr;
 
-annotationItem: 'annotation' IDENT params (EQ expr)?;
+annotationItem: 'annotation' ident params (EQ expr)?;
 
 predicateItem: 'predicate' operationItemTail;
 
@@ -57,11 +57,11 @@ testItem: 'test' operationItemTail;
 
 functionItem: 'function' tiExpr ':' operationItemTail;
 
-operationItemTail: IDENT params annotations (EQ expr)?;
+operationItemTail: ident params annotations (EQ expr)?;
 
 params: ('(' tiExprAndId (',' tiExprAndId)* ')')?;
 
-tiExprAndId: tiExpr ':' IDENT;
+tiExprAndId: tiExpr ':' ident;
 
 tiExpr: baseTiExpr | arrayTiExpr;
 
@@ -71,7 +71,7 @@ baseTiExpr
     ;
 
 baseTiExprTail
-    : IDENT
+    : ident
     | baseType
     | DOLLAR_IDENT
     | 'ann'
@@ -87,7 +87,7 @@ arrayTiExpr
 
 arrayAccessTail: '[' expr (',' expr)* ']';
 
-fieldAccessTail: '.' IDENT | '.' INT_LITERAL;
+fieldAccessTail: '.' ident | '.' INT_LITERAL;
 
 annotations: ('::' annotation)*;
 
@@ -95,7 +95,7 @@ annotation: exprAtomHead exprAtomTail;
 
 exprAtomHead
     : '(' expr ')'
-    | IDENT callSuffix?
+    | ident callSuffix?
     | '_'
     | 'true' | 'false'
     | INT_LITERAL
@@ -117,7 +117,7 @@ exprAtomHead
     | genCallExpr
     ;
 
-annLiteral: IDENT ('(' expr (',' expr)* ')')?;
+annLiteral: ident ('(' expr (',' expr)* ')')?;
 
 exprAtomTail: 
     | arrayAccessTail exprAtomTail
@@ -162,7 +162,7 @@ unaryExpr
 primary
     : literal postfix*
     | quantifierExpr postfix*
-    | IDENT postfix*
+    | ident postfix*
     | '(' expr ')' postfix*
     | ifThenElseExpr postfix*
     | letExpr postfix*
@@ -174,7 +174,7 @@ postfix
     | fieldAccessTail
     ;
 
-quantifierExpr: IDENT '(' generatorList ')' '(' expr ')';
+quantifierExpr: ident '(' generatorList ')' '(' expr ')';
 
 callSuffix: '(' (expr (',' expr)*)? ')';
 
@@ -208,7 +208,7 @@ arrayRow: expr (',' expr)*;
 
 tupleLiteral: '(' expr ',' expr (',' expr)* ')';
 
-recordLiteral: '(' IDENT ':' expr ',' IDENT ':' expr (',' IDENT ':' expr)* ')';
+recordLiteral: '(' ident ':' expr ',' ident ':' expr (',' ident ':' expr)* ')';
 
 ifThenElseExpr
     : 'if' expr 'then' expr
@@ -225,7 +225,7 @@ compTail: generator ('where' expr)? (',' generator)*;
 
 generatorList: generator (',' generator)* ( 'where' expr )?;
 
-generator: (IDENT | '_') (',' (IDENT | '_'))* 'in' expr;
+generator: (ident | '_') (',' (ident | '_'))* 'in' expr;
 
 indexedArrayLiteral
     : '[' (indexTuple ':' expr (',' indexTuple ':' expr)*)? ']'
@@ -242,9 +242,11 @@ arrayComp: '[' expr '|' compTail ']';
 
 indexedArrayComp: '[' indexTuple ':' expr '|' compTail ']';
 
-callExpr: IDENT '(' (expr (',' expr)*)? ')';
+callExpr: ident '(' (expr (',' expr)*)? ')';
 
-genCallExpr: IDENT '(' compTail ')' '(' expr ')';
+genCallExpr: ident '(' compTail ')' '(' expr ')';
+
+ident: IDENT;
 
 EQ : '=' | '==';
 

@@ -40,7 +40,7 @@ class NaiveLift {
             TiExprAndIdContext declaration = ctx.tiExprAndId();
             TiExprContext typeExpr = declaration.tiExpr();
             BaseTiExprContext type;
-            if (declaration.IDENT().getText().equals(parameter)) {
+            if (declaration.ident().getText().equals(parameter)) {
                 // simple variable declaration
                 if (declaration.tiExpr().baseTiExpr() != null)
                     type = typeExpr.baseTiExpr();
@@ -64,7 +64,7 @@ class NaiveLift {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniZincParser parser = new MiniZincParser(tokens);
 
-        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameters);
+        LiftingVisitor visitor = new LiftingVisitor(tokens, parameters);
         visitor.visitModel(parser.model());
         return visitor.getTranspiled();
     }

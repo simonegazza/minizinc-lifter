@@ -973,4 +973,18 @@ public interface MiniZincListener extends ParseTreeListener {
      *            the parse tree
      */
     void exitGenCallExpr(MiniZincParser.GenCallExprContext ctx);
+    /**
+     * Enter a parse tree produced by {@link MiniZincParser#ident}.
+     *
+     * @param ctx
+     *            the parse tree
+     */
+    void enterIdent(MiniZincParser.IdentContext ctx);
+    /**
+     * Exit a parse tree produced by {@link MiniZincParser#ident}.
+     *
+     * @param ctx
+     *            the parse tree
+     */
+    void exitIdent(MiniZincParser.IdentContext ctx);
 }
