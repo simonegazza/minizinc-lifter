@@ -38,7 +38,7 @@ public class Main implements Callable<Integer> {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniZincParser parser = new MiniZincParser(tokens);
 
-        LiftingVisitor visitor = new LiftingVisitor(tokens, parameter);
+        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameter);
         visitor.visitModel(parser.model());
         String lifted = visitor.getTranspiled();
 

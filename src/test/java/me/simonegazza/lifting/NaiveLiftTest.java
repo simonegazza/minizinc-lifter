@@ -6,6 +6,9 @@ import java.io.IOException;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
+import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprAndIdContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -33,17 +36,20 @@ class NaiveLiftTest {
 
         @Override
         public Void visitVarDeclItem(VarDeclItemContext ctx) {
-            var declaration = ctx.tiExprAndId();
+            TiExprAndIdContext declaration = ctx.tiExprAndId();
+            TiExprContext typeExpr = declaration.tiExpr();
+            BaseTiExprContext type;
             if (declaration.IDENT().getText().equals(parameter)) {
-                // simple variable declaration verification
-                if (declaration.tiExpr().baseTiExpr() != null) {
-                    var type = declaration.tiExpr().baseTiExpr();
-                    setVerified(type.getText().startsWith("var"));
+                // simple variable declaration
+                if (declaration.tiExpr().baseTiExpr() != null)
+                    type = typeExpr.baseTiExpr();
+                else // array declaration
+                    type = typeExpr.arrayTiExpr().baseTiExpr();
+
+                if (type.getChild(0).getText().startsWith("var")) {
+                    setVerified(true);
                 }
-                // array declaration
-                else {
-                    throw new InternalError();
-                }
+
             }
             return null;
         }
@@ -57,7 +63,7 @@ class NaiveLiftTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         MiniZincParser parser = new MiniZincParser(tokens);
 
-        LiftingVisitor visitor = new LiftingVisitor(tokens, parameter);
+        VarInserterVisitor visitor = new VarInserterVisitor(tokens, parameter);
         visitor.visitModel(parser.model());
         return visitor.getTranspiled();
     }
@@ -75,8 +81,16 @@ class NaiveLiftTest {
     }
 
     @Test
-    void test() throws IOException {
+    void simpleParameterTest() throws IOException {
         String parameter = "capacity";
+        String liftedModel = naiveLift("resources/knapsack.mzn", parameter);
+
+        assertTrue(verify(liftedModel, parameter));
+    }
+
+    @Test
+    void arrayParameterTest() throws IOException {
+        String parameter = "profit";
         String liftedModel = naiveLift("resources/knapsack.mzn", parameter);
 
         assertTrue(verify(liftedModel, parameter));
