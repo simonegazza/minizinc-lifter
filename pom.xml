@@ -46,16 +46,13 @@
 					<java>
 						<eclipse>
 							<version>4.26</version>
+							<file>${project.basedir}/code-formatting.xml</file>
 						</eclipse>
 						<removeUnusedImports />
 						<trimTrailingWhitespace />
 						<endWithNewline />
 						<importOrder />
 						<formatAnnotations />
-						<indent>
-						    <spaces>true</spaces>
-						    <spacesPerTab>4</spacesPerTab>
-						</indent>
 					</java>
 				</configuration>
 				<executions>
