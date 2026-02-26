@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
@@ -14,11 +13,10 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
 
-class CorrectGrammar {
-	private final Path resourcesFolder = Paths.get("resources");
-
+public class CorrectGrammarTest {
 	private String parse(String model) throws IOException {
 		CharStream input = CharStreams.fromString(model);
 
@@ -33,26 +31,20 @@ class CorrectGrammar {
 		return visitor.visit(tree);
 	}
 
-	@Test
-	void correctGrammarTest() throws IOException {
-		List<Path> directories = Files.list(resourcesFolder)
-			.filter(Files::isDirectory)
+	@TestFactory
+	List<DynamicTest> eachFileTests() throws Exception {
+		Path problemsDir = Path.of(
+			getClass().getClassLoader().getResource("problems").toURI());
+
+		return Files.walk(problemsDir)
+			.filter(Files::isRegularFile)
+			.filter(p -> p.toString().endsWith(".mzn") || p.toString().endsWith(".dzn"))
+			.map(f -> DynamicTest.dynamicTest(
+				f.getName(f.getNameCount() - 2).toString(),
+				() -> {
+					String model = Files.readString(f);
+					assertEquals(parse(model), model);
+				}))
 			.toList();
-
-		for (Path dir : directories) {
-			List<Path> files = Files.list(dir)
-				.filter(Files::isRegularFile)
-				.filter(p -> p.toString().endsWith(".mzn") || p.toString().endsWith(".dzn"))
-				.toList();
-
-			StringBuilder sb = new StringBuilder();
-
-			for (Path file : files)
-				sb.append(Files.readString(file) + "\n");
-
-			String model = sb.toString();
-			assertEquals(parse(model), model);
-		}
-
 	}
 }
