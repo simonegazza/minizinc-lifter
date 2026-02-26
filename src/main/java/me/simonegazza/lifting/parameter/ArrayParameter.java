@@ -1,14 +1,15 @@
 package me.simonegazza.lifting.parameter;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ArrayParameter extends Parameter {
 	List<String> dimensions;
 
-	public ArrayParameter(String name, String elementType, List<String> dimensions) {
-		super(name, elementType);
+	public ArrayParameter(String name, String elementType, Optional<String> bounds, List<String> dimensions) {
+		super(name, elementType, bounds);
 		this.dimensions = dimensions;
 	}
 
@@ -38,5 +39,13 @@ public class ArrayParameter extends Parameter {
 		return "array[" +
 			dimensions.stream().collect(Collectors.joining(", ")) +
 			"] of " + type + ": " + name + ";";
+	}
+
+	@Override
+	public String getLiftedDeclaration() {
+		return "array[" +
+			dimensions.stream().collect(Collectors.joining(", ")) +
+			"] of var " + (bounds.isPresent() ? bounds.get() : type) +
+			": " + getLiftedName();
 	}
 }

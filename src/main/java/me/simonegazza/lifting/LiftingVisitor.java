@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
@@ -16,25 +16,26 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import me.simonegazza.lifting.parameter.ArrayParameter;
 import me.simonegazza.lifting.parameter.Parameter;
+import me.simonegazza.lifting.parameter.SetParameter;
 import me.simonegazza.lifting.parameter.SimpleParameter;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 
 public class LiftingVisitor extends MiniZincBaseVisitor<Void> {
-	private final Set<String> cliParameters;
+	private final List<CLIParameter> cliParameters;
 	private final TokenStreamRewriter rewriter;
 
 	private Map<String, String> initializations = new HashMap<>();
 	private List<Parameter> liftedParameters = new ArrayList<>();
 
-	public LiftingVisitor(TokenStream tokens, Set<String> parameters) {
+	public LiftingVisitor(TokenStream tokens, List<CLIParameter> parameters) {
 		this.cliParameters = parameters;
 		this.rewriter = new TokenStreamRewriter(tokens);
 	}
 
 	@Override
 	public Void visitIdent(IdentContext ctx) {
-		if (cliParameters.stream().anyMatch(p -> p.equals(ctx.getText())))
+		if (cliParameters.stream().anyMatch(p -> p.name().equals(ctx.getText())))
 			rewriter.replace(
 				ctx.getStart(),
 				ctx.getStop(),
@@ -45,7 +46,7 @@ public class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 	@Override
 	public Void visitAssignItem(AssignItemContext ctx) {
 		String ident = ctx.ident().getText();
-		if (cliParameters.stream().anyMatch(p -> p.equals(ident)))
+		if (cliParameters.stream().anyMatch(p -> p.name().equals(ident)))
 			return null;
 		return super.visitAssignItem(ctx);
 	}
@@ -64,49 +65,59 @@ public class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 		TiExprAndIdContext declarationLhs = ctx.tiExprAndId();
 		IdentContext ident = declarationLhs.ident();
 
-		if (cliParameters.stream().anyMatch(p -> p.equals(ident.getText()))) {
+		Optional<CLIParameter> cliParameter = cliParameters.stream()
+			.filter(p -> p.name().equals(ident.getText()))
+			.findAny();
+		if (cliParameter.isPresent()) {
 			TiExprContext typeExpr = declarationLhs.tiExpr();
 			BaseTiExprContext type;
 
-			// simple variable declaration case
+			Parameter parameter;
+			// simple or set parameter declaration case
 			if (declarationLhs.tiExpr().baseTiExpr() != null) {
 				type = typeExpr.baseTiExpr();
-				liftedParameters.add(new SimpleParameter(
-					ident.getText(),
-					type.getText()));
 
+				// set parameter
+				if (type.children.stream().anyMatch(c -> c.getText().equals("set of"))) {
+					parameter = new SetParameter(
+						ident.getText(),
+						type.baseTiExprTail().getText(),
+						cliParameter.get().bounds());
+				}
+				// simple parameter
+				else {
+					parameter = new SimpleParameter(
+						ident.getText(),
+						type.getText(),
+						cliParameter.get().bounds());
+
+				}
 			}
 			// array declaration case
 			else {
 				type = typeExpr.arrayTiExpr().baseTiExpr();
-				liftedParameters.add(
-					new ArrayParameter(
-						ident.getText(),
-						type.getText(),
-						typeExpr.arrayTiExpr().tiExpr().stream()
-							.map(cte -> cte.getText())
-							.toList()));
+				parameter = new ArrayParameter(
+					ident.getText(),
+					type.getText(),
+					cliParameter.get().bounds(),
+					typeExpr.arrayTiExpr().tiExpr().stream()
+						.map(cte -> cte.getText())
+						.toList());
 			}
+			liftedParameters.add(parameter);
 
 			if (type.getChild(0).getText().equals("var"))
-				throw new IllegalStateException(
-					"Requesting lifting of a variable");
+				throw new IllegalStateException("Requested lifting of a variable");
 
-			if (type.getChild(0).getText().equals("par"))
-				rewriter.delete(type.getStart());
-
-			if (ctx.expr() != null) {
+			if (ctx.expr() != null)
 				initializations.put(
 					ident.getText(),
 					ctx.expr().getText());
-				rewriter.delete(ctx.EQ().getSymbol(), ctx.expr().getStop());
-			}
 
-			rewriter.insertBefore(type.getStart(), "var ");
 			rewriter.replace(
-				ident.getStart(),
-				ident.getStop(),
-				Parameter.getLiftedName(ident.getText()));
+				ctx.getStart(),
+				ctx.getStop(),
+				parameter.getLiftedDeclaration());
 
 			return null;
 		} else
@@ -129,14 +140,14 @@ public class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 	public String getTranspiled() {
 		StringBuilder sb = new StringBuilder(rewriter.getText());
 
-		initializations.forEach((k, v) -> {
-			sb.append(k + " = " + v + ";\n");
-		});
-
 		sb.append(liftedParameters.stream()
 			.map(Parameter::getInitialDeclaration)
 			.collect(Collectors.joining("\n")));
 		sb.append("\n");
+
+		initializations.forEach((k, v) -> {
+			sb.append(k + " = " + v + ";\n");
+		});
 
 		sb.append("solve minimize ");
 		sb.append(liftedParameters.stream()
