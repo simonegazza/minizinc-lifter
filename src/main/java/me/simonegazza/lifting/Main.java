@@ -39,6 +39,11 @@ public class Main implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
+		if (filePaths == null)
+			throw new IllegalArgumentException("no file to parse, exiting");
+		else if (parameters == null)
+			throw new IllegalArgumentException("no lifting asked, nothing to do");
+
 		StringBuilder sb = new StringBuilder();
 		for (String fp : filePaths)
 			sb.append(Files.readString(Path.of(fp)) + "\n");
