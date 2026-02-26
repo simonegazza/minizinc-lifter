@@ -18,82 +18,85 @@ import org.antlr.v4.runtime.Lexer;
 import org.junit.jupiter.api.Test;
 
 class NaiveLift {
-    private class VerifierVisitor extends MiniZincBaseVisitor<Void> {
-        private final String parameter;
-        private boolean verified;
+	private class VerifierVisitor extends MiniZincBaseVisitor<Void> {
+		private final String parameter;
+		private boolean verified = false;
 
-        public VerifierVisitor(String parameter) {
-            this.parameter = parameter;
-            this.setVerified(false);
-        }
+		public VerifierVisitor(String parameter) {
+			this.parameter = parameter;
+		}
 
-        public boolean isVerified() {
-            return verified;
-        }
+		public boolean isVerified() {
+			return verified;
+		}
 
-        private void setVerified(boolean verified) {
-            this.verified = verified;
-        }
+		private void setVerified(boolean verified) {
+			this.verified = verified;
+		}
 
-        @Override
-        public Void visitVarDeclItem(VarDeclItemContext ctx) {
-            TiExprAndIdContext declaration = ctx.tiExprAndId();
-            TiExprContext typeExpr = declaration.tiExpr();
-            BaseTiExprContext type;
-            if (declaration.ident().getText().equals(parameter)) {
-                // simple variable declaration
-                if (declaration.tiExpr().baseTiExpr() != null)
-                    type = typeExpr.baseTiExpr();
-                else // array declaration
-                    type = typeExpr.arrayTiExpr().baseTiExpr();
+		@Override
+		public Void visitVarDeclItem(VarDeclItemContext ctx) {
+			TiExprAndIdContext declaration = ctx.tiExprAndId();
+			TiExprContext typeExpr = declaration.tiExpr();
+			BaseTiExprContext type;
+			if (declaration.ident().getText().equals(parameter)) {
+				// simple variable declaration
+				if (declaration.tiExpr().baseTiExpr() != null)
+					type = typeExpr.baseTiExpr();
+				else // array declaration
+					type = typeExpr.arrayTiExpr().baseTiExpr();
 
-                if (type.getChild(0).getText().startsWith("var")) {
-                    setVerified(true);
-                }
+				if (type.getChild(0).getText().startsWith("var")) {
+					setVerified(true);
+				}
 
-            }
-            return null;
-        }
+			}
+			return null;
+		}
 
-    }
+	}
 
-    private String naiveLift(String modelPath, Set<String> parameters) throws IOException {
-        CharStream input = CharStreams.fromFileName(modelPath);
+	private String naiveLift(String modelPath, Set<String> parameters) throws IOException {
+		CharStream input = CharStreams.fromFileName(modelPath);
 
-        Lexer lexer = new MiniZincLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniZincParser parser = new MiniZincParser(tokens);
+		Lexer lexer = new MiniZincLexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		MiniZincParser parser = new MiniZincParser(tokens);
 
-        LiftingVisitor visitor = new LiftingVisitor(tokens, parameters);
-        visitor.visitModel(parser.model());
-        return visitor.getTranspiled();
-    }
+		LiftingVisitor visitor = new LiftingVisitor(tokens, parameters);
+		visitor.visitModel(parser.model());
+		return visitor.getTranspiled();
+	}
 
-    private boolean verify(String model, String parameter) {
-        CharStream input = CharStreams.fromString(model);
+	private boolean verify(String model, String parameter) {
+		CharStream input = CharStreams.fromString(model);
 
-        Lexer lexer = new MiniZincLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        MiniZincParser parser = new MiniZincParser(tokens);
+		Lexer lexer = new MiniZincLexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		MiniZincParser parser = new MiniZincParser(tokens);
 
-        VerifierVisitor verifier = new VerifierVisitor(parameter);
-        verifier.visitModel(parser.model());
-        return verifier.isVerified();
-    }
+		VerifierVisitor verifier = new VerifierVisitor(parameter);
+		verifier.visitModel(parser.model());
+		return verifier.isVerified();
+	}
 
-    @Test
-    void simpleParameterTest() throws IOException {
-        String parameter = "capacity";
-        String liftedModel = naiveLift("resources/knapsack/original.mzn", Set.of(parameter));
+	@Test
+	void simpleParameterTest() throws IOException {
+		String parameter = "capacity";
+		String liftedModel = naiveLift(
+			"resources/knapsack/original.mzn",
+			Set.of(parameter));
 
-        assertTrue(verify(liftedModel, parameter));
-    }
+		assertTrue(verify(liftedModel, parameter));
+	}
 
-    @Test
-    void arrayParameterTest() throws IOException {
-        String parameter = "profit";
-        String liftedModel = naiveLift("resources/knapsack/original.mzn", Set.of(parameter));
+	@Test
+	void arrayParameterTest() throws IOException {
+		String parameter = "profit";
+		String liftedModel = naiveLift(
+			"resources/knapsack/original.mzn",
+			Set.of(parameter));
 
-        assertTrue(verify(liftedModel, parameter));
-    }
+		assertTrue(verify(liftedModel, parameter));
+	}
 }

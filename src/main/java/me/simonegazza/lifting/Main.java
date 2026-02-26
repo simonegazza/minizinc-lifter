@@ -20,43 +20,46 @@ import picocli.CommandLine.Option;
 
 @CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
 public class Main implements Callable<Integer> {
-    @Option(names = {"-m", "--models"}, arity = "1..*", description = "MZN and MDN file paths")
-    private List<String> filePaths;
+	@Option(names = { "-m", "--models" }, arity = "1..*", description = "MZN and MDN file paths")
+	private List<String> filePaths;
 
-    @Option(names = {"-p", "--parameters"}, arity = "1..*", description = "Parameter to lift the model with")
-    private Set<String> parameters;
+	@Option(names = { "-p", "--parameters" }, arity = "1..*", description = "Parameter to lift the model with")
+	private Set<String> parameters;
 
-    @Option(names = {"-o", "--output"}, description = "Output file path (default prints to console)")
-    private Optional<File> outputFile = Optional.empty();
+	@Option(names = { "-o", "--output" }, description = "Output file path (default prints to console)")
+	private Optional<File> outputFile = Optional.empty();
 
-    public static void main(String[] args) {
-        int exitCode = new CommandLine(new Main()).execute(args);
-        System.exit(exitCode);
-    }
+	// TODO: get multiple norms via CLI
+	// TODO: one we have bounded lifting, we can also fix the set of
 
-    @Override
-    public Integer call() throws Exception {
-        StringBuilder sb = new StringBuilder();
-        for (String fp : filePaths)
-            sb.append(Files.readString(Path.of(fp)) + "\n");
+	public static void main(String[] args) {
+		int exitCode = new CommandLine(new Main()).execute(args);
+		System.exit(exitCode);
+	}
 
-        CharStream input = CharStreams.fromString(sb.toString());
-        Lexer lexer = new MiniZincLexer(input);
-        TokenStream tokens = new CommonTokenStream(lexer);
-        MiniZincParser parser = new MiniZincParser(tokens);
+	@Override
+	public Integer call() throws Exception {
+		StringBuilder sb = new StringBuilder();
+		for (String fp : filePaths)
+			sb.append(Files.readString(Path.of(fp)) + "\n");
 
-        LiftingVisitor lv = new LiftingVisitor(tokens, parameters);
-        lv.visitModel(parser.model());
-        String lifted = lv.getTranspiled();
+		CharStream input = CharStreams.fromString(sb.toString());
+		Lexer lexer = new MiniZincLexer(input);
+		TokenStream tokens = new CommonTokenStream(lexer);
+		MiniZincParser parser = new MiniZincParser(tokens);
 
-        if (outputFile.isEmpty()) {
-            System.out.println(lifted);
-        } else {
-            PrintWriter pw = new PrintWriter(outputFile.get());
-            pw.println(lifted);
-            pw.close();
-        }
+		LiftingVisitor lv = new LiftingVisitor(tokens, parameters);
+		lv.visitModel(parser.model());
+		String lifted = lv.getTranspiled();
 
-        return 0;
-    }
+		if (outputFile.isEmpty()) {
+			System.out.println(lifted);
+		} else {
+			PrintWriter pw = new PrintWriter(outputFile.get());
+			pw.println(lifted);
+			pw.close();
+		}
+
+		return 0;
+	}
 }

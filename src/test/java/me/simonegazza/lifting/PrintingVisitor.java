@@ -6,14 +6,14 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 public class PrintingVisitor extends MiniZincBaseVisitor<String> {
-    private final TokenStreamRewriter rewriter;
+	private final TokenStreamRewriter rewriter;
 
-    public PrintingVisitor(CommonTokenStream tokens) {
-        this.rewriter = new TokenStreamRewriter(tokens);
-    }
+	public PrintingVisitor(CommonTokenStream tokens) {
+		this.rewriter = new TokenStreamRewriter(tokens);
+	}
 
-    @Override
-    public String visit(ParseTree tree) {
-        return rewriter.getText();
-    }
+	@Override
+	public String visit(ParseTree tree) {
+		return rewriter.getText();
+	}
 }
