@@ -196,7 +196,7 @@ setLiteral
     ;
 
 arrayLiteral
-    : '[' (expr (',' expr)*)? ']'
+    : '[' (expr (',' expr)*)? ','? ']'
     | '[' expr '|' compTail ']'
     ;
 
@@ -221,11 +221,11 @@ letExpr: 'let' '{' letItem (';' letItem)* '}' 'in' expr;
 
 letItem: varDeclItem | constraintItem;
 
-compTail: generator ('where' expr)? (',' generator)*;
+compTail: generator ('where' expr)? (',' generator)* ;
 
-generatorList: generator (',' generator)* ( 'where' expr )?;
+generatorList: generator (',' generator)*;
 
-generator: (ident | '_') (',' (ident | '_'))* 'in' expr;
+generator: (ident | '_') (',' (ident | '_'))* 'in' expr ( 'where' expr )? ','?;
 
 indexedArrayLiteral
     : '[' (indexTuple ':' expr (',' indexTuple ':' expr)*)? ']'
