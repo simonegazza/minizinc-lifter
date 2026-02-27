@@ -11,6 +11,7 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ItemContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprAndIdContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
@@ -58,6 +59,27 @@ public class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 			return null;
 		}
 		return super.visitItem(ctx);
+	}
+
+	@Override
+	public Void visitOutputItem(OutputItemContext ctx) {
+		String output = cliParameters.stream()
+			.map(p -> {
+				String name = Parameter.getLiftedName(p.name());
+				return "\"" + name + " = \\(" + name + ")\\n\"";
+			}).collect(Collectors.joining(", "));
+
+		output = "[" + output + "] ++ ";
+		// In this case the output is usually a simple "show(vars)", so we
+		// need to wrap it in a array
+		if (!ctx.expr().getText().startsWith("[")) {
+			output += "[";
+			rewriter.insertAfter(ctx.expr().getStop(), "]");
+		}
+
+		rewriter.insertBefore(ctx.expr().getStart(), output);
+
+		return null;
 	}
 
 	@Override
