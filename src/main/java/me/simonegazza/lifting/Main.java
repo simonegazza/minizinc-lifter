@@ -1,7 +1,6 @@
 package me.simonegazza.lifting;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -10,6 +9,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
+import me.simonegazza.lifting.request.LiftRequest;
+import me.simonegazza.lifting.visitor.ParameterVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -43,13 +44,8 @@ public class Main implements Callable<Integer> {
 		else if (parameters == null)
 			throw new IllegalArgumentException("no lifting asked, nothing to do");
 
-		List<CLIParameter> cliParameters = parameters.stream().map(p -> {
-			if (p.contains(DELIMITER)) {
-				String[] a = p.split(DELIMITER);
-				return new CLIParameter(a[0], a[1]);
-			} else
-				return new CLIParameter(p);
-		}).toList();
+		List<LiftRequest> cliParameters = parameters.stream()
+			.map(LiftRequest::parse).toList();
 
 		StringBuilder sb = new StringBuilder();
 		for (String fp : filePaths)
@@ -60,17 +56,22 @@ public class Main implements Callable<Integer> {
 		TokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
 
-		LiftingVisitor lv = new LiftingVisitor(tokens, cliParameters);
-		lv.visitModel(parser.model());
-		String lifted = lv.getTranspiled();
+		ParameterVisitor pv = new ParameterVisitor();
+		var g = pv.visitModel(parser.model());
 
-		if (outputFile.isEmpty()) {
-			System.out.println(lifted);
-		} else {
-			PrintWriter pw = new PrintWriter(outputFile.get());
-			pw.println(lifted);
-			pw.close();
-		}
+		System.out.println(g.toString());
+
+////		LiftingVisitor lv = new LiftingVisitor(tokens, cliParameters);
+////		lv.visitModel(parser.model());
+//		String lifted = lv.getTranspiled();
+
+//		if (outputFile.isEmpty()) {
+//			System.out.println(lifted);
+//		} else {
+//			PrintWriter pw = new PrintWriter(outputFile.get());
+//			pw.println(lifted);
+//			pw.close();
+//		}
 
 		return 0;
 	}
