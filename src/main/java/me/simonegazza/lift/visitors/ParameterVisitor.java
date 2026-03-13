@@ -16,7 +16,7 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.ItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
-import me.simonegazza.lift.parameters.MiniZincParameter;
+import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.types.MiniZincCompositeType;
 import me.simonegazza.lift.types.MiniZincEnumType;
 import me.simonegazza.lift.types.MiniZincNamedType;
@@ -25,13 +25,13 @@ import me.simonegazza.lift.utils.DirectedGraph;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZincParameter>> {
+public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<OriginalParameter>> {
 	private Map<String, ParserRuleContext> assignments;
 	private Map<String, List<String>> dependencies;
 
 	private String currentIdentifier;
 
-	private DirectedGraph<MiniZincParameter> graph;
+	private DirectedGraph<OriginalParameter> graph;
 
 	private void addAssignment(IdentContext idCtx, ParserRuleContext exprCtx) {
 		String ident = idCtx.getText();
@@ -53,17 +53,17 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZinc
 	}
 
 	@Override
-	public DirectedGraph<MiniZincParameter> visitIdent(IdentContext ctx) {
+	public DirectedGraph<OriginalParameter> visitIdent(IdentContext ctx) {
 		if (currentIdentifier != null)
 			addDependency(currentIdentifier, ctx.getText());
 		return graph;
 	}
 
 	@Override
-	public DirectedGraph<MiniZincParameter> visitEnumItem(EnumItemContext ctx) {
+	public DirectedGraph<OriginalParameter> visitEnumItem(EnumItemContext ctx) {
 		String enumName = ctx.ident().getText();
 		MiniZincEnumType type = new MiniZincEnumType(enumName);
-		MiniZincParameter ep = new MiniZincParameter(type, enumName);
+		OriginalParameter ep = new OriginalParameter(type, enumName);
 		graph.addNode(ep);
 
 		if (ctx.enumCasesList() != null) {
@@ -102,7 +102,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZinc
 	}
 
 	@Override
-	public DirectedGraph<MiniZincParameter> visitVarDeclItem(VarDeclItemContext ctx) {
+	public DirectedGraph<OriginalParameter> visitVarDeclItem(VarDeclItemContext ctx) {
 		if (ctx.getChild(0).getText().startsWith("any"))
 			throw new UnimplementedException("Unimplemented \"any\" delcaration");
 
@@ -120,7 +120,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZinc
 				addDependency(ident.getText(), typeDependency.getName());
 		}
 
-		MiniZincParameter parameter = new MiniZincParameter(type, ident.getText());
+		OriginalParameter parameter = new OriginalParameter(type, ident.getText());
 		if (ctx.expr() != null) {
 			ExprContext value = ctx.expr();
 			addAssignment(ident, value);
@@ -134,14 +134,14 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZinc
 	}
 
 	@Override
-	public DirectedGraph<MiniZincParameter> visitAssignItem(AssignItemContext ctx) {
+	public DirectedGraph<OriginalParameter> visitAssignItem(AssignItemContext ctx) {
 		ExprContext value = ctx.expr();
 		addAssignment(ctx.ident(), value);
 		return visitExpr(value);
 	}
 
 	@Override
-	public DirectedGraph<MiniZincParameter> visitItem(ItemContext ctx) {
+	public DirectedGraph<OriginalParameter> visitItem(ItemContext ctx) {
 		if (ctx.varDeclItem() != null)
 			return this.visitVarDeclItem(ctx.varDeclItem());
 		else if (ctx.enumItem() != null)
@@ -156,10 +156,10 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZinc
 	 * We guaranty a correct state *only* with this method.
 	 */
 	@Override
-	public DirectedGraph<MiniZincParameter> visitModel(ModelContext ctx) {
+	public DirectedGraph<OriginalParameter> visitModel(ModelContext ctx) {
 		super.visitModel(ctx);
 
-		for (MiniZincParameter par : graph.getNodes()) {
+		for (OriginalParameter par : graph.getNodes()) {
 			ParserRuleContext valueContext = assignments.get(par.getName());
 			// There must be a value, otherwise the MiniZinc model won't compile
 			if (valueContext == null)
@@ -177,7 +177,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZinc
 			}
 
 			for (String d : dependencies.get(par.getName())) {
-				Optional<MiniZincParameter> dependency = graph.getNodes().stream()
+				Optional<OriginalParameter> dependency = graph.getNodes().stream()
 					.filter(p -> p.getName().equals(d))
 					.findFirst();
 

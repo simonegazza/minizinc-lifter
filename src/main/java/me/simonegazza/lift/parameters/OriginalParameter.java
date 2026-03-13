@@ -3,17 +3,17 @@ package me.simonegazza.lift.parameters;
 import me.simonegazza.lift.types.MiniZincType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
-public class MiniZincParameter {
+public class OriginalParameter {
 	protected final String name;
 	protected final MiniZincType type;
 	protected ParserRuleContext value;
 
-	public MiniZincParameter(MiniZincType type, String name) {
+	public OriginalParameter(MiniZincType type, String name) {
 		this.type = type;
 		this.name = name;
 	}
 
-	public MiniZincParameter(MiniZincType type, String name, ParserRuleContext value) {
+	public OriginalParameter(MiniZincType type, String name, ParserRuleContext value) {
 		this.type = type;
 		this.name = name;
 		this.value = value;
@@ -37,8 +37,8 @@ public class MiniZincParameter {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof MiniZincParameter)
-			return name.equals(((MiniZincParameter) obj).name);
+		if (obj instanceof OriginalParameter)
+			return name.equals(((OriginalParameter) obj).name);
 		else
 			return false;
 	}

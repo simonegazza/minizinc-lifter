@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
-import me.simonegazza.lift.parameters.MiniZincParameter;
+import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincEnumType;
 import me.simonegazza.lift.utils.DirectedGraph;
@@ -79,10 +79,10 @@ public class Main implements Callable<Integer> {
 		MiniZincParser parser = new MiniZincParser(tokens);
 
 		ParameterVisitor pv = new ParameterVisitor();
-		DirectedGraph<MiniZincParameter> graph = pv.visitModel(parser.model());
+		DirectedGraph<OriginalParameter> graph = pv.visitModel(parser.model());
 
 		for (LiftRequest request : cliParameters) {
-			List<MiniZincParameter> toLift = graph.getNodes().stream()
+			List<OriginalParameter> toLift = graph.getNodes().stream()
 				.filter(p -> p.getName().equals(request.getName()))
 				.toList();
 
@@ -92,7 +92,7 @@ public class Main implements Callable<Integer> {
 					"Requested lift for " + request.getName() + " but it does not exists");
 
 			// Enums cannot be lifted
-			Optional<MiniZincParameter> enumLift = toLift.stream()
+			Optional<OriginalParameter> enumLift = toLift.stream()
 				.filter(p -> p.getType() instanceof MiniZincEnumType)
 				.findAny();
 			if (enumLift.isPresent())
