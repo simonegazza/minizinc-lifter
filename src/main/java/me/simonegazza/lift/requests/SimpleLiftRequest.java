@@ -1,17 +1,14 @@
-package me.simonegazza.lifting.request;
+package me.simonegazza.lift.requests;
 
 import java.util.Optional;
 
-public class ArrayElementLiftRequest implements LiftRequest {
+public class SimpleLiftRequest implements LiftRequest {
 	private final String name;
 	private final Optional<String> bounds;
-	@SuppressWarnings("unused")
-	private final int location;
 
-	public ArrayElementLiftRequest(String name, Optional<String> bounds, int location) {
+	public SimpleLiftRequest(String name, Optional<String> bounds) {
 		this.name = name;
 		this.bounds = bounds;
-		this.location = location;
 	}
 
 	@Override

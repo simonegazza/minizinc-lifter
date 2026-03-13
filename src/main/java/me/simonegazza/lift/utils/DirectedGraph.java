@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.utils;
+package me.simonegazza.lift.utils;
 
 import java.util.HashMap;
 import java.util.HashSet;

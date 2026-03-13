@@ -1,6 +1,7 @@
-package me.simonegazza.lifting;
+package me.simonegazza.lift;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -9,19 +10,40 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
-import me.simonegazza.lifting.request.LiftRequest;
-import me.simonegazza.lifting.visitor.ParameterVisitor;
+import me.simonegazza.lift.parameters.MiniZincParameter;
+import me.simonegazza.lift.requests.LiftRequest;
+import me.simonegazza.lift.types.MiniZincEnumType;
+import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.visitors.Lifter;
+import me.simonegazza.lift.visitors.ParameterVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.misc.Interval;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 @CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
 public class Main implements Callable<Integer> {
-	private final static String DELIMITER = ":";
+
+	/**
+	 * Given a rule context, it extrapolates all the text from the corresponding
+	 * {@link org.antlr.v4.runtime.CharStream}, comprised of the spaces (as if
+	 * it was the original text)
+	 *
+	 * @param ctx the context to get the values from
+	 *
+	 * @return the original program text
+	 */
+	public static String getFullText(ParserRuleContext ctx) {
+		CharStream stream = ctx.start.getInputStream();
+		return stream.getText(new Interval(
+			ctx.getStart().getStartIndex(),
+			ctx.getStop().getStopIndex()));
+	}
 
 	@Option(names = { "-m", "--models" }, arity = "1..*", description = "MZN and MDN file paths")
 	private List<String> filePaths;
@@ -57,21 +79,36 @@ public class Main implements Callable<Integer> {
 		MiniZincParser parser = new MiniZincParser(tokens);
 
 		ParameterVisitor pv = new ParameterVisitor();
-		var g = pv.visitModel(parser.model());
+		DirectedGraph<MiniZincParameter> graph = pv.visitModel(parser.model());
 
-		System.out.println(g.toString());
+		for (LiftRequest request : cliParameters) {
+			List<MiniZincParameter> toLift = graph.getNodes().stream()
+				.filter(p -> p.getName().equals(request.getName()))
+				.toList();
 
-////		LiftingVisitor lv = new LiftingVisitor(tokens, cliParameters);
-////		lv.visitModel(parser.model());
-//		String lifted = lv.getTranspiled();
+			// Check parameter existence
+			if (toLift.isEmpty())
+				throw new IllegalArgumentException(
+					"Requested lift for " + request.getName() + " but it does not exists");
 
-//		if (outputFile.isEmpty()) {
-//			System.out.println(lifted);
-//		} else {
-//			PrintWriter pw = new PrintWriter(outputFile.get());
-//			pw.println(lifted);
-//			pw.close();
-//		}
+			// Enums cannot be lifted
+			Optional<MiniZincParameter> enumLift = toLift.stream()
+				.filter(p -> p.getType() instanceof MiniZincEnumType)
+				.findAny();
+			if (enumLift.isPresent())
+				throw new IllegalArgumentException("Cannot lift enum " + enumLift.get().getName());
+		}
+
+		Lifter lv = new Lifter(tokens, cliParameters, graph);
+		String liftedModel = lv.execute(parser.model());
+
+		if (outputFile.isEmpty()) {
+			System.out.println(liftedModel);
+		} else {
+			PrintWriter pw = new PrintWriter(outputFile.get());
+			pw.println(liftedModel);
+			pw.close();
+		}
 
 		return 0;
 	}

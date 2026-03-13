@@ -1,6 +1,6 @@
-package me.simonegazza.lifting.expression;
+package me.simonegazza.lift.expressions;
 
-import me.simonegazza.lifting.type.MiniZincNamedType;
+import me.simonegazza.lift.types.MiniZincNamedType;
 
 public class MiniZincIdentifier extends MiniZincNamedType {
 

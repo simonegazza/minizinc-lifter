@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.type;
+package me.simonegazza.lift.types;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.type;
+package me.simonegazza.lift.types;
 
 /**
  * Represents types that are only defined by their names

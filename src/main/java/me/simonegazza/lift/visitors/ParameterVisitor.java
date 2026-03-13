@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.visitor;
+package me.simonegazza.lift.visitors;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,13 +16,13 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.ItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
-import me.simonegazza.lifting.parameter.MiniZincParameter;
-import me.simonegazza.lifting.type.MiniZincCompositeType;
-import me.simonegazza.lifting.type.MiniZincEnumType;
-import me.simonegazza.lifting.type.MiniZincNamedType;
-import me.simonegazza.lifting.type.MiniZincType;
-import me.simonegazza.lifting.utils.DirectedGraph;
-import me.simonegazza.lifting.utils.exception.UnimplementedException;
+import me.simonegazza.lift.parameters.MiniZincParameter;
+import me.simonegazza.lift.types.MiniZincCompositeType;
+import me.simonegazza.lift.types.MiniZincEnumType;
+import me.simonegazza.lift.types.MiniZincNamedType;
+import me.simonegazza.lift.types.MiniZincType;
+import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.utils.exception.UnimplementedException;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<MiniZincParameter>> {

@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.request;
+package me.simonegazza.lift.requests;
 
 import java.util.Optional;
 

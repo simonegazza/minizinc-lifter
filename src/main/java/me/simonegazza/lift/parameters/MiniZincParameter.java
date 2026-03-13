@@ -1,6 +1,6 @@
-package me.simonegazza.lifting.parameter;
+package me.simonegazza.lift.parameters;
 
-import me.simonegazza.lifting.type.MiniZincType;
+import me.simonegazza.lift.types.MiniZincType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class MiniZincParameter {

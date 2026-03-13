@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.type;
+package me.simonegazza.lift.types;
 
 public enum MiniZincBasicType implements MiniZincType {
 	INT,

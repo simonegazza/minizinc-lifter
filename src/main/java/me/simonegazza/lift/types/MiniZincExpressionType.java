@@ -1,10 +1,9 @@
-package me.simonegazza.lifting.type;
+package me.simonegazza.lift.types;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.antlr.v4.runtime.CharStream;
+import me.simonegazza.lift.Main;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.Interval;
 
 /**
  * This type has the sole purpose of keeping a (running) list of identifiers.
@@ -22,10 +21,7 @@ public class MiniZincExpressionType extends MiniZincCompositeType {
 
 	public MiniZincExpressionType(ParserRuleContext ctx) {
 		super(new ArrayList<MiniZincNamedType>());
-		CharStream stream = ctx.start.getInputStream();
-		this.expression = stream.getText(new Interval(
-			ctx.getStart().getStartIndex(),
-			ctx.getStop().getStopIndex()));
+		this.expression = Main.getFullText(ctx);
 	}
 
 	public void addIdentifier(MiniZincNamedType i) {

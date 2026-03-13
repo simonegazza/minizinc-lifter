@@ -1,4 +1,4 @@
-package me.simonegazza.lifting.visitor;
+package me.simonegazza.lift.visitors;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,16 +9,16 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprTailContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTypeContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
-import me.simonegazza.lifting.expression.MiniZincIdentifier;
-import me.simonegazza.lifting.type.MiniZincArrayType;
-import me.simonegazza.lifting.type.MiniZincBasicType;
-import me.simonegazza.lifting.type.MiniZincCompositeType;
-import me.simonegazza.lifting.type.MiniZincEnumType;
-import me.simonegazza.lifting.type.MiniZincExpressionType;
-import me.simonegazza.lifting.type.MiniZincNamedType;
-import me.simonegazza.lifting.type.MiniZincSetType;
-import me.simonegazza.lifting.type.MiniZincType;
-import me.simonegazza.lifting.utils.exception.UnimplementedException;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
+import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincBasicType;
+import me.simonegazza.lift.types.MiniZincCompositeType;
+import me.simonegazza.lift.types.MiniZincEnumType;
+import me.simonegazza.lift.types.MiniZincExpressionType;
+import me.simonegazza.lift.types.MiniZincNamedType;
+import me.simonegazza.lift.types.MiniZincSetType;
+import me.simonegazza.lift.types.MiniZincType;
+import me.simonegazza.lift.utils.exception.UnimplementedException;
 
 class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 	@Override
