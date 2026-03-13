@@ -81,30 +81,6 @@ public class MiniZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
-	public T visitEnumCasesList(MiniZincParser.EnumCasesListContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitEnumCases(MiniZincParser.EnumCasesContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
 	public T visitTypeInstSynItem(MiniZincParser.TypeInstSynItemContext ctx) {
 		return visitChildren(ctx);
 	}
@@ -202,6 +178,30 @@ public class MiniZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 */
 	@Override
 	public T visitFunctionItem(MiniZincParser.FunctionItemContext ctx) {
+		return visitChildren(ctx);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.
+	 * </p>
+	 */
+	@Override
+	public T visitEnumCasesList(MiniZincParser.EnumCasesListContext ctx) {
+		return visitChildren(ctx);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.
+	 * </p>
+	 */
+	@Override
+	public T visitEnumCases(MiniZincParser.EnumCasesContext ctx) {
 		return visitChildren(ctx);
 	}
 

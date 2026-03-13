@@ -79,34 +79,6 @@ public interface MiniZincListener extends ParseTreeListener {
 	void exitEnumItem(MiniZincParser.EnumItemContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link MiniZincParser#enumCasesList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link MiniZincParser#enumCasesList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link MiniZincParser#enumCases}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterEnumCases(MiniZincParser.EnumCasesContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link MiniZincParser#enumCases}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitEnumCases(MiniZincParser.EnumCasesContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link MiniZincParser#typeInstSynItem}.
 	 *
 	 * @param ctx the parse tree
@@ -231,6 +203,34 @@ public interface MiniZincListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFunctionItem(MiniZincParser.FunctionItemContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link MiniZincParser#enumCasesList}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void enterEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
+
+	/**
+	 * Exit a parse tree produced by {@link MiniZincParser#enumCasesList}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void exitEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link MiniZincParser#enumCases}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void enterEnumCases(MiniZincParser.EnumCasesContext ctx);
+
+	/**
+	 * Exit a parse tree produced by {@link MiniZincParser#enumCases}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void exitEnumCases(MiniZincParser.EnumCasesContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link MiniZincParser#operationItemTail}.

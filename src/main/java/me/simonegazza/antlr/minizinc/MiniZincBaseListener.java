@@ -119,46 +119,6 @@ public class MiniZincBaseListener implements MiniZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterEnumCasesList(MiniZincParser.EnumCasesListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitEnumCasesList(MiniZincParser.EnumCasesListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterEnumCases(MiniZincParser.EnumCasesContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitEnumCases(MiniZincParser.EnumCasesContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
 	public void enterTypeInstSynItem(MiniZincParser.TypeInstSynItemContext ctx) {
 	}
 
@@ -330,6 +290,46 @@ public class MiniZincBaseListener implements MiniZincListener {
 	 */
 	@Override
 	public void exitFunctionItem(MiniZincParser.FunctionItemContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void enterEnumCasesList(MiniZincParser.EnumCasesListContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void exitEnumCasesList(MiniZincParser.EnumCasesListContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void enterEnumCases(MiniZincParser.EnumCasesContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void exitEnumCases(MiniZincParser.EnumCasesContext ctx) {
 	}
 
 	/**

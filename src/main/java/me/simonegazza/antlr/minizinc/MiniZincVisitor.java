@@ -57,24 +57,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitEnumItem(MiniZincParser.EnumItemContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link MiniZincParser#enumCasesList}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link MiniZincParser#enumCases}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitEnumCases(MiniZincParser.EnumCasesContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link MiniZincParser#typeInstSynItem}.
 	 *
 	 * @param ctx the parse tree
@@ -154,6 +136,24 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitFunctionItem(MiniZincParser.FunctionItemContext ctx);
+
+	/**
+	 * Visit a parse tree produced by {@link MiniZincParser#enumCasesList}.
+	 *
+	 * @param ctx the parse tree
+	 *
+	 * @return the visitor result
+	 */
+	T visitEnumCasesList(MiniZincParser.EnumCasesListContext ctx);
+
+	/**
+	 * Visit a parse tree produced by {@link MiniZincParser#enumCases}.
+	 *
+	 * @param ctx the parse tree
+	 *
+	 * @return the visitor result
+	 */
+	T visitEnumCases(MiniZincParser.EnumCasesContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link MiniZincParser#operationItemTail}.
