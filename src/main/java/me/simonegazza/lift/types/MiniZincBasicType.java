@@ -4,5 +4,14 @@ public enum MiniZincBasicType implements MiniZincType {
 	INT,
 	FLOAT,
 	STRING,
-	BOOL
+	BOOL;
+
+	@Override
+	public String toString() {
+		return name().toLowerCase();
+	}
+
+	public String getName() {
+		return name();
+	}
 }

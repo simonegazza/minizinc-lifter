@@ -16,10 +16,9 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.ItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.types.MiniZincCompositeType;
-import me.simonegazza.lift.types.MiniZincEnumType;
-import me.simonegazza.lift.types.MiniZincNamedType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.DirectedGraph;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
@@ -62,7 +61,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 	@Override
 	public DirectedGraph<OriginalParameter> visitEnumItem(EnumItemContext ctx) {
 		String enumName = ctx.ident().getText();
-		MiniZincEnumType type = new MiniZincEnumType(enumName);
+		MiniZincIdentifier type = new MiniZincIdentifier(enumName);
 		OriginalParameter ep = new OriginalParameter(type, enumName);
 		graph.addNode(ep);
 
@@ -116,7 +115,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 		MiniZincType type = new TypeVisitor().visitTiExpr(typeCtx);
 		if (type instanceof MiniZincCompositeType) {
 			MiniZincCompositeType composite = (MiniZincCompositeType) type;
-			for (MiniZincNamedType typeDependency : composite.getSubtypesIdentifiers())
+			for (MiniZincIdentifier typeDependency : composite.getSubtypesIdentifier())
 				addDependency(ident.getText(), typeDependency.getName());
 		}
 
@@ -171,7 +170,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 			if (type instanceof MiniZincCompositeType) {
 				var t = (MiniZincCompositeType) type;
 				dependencies.get(par.getName()).addAll(
-					t.getSubtypesIdentifiers().stream()
+					t.getSubtypesIdentifier().stream()
 						.map(s -> s.getName())
 						.toList());
 			}

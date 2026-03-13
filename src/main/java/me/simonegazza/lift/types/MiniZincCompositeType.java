@@ -1,21 +1,16 @@
 package me.simonegazza.lift.types;
 
 import java.util.List;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
 
 public abstract class MiniZincCompositeType implements MiniZincType {
-	protected List<MiniZincNamedType> ids;
+	protected MiniZincType subtype;
+	protected List<String> expressions;
 
-	public MiniZincCompositeType(List<MiniZincNamedType> ids) {
-		this.ids = ids;
+	public MiniZincCompositeType(MiniZincType subtype) {
+		this.subtype = subtype;
 	}
 
-	/**
-	 * Provide the identifiers in the type declaration. For example, given a
-	 * type declaration of the form: array[M] of set of N, this method will
-	 * return a list of M and N
-	 *
-	 * @return all the identifiers in the type declaration
-	 */
-	public abstract List<MiniZincNamedType> getSubtypesIdentifiers();
+	public abstract List<MiniZincIdentifier> getSubtypesIdentifier();
 
 }

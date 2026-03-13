@@ -2,39 +2,56 @@ package me.simonegazza.lift.types;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
 
 public class MiniZincArrayType extends MiniZincCompositeType {
 	/**
 	 * String representation of the expression that compose the type ranges
 	 */
-	private final List<String> ranges;
-	private final MiniZincType innerType;
+	private final List<MiniZincType> dimensions;
 
 	public MiniZincArrayType(
-		List<MiniZincNamedType> subtypesIdentifiers,
-		List<String> ranges,
+		List<MiniZincType> dimensions,
 		MiniZincType innerType) {
 
-		super(subtypesIdentifiers);
-		this.ranges = ranges;
-		this.innerType = innerType;
-	}
-
-	public List<String> getRanges() {
-		return ranges;
+		super(innerType);
+		this.dimensions = dimensions;
 	}
 
 	@Override
-	public List<MiniZincNamedType> getSubtypesIdentifiers() {
-		List<MiniZincNamedType> ids = new ArrayList<>(super.ids);
+	public List<MiniZincIdentifier> getSubtypesIdentifier() {
+		List<MiniZincIdentifier> ids = new ArrayList<>();
 
-		if (innerType instanceof MiniZincCompositeType) {
-			ids.addAll(((MiniZincCompositeType) innerType).getSubtypesIdentifiers());
-		} else if (innerType instanceof MiniZincNamedType)
-			ids.add((MiniZincNamedType) innerType);
-		// Do not need to do anything for the basic types
-
+		if (subtype instanceof MiniZincExpressionType)
+			ids.addAll(((MiniZincExpressionType) subtype).getIdentifiers());
+		else if (subtype instanceof MiniZincSetType)
+			ids.addAll(((MiniZincSetType) subtype).getSubtypesIdentifier());
+		else {
+			if (!(subtype instanceof MiniZincBasicType))
+				throw new IllegalStateException("Impossible subtype of a non-basic type");
+		}
 		return ids;
+	}
+
+	@Override
+	public String toString() {
+		String ranges = dimensions.stream()
+			.map(d -> {
+				if (d instanceof MiniZincIdentifier) {
+					return ((MiniZincIdentifier) d).getName();
+				} else if (d instanceof MiniZincBasicType) {
+					return ((MiniZincBasicType) d).toString();
+				} else if (d instanceof MiniZincExpressionType) {
+					return ((MiniZincExpressionType) d).toString();
+				} else
+					// Should not be possible to use a MiniZincSetType as a
+					// dimension
+					throw new IllegalStateException();
+			})
+			.collect(Collectors.joining(", "));
+
+		return "array[" + ranges + "] of " + subtype;
 	}
 
 }

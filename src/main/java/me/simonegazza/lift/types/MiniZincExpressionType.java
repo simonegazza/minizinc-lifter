@@ -3,34 +3,33 @@ package me.simonegazza.lift.types;
 import java.util.ArrayList;
 import java.util.List;
 import me.simonegazza.lift.Main;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
- * This type has the sole purpose of keeping a (running) list of identifiers.
- * This avoid parsing expressions but makes possibile to registre which type
- * (and parameter) is dependent on another parameter
+ * This type has the sole purpose of keeping a list of identifiers. This avoid
+ * parsing expressions but makes possible to register which parameter is
+ * dependent on another one
  */
-public class MiniZincExpressionType extends MiniZincCompositeType {
-	@SuppressWarnings("unused")
+public class MiniZincExpressionType implements MiniZincType {
 	private final String expression;
-
-	public MiniZincExpressionType(String expression) {
-		super(new ArrayList<MiniZincNamedType>());
-		this.expression = expression;
-	}
+	private List<MiniZincIdentifier> ids;
 
 	public MiniZincExpressionType(ParserRuleContext ctx) {
-		super(new ArrayList<MiniZincNamedType>());
 		this.expression = Main.getFullText(ctx);
+		this.ids = new ArrayList<>();
 	}
 
-	public void addIdentifier(MiniZincNamedType i) {
+	public void addIdentifier(MiniZincIdentifier i) {
 		this.ids.add(i);
 	}
 
-	@Override
-	public List<MiniZincNamedType> getSubtypesIdentifiers() {
+	public List<MiniZincIdentifier> getIdentifiers() {
 		return this.ids;
 	}
 
+	@Override
+	public String toString() {
+		return expression;
+	}
 }

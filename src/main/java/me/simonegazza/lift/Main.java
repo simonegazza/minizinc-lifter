@@ -12,7 +12,6 @@ import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
-import me.simonegazza.lift.types.MiniZincEnumType;
 import me.simonegazza.lift.utils.DirectedGraph;
 import me.simonegazza.lift.visitors.Lifter;
 import me.simonegazza.lift.visitors.ParameterVisitor;
@@ -90,13 +89,6 @@ public class Main implements Callable<Integer> {
 			if (toLift.isEmpty())
 				throw new IllegalArgumentException(
 					"Requested lift for " + request.getName() + " but it does not exists");
-
-			// Enums cannot be lifted
-			Optional<OriginalParameter> enumLift = toLift.stream()
-				.filter(p -> p.getType() instanceof MiniZincEnumType)
-				.findAny();
-			if (enumLift.isPresent())
-				throw new IllegalArgumentException("Cannot lift enum " + enumLift.get().getName());
 		}
 
 		Lifter lv = new Lifter(tokens, cliParameters, graph);

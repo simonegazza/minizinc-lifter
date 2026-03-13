@@ -1,16 +1,33 @@
 package me.simonegazza.lift.types;
 
+import java.util.ArrayList;
 import java.util.List;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
 
 public class MiniZincSetType extends MiniZincCompositeType {
 
-	public MiniZincSetType(List<MiniZincNamedType> ids) {
-		super(ids);
+	public MiniZincSetType(MiniZincType innerType) {
+		super(innerType);
 	}
 
 	@Override
-	public List<MiniZincNamedType> getSubtypesIdentifiers() {
-		return super.ids;
+	public String toString() {
+		return "set of " + subtype;
+	}
+
+	@Override
+	public List<MiniZincIdentifier> getSubtypesIdentifier() {
+		if (subtype instanceof MiniZincExpressionType)
+			return ((MiniZincExpressionType) subtype).getIdentifiers();
+		else {
+			if (subtype instanceof MiniZincBasicType)
+				return new ArrayList<>();
+			else if (subtype instanceof MiniZincIdentifier)
+				return List.of((MiniZincIdentifier) subtype);
+			else
+				throw new IllegalStateException("Impossible subtype of a non-basic type");
+		}
+
 	}
 
 }

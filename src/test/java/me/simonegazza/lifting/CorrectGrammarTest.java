@@ -3,6 +3,7 @@ package me.simonegazza.lifting;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,7 +18,7 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 public class CorrectGrammarTest {
-	private String parse(String model) throws IOException {
+	private String parse(String model) {
 		CharStream input = CharStreams.fromString(model);
 
 		Lexer lexer = new MiniZincLexer(input);
@@ -32,7 +33,7 @@ public class CorrectGrammarTest {
 	}
 
 	@TestFactory
-	List<DynamicTest> eachFileTests() throws Exception {
+	List<DynamicTest> eachFileTests() throws URISyntaxException, IOException {
 		Path problemsDir = Path.of(
 			getClass().getClassLoader().getResource("problems").toURI());
 

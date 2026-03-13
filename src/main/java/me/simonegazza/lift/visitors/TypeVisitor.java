@@ -13,9 +13,7 @@ import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincBasicType;
 import me.simonegazza.lift.types.MiniZincCompositeType;
-import me.simonegazza.lift.types.MiniZincEnumType;
 import me.simonegazza.lift.types.MiniZincExpressionType;
-import me.simonegazza.lift.types.MiniZincNamedType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
@@ -42,22 +40,16 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 
 		if (ctx.getText().contains("set of")) {
 			MiniZincType innerType = visitBaseTiExprTail(ctx.baseTiExprTail());
-			List<MiniZincNamedType> ids = new ArrayList<>();
-			if (innerType instanceof MiniZincNamedType)
-				ids.add((MiniZincNamedType) innerType);
-			return new MiniZincSetType(ids);
+			return new MiniZincSetType(innerType);
 		} else
 			return visitBaseTiExprTail(ctx.baseTiExprTail());
 	}
 
 	@Override
 	public MiniZincType visitArrayTiExpr(ArrayTiExprContext ctx) {
-		List<String> ranges = new ArrayList<>();
-		List<MiniZincNamedType> identifiers = new ArrayList<>();
+		List<MiniZincType> dimensions = new ArrayList<>();
 		if (ctx.tiExpr() != null) {
 			for (TiExprContext range : ctx.tiExpr()) {
-				ranges.add(range.getText());
-
 				// Note here that the grammar consider a tiExpr in the dimension
 				// expression too, even though it does not seem to be legal
 				// e.g., type expression like
@@ -72,22 +64,19 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 					throw new UnimplementedException(
 						"Unable to parse a composite type as index for another composite type");
 
-				if (rangeType instanceof MiniZincNamedType)
-					identifiers.add((MiniZincNamedType) rangeType);
-				// It is not necessary to do anything in case of a base type
+				dimensions.add(rangeType);
 			}
 		}
 
 		return new MiniZincArrayType(
-			identifiers,
-			ranges,
+			dimensions,
 			visitBaseTiExpr(ctx.baseTiExpr()));
 	}
 
 	@Override
 	public MiniZincType visitBaseTiExprTail(BaseTiExprTailContext ctx) {
 		if (ctx.ident() != null)
-			return new MiniZincEnumType(ctx.ident().getText());
+			return new MiniZincIdentifier(ctx.ident().getText());
 		if (ctx.baseType() != null)
 			return visitBaseType(ctx.baseType());
 		if (ctx.expr() != null) {

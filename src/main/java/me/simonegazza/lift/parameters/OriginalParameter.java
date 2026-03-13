@@ -4,19 +4,13 @@ import me.simonegazza.lift.types.MiniZincType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 public class OriginalParameter {
-	protected final String name;
-	protected final MiniZincType type;
-	protected ParserRuleContext value;
+	private final String name;
+	private final MiniZincType type;
+	private ParserRuleContext value;
 
 	public OriginalParameter(MiniZincType type, String name) {
 		this.type = type;
 		this.name = name;
-	}
-
-	public OriginalParameter(MiniZincType type, String name, ParserRuleContext value) {
-		this.type = type;
-		this.name = name;
-		this.value = value;
 	}
 
 	public void setValue(ParserRuleContext expr) {
@@ -35,6 +29,10 @@ public class OriginalParameter {
 		return type.toString() + ": " + name + " = " + value.getText();
 	}
 
+	public ParserRuleContext getValue() {
+		return value;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj instanceof OriginalParameter)
@@ -49,7 +47,7 @@ public class OriginalParameter {
 	}
 
 	/**
-	 * This remains like this as of know for debugging purposes
+	 * This remains like this as of now for debugging purposes
 	 */
 	@Override
 	public String toString() {
