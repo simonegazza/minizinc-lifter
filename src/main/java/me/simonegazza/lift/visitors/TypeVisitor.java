@@ -49,7 +49,7 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 	public MiniZincType visitArrayTiExpr(ArrayTiExprContext ctx) {
 		List<MiniZincType> dimensions = new ArrayList<>();
 		if (ctx.tiExpr() != null) {
-			for (TiExprContext range : ctx.tiExpr()) {
+			for (TiExprContext range : ctx.tiExpr().subList(0, ctx.tiExpr().size() - 1)) {
 				// Note here that the grammar consider a tiExpr in the dimension
 				// expression too, even though it does not seem to be legal
 				// e.g., type expression like
@@ -70,7 +70,7 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 
 		return new MiniZincArrayType(
 			dimensions,
-			visitBaseTiExpr(ctx.baseTiExpr()));
+			visitTiExpr(ctx.tiExpr(ctx.tiExpr().size() - 1)));
 	}
 
 	@Override

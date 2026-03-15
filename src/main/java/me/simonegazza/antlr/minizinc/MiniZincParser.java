@@ -2192,16 +2192,16 @@ public class MiniZincParser extends Parser {
 
 	@SuppressWarnings("CheckReturnValue")
 	public static class ArrayTiExprContext extends ParserRuleContext {
-		public BaseTiExprContext baseTiExpr() {
-			return getRuleContext(BaseTiExprContext.class, 0);
-		}
-
 		public List<TiExprContext> tiExpr() {
 			return getRuleContexts(TiExprContext.class);
 		}
 
 		public TiExprContext tiExpr(int i) {
 			return getRuleContext(TiExprContext.class, i);
+		}
+
+		public BaseTiExprContext baseTiExpr() {
+			return getRuleContext(BaseTiExprContext.class, 0);
 		}
 
 		public ArrayTiExprContext(ParserRuleContext parent, int invokingState) {
@@ -2279,7 +2279,7 @@ public class MiniZincParser extends Parser {
 				setState(370);
 				match(T__37);
 				setState(371);
-				baseTiExpr();
+				tiExpr();
 			}
 				break;
 			case T__38:
@@ -6969,7 +6969,7 @@ public class MiniZincParser extends Parser {
 		"\u0000\u016e\u016f\u0005%\u0000\u0000\u016f\u0171\u0001\u0000\u0000\u0000" +
 		"\u0170\u0165\u0001\u0000\u0000\u0000\u0170\u0171\u0001\u0000\u0000\u0000" +
 		"\u0171\u0172\u0001\u0000\u0000\u0000\u0172\u0173\u0005&\u0000\u0000\u0173" +
-		"\u0178\u0003(\u0014\u0000\u0174\u0175\u0005\'\u0000\u0000\u0175\u0176" +
+		"\u0178\u0003&\u0013\u0000\u0174\u0175\u0005\'\u0000\u0000\u0175\u0176" +
 		"\u0005&\u0000\u0000\u0176\u0178\u0003(\u0014\u0000\u0177\u0164\u0001\u0000" +
 		"\u0000\u0000\u0177\u0174\u0001\u0000\u0000\u0000\u0178/\u0001\u0000\u0000" +
 		"\u0000\u0179\u017a\u0005$\u0000\u0000\u017a\u017f\u0003>\u001f\u0000\u017b" +

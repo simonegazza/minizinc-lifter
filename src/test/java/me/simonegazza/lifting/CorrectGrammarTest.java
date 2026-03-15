@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 public class CorrectGrammarTest {
@@ -44,8 +45,14 @@ public class CorrectGrammarTest {
 				f.getName(f.getNameCount() - 2).toString(),
 				() -> {
 					String model = Files.readString(f);
-					assertEquals(parse(model), model);
+					assertEquals(model, parse(model));
 				}))
 			.toList();
+	}
+
+	@Test
+	public void arrayOfArrayTypeTest() {
+		String model = "array[Comps, Flavs, 0..1] of array[0..1] of array[0..1] of 0..1: a = [1];";
+		assertEquals(model, parse(model));
 	}
 }

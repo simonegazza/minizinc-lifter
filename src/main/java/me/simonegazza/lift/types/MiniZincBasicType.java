@@ -20,7 +20,7 @@ public enum MiniZincBasicType implements MiniZincType {
 	@Override
 	public String lift(Optional<String> bounding) {
 		if (bounding.isEmpty())
-			return "var " + name();
+			return "var " + toString();
 		else
 			return "var " + bounding.get();
 	}

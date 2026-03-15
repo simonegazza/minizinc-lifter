@@ -30,8 +30,8 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 
 		if (subtype instanceof MiniZincExpressionType)
 			ids.addAll(((MiniZincExpressionType) subtype).getIdentifiers());
-		else if (subtype instanceof MiniZincSetType)
-			ids.addAll(((MiniZincSetType) subtype).getSubtypesIdentifier());
+		else if (subtype instanceof MiniZincCompositeType)
+			ids.addAll(((MiniZincCompositeType) subtype).getSubtypesIdentifier());
 		else {
 			if (!(subtype instanceof MiniZincBasicType))
 				throw new IllegalStateException("Impossible subtype of a non-basic type");
@@ -60,25 +60,15 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 		String ranges = getDimensionsString().stream()
 			.collect(Collectors.joining(", "));
 
-		return "array[" + ranges + "] of " + subtype;
+		return "array[" + ranges + "] of " + subtype.toString();
 	}
 
 	@Override
 	public String lift(Optional<String> bounding) {
-		String result = "array["
+		return "array["
 			+ getDimensionsString().stream().collect(Collectors.joining(", "))
-			+ "] of ";
-		MiniZincType t = subtype;
-		while (true) {
-			if (t instanceof MiniZincArrayType) {
-				MiniZincArrayType at = (MiniZincArrayType) t;
-				result += at.getSubtype().toString();
-				t = at.getSubtype();
-			} else
-				break;
-		}
-
-		return result + t.lift(bounding);
+			+ "] of "
+			+ subtype.lift(bounding);
 	}
 
 }

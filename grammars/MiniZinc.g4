@@ -64,7 +64,7 @@ baseTiExprTail
     ;
 baseType: 'bool' | 'int' | 'float' | 'string';
 arrayTiExpr
-    : 'array' ('[' tiExpr (',' tiExpr)* ']')? 'of' baseTiExpr
+    : 'array' ('[' tiExpr (',' tiExpr)* ']')? 'of' tiExpr
     | 'list' 'of' baseTiExpr
     ;
 
