@@ -61,9 +61,9 @@ public class Main implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		if (filePaths == null)
-			throw new IllegalArgumentException("no file to parse, exiting");
+			throw new IllegalArgumentException("No file to parse, exiting");
 		else if (parameters == null)
-			throw new IllegalArgumentException("no lifting asked, nothing to do");
+			throw new IllegalArgumentException("No lifting asked, nothing to do");
 
 		List<LiftRequest> cliParameters = parameters.stream()
 			.map(LiftRequest::parse).toList();

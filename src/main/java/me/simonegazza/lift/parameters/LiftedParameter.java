@@ -54,7 +54,7 @@ public abstract class LiftedParameter {
 	}
 
 	public String getLiftedName() {
-		return parameter.getName() + "_lifed";
+		return parameter.getName() + "_lifted";
 	}
 
 	public List<String> getConstraints() {

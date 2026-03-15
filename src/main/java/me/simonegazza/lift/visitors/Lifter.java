@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
@@ -65,7 +66,7 @@ public class Lifter {
 		this.rewriter = new TokenStreamRewriter(tokens);
 
 		// collect all dependencies
-		this.lifted = toLift.stream()
+		var liftedStream = toLift.stream()
 			// get all names
 			.map(LiftRequest::getName)
 			// avoid duplicates
@@ -74,17 +75,21 @@ public class Lifter {
 			.flatMap(pName -> dependsOn(parameters, pName).stream())
 			// some parameters could have the same dependencies, we eant to
 			// avoid counting them twice
-			.distinct()
+			.distinct();
+
+		this.lifted = Stream.concat(liftedStream, toLift.stream().map(LiftRequest::getName))
 			// get back the OriginalParameter based on the name
 			.map(s -> parameters.getNodes().stream()
 				.filter(p -> p.getName().equals(s))
 				.findAny())
+
 			// if something fails here, the error is very weird. It would mean
 			// that the name of the parameters used to asking a lift does not
 			// match with any of the parameter found in the model (even though
 			// we already check before that such parameter would exists). So it
 			// is safe to Optional::get here without checking
 			.map(Optional::get)
+			.distinct()
 			// now, for each parameter we got, we get a list of all the lifts
 			// for that parameter (it could be an empty list if the parameter
 			// was just a dependency and was not requested for an
@@ -99,11 +104,11 @@ public class Lifter {
 
 	public String execute(ModelContext ctx) {
 		visitor.visitModel(ctx);
-		String model = rewriter.getText();
+		StringBuilder model = new StringBuilder(rewriter.getText());
 		for (LiftedParameter lp : this.lifted)
-			model += lp.getLiftedDeclaration() + "\n";
+			model.append("\n" + lp.getLiftedDeclaration() + "\n");
 
-		return model;
+		return model.toString();
 	}
 
 	private class LiftingVisitor extends MiniZincBaseVisitor<Void> {

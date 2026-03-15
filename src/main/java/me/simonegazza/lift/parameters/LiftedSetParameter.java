@@ -20,7 +20,8 @@ public class LiftedSetParameter extends LiftedParameter {
 		return "var set of "
 			+ bounding
 			+ ": "
-			+ getLiftedName();
+			+ getLiftedName()
+			+ ";";
 	}
 
 	@Override

@@ -13,7 +13,8 @@ public class LiftedSimpleParameter extends LiftedParameter {
 	public String getLiftedDeclaration() {
 		return parameter.getType().lift(changes.get(0).getBounds())
 			+ ": "
-			+ getLiftedName();
+			+ getLiftedName()
+			+ ";";
 	}
 
 	@Override
