@@ -62,10 +62,15 @@ public abstract class LiftedParameter {
 	}
 
 	public String getOutputPiece() {
-		return getOriginalName() + " = \\(" + getLiftedName() + ")";
+		return "\"" + getOriginalName() + " = \\(" + getLiftedName() + ")\"";
 	}
 
-	public abstract String getLiftedDeclaration();
+	public String getLiftedDeclaration() {
+		return parameter.getType().lift(changes.get(0).getBounds())
+			+ ": "
+			+ getLiftedName()
+			+ ";";
+	}
 
 	public abstract String getSolvePiece();
 

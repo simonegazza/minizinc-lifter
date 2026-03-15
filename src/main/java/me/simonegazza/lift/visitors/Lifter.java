@@ -24,6 +24,25 @@ public class Lifter {
 	private final TokenStreamRewriter rewriter;
 	private final List<LiftedParameter> lifted;
 
+	private boolean isSolvePresent;
+	private boolean isOutputPresent;
+
+	private String getSolve() {
+		return "solve minimize "
+			+ lifted.stream()
+				.map(LiftedParameter::getSolvePiece)
+				.collect(Collectors.joining(" + "))
+			+ ";\n";
+	}
+
+	private String getOutput() {
+		return "output ["
+			+ lifted.stream()
+				.map(LiftedParameter::getOutputPiece)
+				.collect(Collectors.joining(", \"\\n\", "))
+			+ ", \"\\n\"];\n";
+	}
+
 	/**
 	 * Termination is guaranteed because graph is topological. This is a
 	 * fixpoint algorithm
@@ -62,6 +81,8 @@ public class Lifter {
 		List<LiftRequest> toLift,
 		DirectedGraph<OriginalParameter> parameters) {
 
+		isSolvePresent = false;
+		isOutputPresent = false;
 		visitor = new LiftingVisitor();
 		this.rewriter = new TokenStreamRewriter(tokens);
 
@@ -104,9 +125,15 @@ public class Lifter {
 
 	public String execute(ModelContext ctx) {
 		visitor.visitModel(ctx);
-		StringBuilder model = new StringBuilder(rewriter.getText());
+		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
 		for (LiftedParameter lp : this.lifted)
-			model.append("\n" + lp.getLiftedDeclaration() + "\n");
+			model.append(lp.getLiftedDeclaration() + "\n");
+
+		if (!isSolvePresent)
+			model.append(getSolve());
+
+		if (!isOutputPresent)
+			model.append(getOutput());
 
 		return model.toString();
 	}
@@ -151,19 +178,15 @@ public class Lifter {
 
 		@Override
 		public Void visitSolveItem(SolveItemContext ctx) {
-			String replace = lifted.stream()
-				.map(LiftedParameter::getSolvePiece)
-				.collect(Collectors.joining(" + "));
-			rewriter.replace(ctx.getStart(), ctx.getStop(), "solve minimize " + replace + ";\n");
+			isSolvePresent = true;
+			rewriter.replace(ctx.getStart(), ctx.getStop(), getSolve());
 			return null;
 		}
 
 		@Override
 		public Void visitOutputItem(OutputItemContext ctx) {
-			String replace = lifted.stream()
-				.map(LiftedParameter::getOutputPiece)
-				.collect(Collectors.joining("\n"));
-			rewriter.replace(ctx.getStart(), ctx.getStop(), "output [\" " + replace + "\"];\n");
+			isOutputPresent = true;
+			rewriter.replace(ctx.getStart(), ctx.getStop(), getOutput());
 			return null;
 		}
 

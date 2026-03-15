@@ -34,7 +34,7 @@ public class CorrectGrammarTest {
 	}
 
 	@TestFactory
-	List<DynamicTest> eachFileTests() throws URISyntaxException, IOException {
+	public List<DynamicTest> eachFileTests() throws URISyntaxException, IOException {
 		Path problemsDir = Path.of(
 			getClass().getClassLoader().getResource("problems").toURI());
 

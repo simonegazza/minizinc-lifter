@@ -2,7 +2,11 @@ package me.simonegazza.lifting;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
@@ -21,9 +25,9 @@ import org.junit.jupiter.api.Test;
 
 public class LifterTest {
 
-	private String lift(String model, List<LiftRequest> cliParameters) {
+	private String lift(Path model, List<LiftRequest> cliParameters) throws IOException {
 
-		CharStream input = CharStreams.fromString(model);
+		CharStream input = CharStreams.fromPath(model);
 
 		Lexer lexer = new MiniZincLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -38,46 +42,77 @@ public class LifterTest {
 	}
 
 	@Test
-	public void noLiftTest() {
-		List<LiftRequest> r = new ArrayList<>();
-		String model = "int: a = 1;";
-
-		assertEquals(model, lift(model, r));
-	}
-
-	@Test
-	public void simpleLiftTest() {
+	public void simpleLiftTest() throws IOException, URISyntaxException {
 		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
-		String model = "int: a = 1;";
+		String testName = "simple";
 
-		assertEquals("int: a = 1;\nvar int: a_lifted;\n", lift(model, r));
+		Path testDir = Path.of(
+			getClass().getClassLoader().getResource("lifter").toURI());
+		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
+		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
+		assertEquals(Files.readString(lifted), lift(original, r));
 	}
 
 	@Test
-	public void simpleLiftWithBoundsTest() {
-		List<LiftRequest> r = List.of(new SimpleLiftRequest(
-			"a", Optional.of("0..1")));
-		String model = "int: a = 1;";
+	public void simpleLiftWithBoundsTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
+		String testName = "simple_bounds";
 
-		assertEquals("int: a = 1;\nvar 0..1: a_lifted;\n", lift(model, r));
+		Path testDir = Path.of(
+			getClass().getClassLoader().getResource("lifter").toURI());
+		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
+		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
+		assertEquals(Files.readString(lifted), lift(original, r));
 	}
 
 	@Test
-	public void setLiftWithBoundsTest() {
-		List<LiftRequest> r = List.of(new SimpleLiftRequest(
-			"a", Optional.of("0..1")));
-		String model = "set of int: a = 1;";
+	public void setLiftWithBoundsTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
+		String testName = "set";
 
-		assertEquals("set of int: a = 1;\nvar set of 0..1: a_lifted;\n", lift(model, r));
+		Path testDir = Path.of(
+			getClass().getClassLoader().getResource("lifter").toURI());
+		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
+		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
+		assertEquals(Files.readString(lifted), lift(original, r));
 	}
 
 	@Test
-	public void arrayLiftWithBoundsTest() {
-		List<LiftRequest> r = List.of(new SimpleLiftRequest(
-			"a", Optional.of("0..1")));
-		String model = "array[int] of int: a = [1];";
+	public void simpleDoubleLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
+		String testName = "double_simple";
 
-		assertEquals("array[int] of int: a = [1];\narray[int] of var 0..1: a_lifted;\n", lift(model, r));
+		Path testDir = Path.of(
+			getClass().getClassLoader().getResource("lifter").toURI());
+		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
+		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
+		assertEquals(Files.readString(lifted), lift(original, r));
+	}
+
+	@Test
+	public void doubleLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(
+			new SimpleLiftRequest("a", Optional.empty()),
+			new SimpleLiftRequest("b", Optional.of("0..1")));
+		String testName = "double";
+
+		Path testDir = Path.of(
+			getClass().getClassLoader().getResource("lifter").toURI());
+		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
+		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
+		assertEquals(Files.readString(lifted), lift(original, r));
+	}
+
+	@Test
+	public void arrayLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
+		String testName = "array";
+
+		Path testDir = Path.of(
+			getClass().getClassLoader().getResource("lifter").toURI());
+		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
+		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
+		assertEquals(Files.readString(lifted), lift(original, r));
 	}
 
 }

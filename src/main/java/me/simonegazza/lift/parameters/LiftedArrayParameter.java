@@ -13,14 +13,6 @@ public class LiftedArrayParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String getLiftedDeclaration() {
-		return parameter.getType().lift(changes.get(0).getBounds())
-			+ ": "
-			+ getLiftedName()
-			+ ";";
-	}
-
-	@Override
 	public String getSolvePiece() {
 		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
 		List<String> dimensionsExpression = ct.getDimensionsString();
@@ -30,16 +22,16 @@ public class LiftedArrayParameter extends LiftedParameter {
 			.toList();
 
 		String firstPart = "abs("
-			+ getOriginalName() + "[" + indices.stream().collect(Collectors.joining(", ")) + "]"
+			+ getLiftedName() + "[" + indices.stream().collect(Collectors.joining(", ")) + "]"
 			+ " - "
-			+ getLiftedDeclaration() + "[" + indices.stream().collect(Collectors.joining(", ")) + "]"
+			+ getOriginalName() + "[" + indices.stream().collect(Collectors.joining(", ")) + "]"
 			+ ")";
 
 		String secondPart = IntStream.range(0, dimensionsExpression.size())
 			.mapToObj(i -> indices.get(i) + " in " + dimensionsExpression.get(i))
 			.collect(Collectors.joining(", "));
 
-		return "sum([" + firstPart + " | " + secondPart + "]);";
+		return "sum([" + firstPart + " | " + secondPart + "])";
 	}
 
 }

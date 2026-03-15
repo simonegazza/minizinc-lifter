@@ -46,12 +46,4 @@ public class OriginalParameter {
 		return name.hashCode();
 	}
 
-	/**
-	 * This remains like this as of now for debugging purposes
-	 */
-	@Override
-	public String toString() {
-		return name;
-	}
-
 }
