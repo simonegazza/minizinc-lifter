@@ -2,6 +2,7 @@ package me.simonegazza.lift.types;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import me.simonegazza.lift.expressions.MiniZincIdentifier;
 
@@ -19,6 +20,10 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 		this.dimensions = dimensions;
 	}
 
+	public List<MiniZincType> getDimensions() {
+		return dimensions;
+	}
+
 	@Override
 	public List<MiniZincIdentifier> getSubtypesIdentifier() {
 		List<MiniZincIdentifier> ids = new ArrayList<>();
@@ -34,9 +39,8 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 		return ids;
 	}
 
-	@Override
-	public String toString() {
-		String ranges = dimensions.stream()
+	public List<String> getDimensionsString() {
+		return dimensions.stream()
 			.map(d -> {
 				if (d instanceof MiniZincIdentifier) {
 					return ((MiniZincIdentifier) d).getName();
@@ -48,10 +52,33 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 					// Should not be possible to use a MiniZincSetType as a
 					// dimension
 					throw new IllegalStateException();
-			})
+			}).toList();
+	}
+
+	@Override
+	public String toString() {
+		String ranges = getDimensionsString().stream()
 			.collect(Collectors.joining(", "));
 
 		return "array[" + ranges + "] of " + subtype;
+	}
+
+	@Override
+	public String lift(Optional<String> bounding) {
+		String result = "array["
+			+ getDimensionsString().stream().collect(Collectors.joining(", "))
+			+ "] of ";
+		MiniZincType t = subtype;
+		while (true) {
+			if (t instanceof MiniZincArrayType) {
+				MiniZincArrayType at = (MiniZincArrayType) t;
+				result += at.getSubtype().toString();
+				t = at.getSubtype();
+			} else
+				break;
+		}
+
+		return result + t.lift(bounding);
 	}
 
 }

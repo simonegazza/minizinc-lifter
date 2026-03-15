@@ -13,4 +13,8 @@ public abstract class MiniZincCompositeType implements MiniZincType {
 
 	public abstract List<MiniZincIdentifier> getSubtypesIdentifier();
 
+	public MiniZincType getSubtype() {
+		return subtype;
+	}
+
 }

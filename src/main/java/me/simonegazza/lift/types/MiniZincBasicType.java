@@ -1,5 +1,7 @@
 package me.simonegazza.lift.types;
 
+import java.util.Optional;
+
 public enum MiniZincBasicType implements MiniZincType {
 	INT,
 	FLOAT,
@@ -13,5 +15,13 @@ public enum MiniZincBasicType implements MiniZincType {
 
 	public String getName() {
 		return name();
+	}
+
+	@Override
+	public String lift(Optional<String> bounding) {
+		if (bounding.isEmpty())
+			return "var " + name();
+		else
+			return "var " + bounding.get();
 	}
 }

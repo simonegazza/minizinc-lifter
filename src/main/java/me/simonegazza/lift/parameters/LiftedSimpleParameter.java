@@ -5,20 +5,13 @@ import java.util.List;
 import me.simonegazza.lift.requests.LiftRequest;
 
 public class LiftedSimpleParameter extends LiftedParameter {
-	private LiftRequest change;
-
 	public LiftedSimpleParameter(OriginalParameter parameter, LiftRequest change) {
 		super(parameter, List.of(change));
-		this.change = change;
 	}
 
 	@Override
 	public String getLiftedDeclaration() {
-		String bounding = parameter.getType().toString();
-		if (change.getBounds().isPresent())
-			bounding = change.getBounds().get();
-		return "var "
-			+ bounding
+		return parameter.getType().lift(changes.get(0).getBounds())
 			+ ": "
 			+ getLiftedName();
 	}
@@ -31,11 +24,6 @@ public class LiftedSimpleParameter extends LiftedParameter {
 	@Override
 	public String getSolvePiece() {
 		return "abs(" + getLiftedName() + " - " + getOriginalName() + ")";
-	}
-
-	@Override
-	public String getOutputPiece() {
-		return "[" + getOriginalName() + " = \\(" + getLiftedName() + ")]";
 	}
 
 }
