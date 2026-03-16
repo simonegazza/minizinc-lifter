@@ -3,32 +3,90 @@ package me.simonegazza.lift.parameters;
 import me.simonegazza.lift.types.MiniZincType;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+/**
+ * Represents a parameter as originally declared in the MiniZinc model.
+ * <p>
+ * An {@code OriginalParameter} captures:
+ * <ul>
+ * <li>The parameter name</li>
+ * <li>Its type</li>
+ * <li>Its assigned value (as a parse tree)</li>
+ * </ul>
+ * <p>
+ * The value is stored as a {@link ParserRuleContext} instead of a string to
+ * preserve the original structure of the parsed model and allow precise
+ * transformations later in the pipeline.
+ * <p>
+ * Instances of this class are also used as nodes in the dependency graph, where
+ * edges represent relationships between parameters (e.g. usage inside
+ * expressions or type definitions).
+ * <p>
+ * <b>Equality semantics:</b> two {@code OriginalParameter}s are considered
+ * equal if they share the same name. This allows them to be safely used in
+ * graph structures and sets without duplicating logical parameters.
+ */
 public class OriginalParameter {
 	private final String name;
 	private final MiniZincType type;
 	private ParserRuleContext value;
 
+	/**
+	 * Creates a parameter with a given type and name.
+	 *
+	 * @param type the MiniZinc type of the parameter
+	 * @param name the parameter name
+	 */
 	public OriginalParameter(MiniZincType type, String name) {
 		this.type = type;
 		this.name = name;
 	}
 
+	/**
+	 * Assigns the value expression of this parameter.
+	 * <p>
+	 * The value is stored as a parse tree to preserve exact source information.
+	 *
+	 * @param expr the expression representing the parameter value
+	 */
 	public void setValue(ParserRuleContext expr) {
 		this.value = expr;
 	}
 
+	/**
+	 * @return the parameter type
+	 */
 	public MiniZincType getType() {
 		return type;
 	}
 
+	/**
+	 * @return the parameter name
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * Reconstructs the original MiniZinc declaration.
+	 * <p>
+	 * Example:
+	 *
+	 * <pre>
+	 * int: n = 10
+	 * </pre>
+	 * <p>
+	 * This method uses {@link ParserRuleContext#getText()}, meaning that
+	 * formatting (e.g. spaces) may not exactly match the original source.
+	 *
+	 * @return the parameter declaration as a string
+	 */
 	public String getDeclaration() {
 		return type.toString() + ": " + name + " = " + value.getText();
 	}
 
+	/**
+	 * @return the parse tree representing the parameter value
+	 */
 	public ParserRuleContext getValue() {
 		return value;
 	}

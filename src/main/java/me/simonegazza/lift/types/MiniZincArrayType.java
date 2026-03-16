@@ -6,9 +6,30 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import me.simonegazza.lift.expressions.MiniZincIdentifier;
 
+/**
+ * Represents a MiniZinc array type.
+ * <p>
+ * Example:
+ *
+ * <pre>
+ * array[1..n] of int
+ * </pre>
+ * <p>
+ * The type consists of:
+ * <ul>
+ * <li>A list of dimension expressions</li>
+ * <li>An inner element type</li>
+ * </ul>
+ * <p>
+ * Dependencies may arise from:
+ * <ul>
+ * <li>Dimension expressions</li>
+ * <li>The inner type</li>
+ * </ul>
+ */
 public class MiniZincArrayType extends MiniZincCompositeType {
 	/**
-	 * String representation of the expression that compose the type ranges
+	 * Dimension definitions (ranges or expressions).
 	 */
 	private final List<MiniZincType> dimensions;
 
@@ -20,6 +41,9 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 		this.dimensions = dimensions;
 	}
 
+	/**
+	 * @return the list of dimensions
+	 */
 	public List<MiniZincType> getDimensions() {
 		return dimensions;
 	}
@@ -39,6 +63,11 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 		return ids;
 	}
 
+	/**
+	 * Returns the textual representation of dimensions.
+	 *
+	 * @return a list of strings for the dimensions of this type
+	 */
 	public List<String> getDimensionsString() {
 		return dimensions.stream()
 			.map(d -> {
@@ -63,6 +92,11 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 		return "array[" + ranges + "] of " + subtype.toString();
 	}
 
+	/**
+	 * Produces the lifted version of the array type.
+	 * <p>
+	 * The array structure is preserved, but the inner type is lifted.
+	 */
 	@Override
 	public String lift(Optional<String> bounding) {
 		return "array["

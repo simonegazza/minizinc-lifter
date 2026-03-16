@@ -5,6 +5,17 @@ import java.util.List;
 import java.util.Optional;
 import me.simonegazza.lift.expressions.MiniZincIdentifier;
 
+/**
+ * Represents a MiniZinc set type (e.g. {@code set of int}).
+ * <p>
+ * This is a composite type where the subtype defines the element type.
+ * <p>
+ * During lifting:
+ * <ul>
+ * <li>Without bounds transforms into {@code var set of <type>}</li>
+ * <li>With bounds transforms into {@code var set of <bounds>}</li>
+ * </ul>
+ */
 public class MiniZincSetType extends MiniZincCompositeType {
 
 	public MiniZincSetType(MiniZincType innerType) {

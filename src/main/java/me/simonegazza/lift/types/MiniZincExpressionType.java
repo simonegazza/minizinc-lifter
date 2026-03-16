@@ -8,12 +8,28 @@ import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
- * This type has the sole purpose of keeping a list of identifiers. This avoid
- * parsing expressions but makes possible to register which parameter is
- * dependent on another one
+ * Represents a type defined by an expression.
+ * <p>
+ * This class does not attempt to semantically interpret the expression.
+ * Instead, it:
+ * <ul>
+ * <li>Stores the original textual representation</li>
+ * <li>Tracks identifiers used inside the expression</li>
+ * </ul>
+ * <p>
+ * This is mainly used for dependency tracking without requiring a full
+ * expression evaluation system.
  */
 public class MiniZincExpressionType implements MiniZincType {
+
+	/**
+	 * Original textual representation of the expression.
+	 */
 	private final String expression;
+
+	/**
+	 * Original textual representation of the expression.
+	 */
 	private List<MiniZincIdentifier> ids;
 
 	public MiniZincExpressionType(ParserRuleContext ctx) {
@@ -21,10 +37,18 @@ public class MiniZincExpressionType implements MiniZincType {
 		this.ids = new ArrayList<>();
 	}
 
+	/**
+	 * Registers an identifier used inside the expression.
+	 *
+	 * @param i the {@link MiniZincIdentifier} to add for this expression
+	 */
 	public void addIdentifier(MiniZincIdentifier i) {
 		this.ids.add(i);
 	}
 
+	/**
+	 * @return identifiers referenced in the expression
+	 */
 	public List<MiniZincIdentifier> getIdentifiers() {
 		return this.ids;
 	}

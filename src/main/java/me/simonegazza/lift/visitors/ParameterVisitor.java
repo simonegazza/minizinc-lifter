@@ -24,20 +24,87 @@ import me.simonegazza.lift.utils.DirectedGraph;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 import org.antlr.v4.runtime.ParserRuleContext;
 
+/**
+ * ANTLR visitor responsible for extracting parameters from a MiniZinc model and
+ * building their dependency graph.
+ * <p>
+ * This visitor walks the MiniZinc AST and identifies all parameter-like
+ * entities (including enums and assignments), collecting:
+ * <ul>
+ * <li>Parameter definitions (name + type)</li>
+ * <li>Parameter values (expressions assigned to them)</li>
+ * <li>Dependencies between parameters</li>
+ * </ul>
+ * <p>
+ * The result is a {@link DirectedGraph} where:
+ * <ul>
+ * <li>Nodes are {@link OriginalParameter}</li>
+ * <li>Edges represent "depends on" relationships</li>
+ * </ul>
+ * <p>
+ * This graph is later used by the lifting phase to understand how
+ * transformations should propagate across parameters.
+ * <p>
+ * <b>Important:</b> The visitor collects partial information during traversal
+ * (assignments, dependencies) and only produces a consistent graph after
+ * {@link #visitModel(ModelContext)} completes.
+ */
 public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<OriginalParameter>> {
+	/**
+	 * Maps parameter names to their assigned expression context.
+	 * <p>
+	 * This is populated during the visit and later used in {@link #visitModel}
+	 * to attach values to {@link OriginalParameter} instances.
+	 */
 	private Map<String, ParserRuleContext> assignments;
+
+	/**
+	 * Temporary storage of dependencies between identifiers.
+	 * <p>
+	 * Each key represents a parameter, and the associated list contains the
+	 * identifiers it depends on (as discovered during expression traversal).
+	 */
 	private Map<String, List<String>> dependencies;
 
+	/**
+	 * Tracks the identifier currently being analyzed.
+	 * <p>
+	 * This is used while visiting expressions: whenever an {@link IdentContext}
+	 * is encountered, it is recorded as a dependency of this identifier.
+	 */
 	private String currentIdentifier;
 
+	/**
+	 * The resulting dependency graph.
+	 */
 	private DirectedGraph<OriginalParameter> graph;
 
+	/**
+	 * Registers an assignment for a given identifier.
+	 * <p>
+	 * This also updates {@link #currentIdentifier} so that any identifiers
+	 * encountered while visiting the expression are tracked as dependencies.
+	 *
+	 * @param idCtx   the {@link IdentContext} to get the ident name
+	 * @param exprCtx a {@link ParserRuleContext} that contains the expression
+	 *                    of this assignment
+	 */
 	private void addAssignment(IdentContext idCtx, ParserRuleContext exprCtx) {
 		String ident = idCtx.getText();
 		currentIdentifier = ident;
 		assignments.putIfAbsent(ident, exprCtx);
 	}
 
+	/**
+	 * Handles enum declarations.
+	 * <p>
+	 * Enums are treated as parameters and added as graph nodes. If the enum has
+	 * explicit cases, they are treated as an assignment and analyzed for
+	 * dependencies.
+	 *
+	 * @param ident      the identifier name
+	 * @param dependency the dependency name
+	 */
 	private void addDependency(String ident, String dependency) {
 		dependencies.putIfAbsent(ident, new ArrayList<String>());
 		dependencies.get(ident).add(dependency);
@@ -75,12 +142,16 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 	}
 
 	/**
-	 * Gives True when there's a var in the type definition of this type
-	 * declaration.
+	 * Determines whether a variable declaration should be ignored.
+	 * <p>
+	 * If the type contains the keyword {@code var}, the declaration represents
+	 * a decision variable rather than a parameter, and is therefore skipped.
+	 * <p>
+	 * This method recursively inspects type expressions to detect such cases.
 	 *
-	 * @param ctx must be of type TiExprContenxt at first call
+	 * @param ctx the type expression context
 	 *
-	 * @return whether we should jump the declaration
+	 * @return true if the declaration should be ignored
 	 */
 	private boolean jumpVarDecl(ParserRuleContext ctx) {
 		if (ctx instanceof TiExprContext) {
@@ -100,6 +171,22 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 		return false;
 	}
 
+	/**
+	 * Processes variable/parameter declarations.
+	 * <p>
+	 * Only parameter declarations are considered. Decision variables (those
+	 * containing {@code var}) are ignored.
+	 * <p>
+	 * This method:
+	 * <ul>
+	 * <li>Extracts the parameter type</li>
+	 * <li>Registers dependencies from composite types</li>
+	 * <li>Captures assigned expressions (if present)</li>
+	 * <li>Adds the parameter to the graph</li>
+	 * </ul>
+	 *
+	 * @return a parameter graph with the current declaration added
+	 */
 	@Override
 	public DirectedGraph<OriginalParameter> visitVarDeclItem(VarDeclItemContext ctx) {
 		if (ctx.getChild(0).getText().startsWith("any"))
@@ -132,6 +219,14 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 		return graph;
 	}
 
+	/**
+	 * Processes assignment statements.
+	 * <p>
+	 * Registers the assigned expression and extracts dependencies from it.
+	 *
+	 * @return a parameter graph with the current assignation added to the
+	 *             corresponding parameter
+	 */
 	@Override
 	public DirectedGraph<OriginalParameter> visitAssignItem(AssignItemContext ctx) {
 		ExprContext value = ctx.expr();
@@ -152,7 +247,25 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 	}
 
 	/**
-	 * We guaranty a correct state *only* with this method.
+	 * Finalizes parameter extraction and builds the dependency graph.
+	 * <p>
+	 * This is the only method that guarantees a consistent result. It performs
+	 * a post-processing step after the full AST traversal:
+	 * <ul>
+	 * <li>Assigns expression values to each parameter</li>
+	 * <li>Validates that all parameters have a value</li>
+	 * <li>Resolves dependencies into graph edges</li>
+	 * <li>Adds implicit dependencies from composite types</li>
+	 * </ul>
+	 * <p>
+	 * Only identifiers that correspond to actual parameters are turned into
+	 * edges. Other identifiers (e.g., local variables) are ignored.
+	 *
+	 * @param ctx the root model context
+	 *
+	 * @return the fully constructed dependency graph
+	 *
+	 * @throws IllegalStateException if a parameter has no assigned value
 	 */
 	@Override
 	public DirectedGraph<OriginalParameter> visitModel(ModelContext ctx) {

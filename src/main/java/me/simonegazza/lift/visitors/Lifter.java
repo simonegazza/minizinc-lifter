@@ -19,6 +19,31 @@ import me.simonegazza.lift.utils.DirectedGraph;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 
+/**
+ * Applies the parameter lifting transformation to a MiniZinc model.
+ * <p>
+ * This class is responsible for rewriting the parsed model by:
+ * <ul>
+ * <li>Removing original parameter declarations and assignments</li>
+ * <li>Replacing parameter usages with their lifted counterparts</li>
+ * <li>Injecting new variable declarations for lifted parameters</li>
+ * <li>Generating a {@code solve} and {@code output} section if missing</li>
+ * </ul>
+ * <p>
+ * Unlike {@link ParameterVisitor}, this class does not build a semantic model.
+ * Instead, it operates directly on the token stream using
+ * {@link TokenStreamRewriter}, making it a purely syntactic transformation
+ * step.
+ * <p>
+ * The transformation is driven by:
+ * <ul>
+ * <li>A set of {@link LiftRequest}</li>
+ * <li>The parameter dependency graph</li>
+ * </ul>
+ * <p>
+ * Dependencies are resolved transitively: lifting a parameter automatically
+ * lifts all parameters that depend on it.
+ */
 public class Lifter {
 	private final LiftingVisitor visitor;
 	private final TokenStreamRewriter rewriter;
@@ -27,6 +52,14 @@ public class Lifter {
 	private boolean isSolvePresent;
 	private boolean isOutputPresent;
 
+	/**
+	 * Builds a default solve statement based on lifted parameters.
+	 * <p>
+	 * The objective is constructed as the sum of all lifted parameter
+	 * contributions.
+	 *
+	 * @return the solve component of the combined lifts
+	 */
 	private String getSolve() {
 		return "solve minimize "
 			+ lifted.stream()
@@ -35,6 +68,11 @@ public class Lifter {
 			+ ";\n";
 	}
 
+	/**
+	 * Builds a default output statement listing lifted parameters.
+	 *
+	 * @return the output component of the combined lifts
+	 */
 	private String getOutput() {
 		return "output ["
 			+ lifted.stream()
@@ -44,13 +82,19 @@ public class Lifter {
 	}
 
 	/**
-	 * Termination is guaranteed because graph is topological. This is a
-	 * fixpoint algorithm
+	 * Computes the transitive closure of dependencies for a given parameter.
+	 * <p>
+	 * This method returns all parameters that directly or indirectly depend on
+	 * the given one. It iteratively expands the set until a fixpoint is
+	 * reached.
+	 * <p>
+	 * <b>Important:</b> This assumes the graph is acyclic (topological),
+	 * otherwise termination is not guaranteed.
 	 *
-	 * @param graph the current graph. Must not contain cycles
+	 * @param parameterGraph the dependency graph
+	 * @param parameter      the starting parameter
 	 *
-	 * @return the set of identifiers that a certain parameter depends on
-	 *             (incluse dependencies up above the chain)
+	 * @return the set of dependent parameter names (including the input)
 	 */
 	private static Set<String> dependsOn(
 		DirectedGraph<OriginalParameter> parameterGraph,
@@ -76,6 +120,23 @@ public class Lifter {
 
 	}
 
+	/**
+	 * Construct and prepares the lifting transformation.
+	 * <p>
+	 * This constructor:
+	 * <ul>
+	 * <li>Resolves all parameters that need to be lifted</li>
+	 * <li>Expands lifting to include dependencies</li>
+	 * <li>Creates {@link LiftedParameter} instances</li>
+	 * </ul>
+	 * <p>
+	 * Note that even parameters not explicitly requested may be lifted if they
+	 * are required to preserve correctness.
+	 *
+	 * @param tokens     the token stream of the parsed model
+	 * @param toLift     the user-provided lift requests
+	 * @param parameters the parameter dependency graph
+	 */
 	public Lifter(
 		TokenStream tokens,
 		List<LiftRequest> toLift,
@@ -123,6 +184,20 @@ public class Lifter {
 			.toList();
 	}
 
+	/**
+	 * Executes the rewriting process and returns the transformed model.
+	 * <p>
+	 * This method:
+	 * <ol>
+	 * <li>Traverses the AST and applies rewriting rules</li>
+	 * <li>Appends new declarations for lifted parameters</li>
+	 * <li>Adds solve/output blocks if not already present</li>
+	 * </ol>
+	 *
+	 * @param ctx the root model context
+	 *
+	 * @return the rewritten MiniZinc model as a string
+	 */
 	public String execute(ModelContext ctx) {
 		visitor.visitModel(ctx);
 		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
@@ -138,14 +213,39 @@ public class Lifter {
 		return model.toString();
 	}
 
+	/**
+	 * Internal visitor that applies rewriting rules to the AST.
+	 * <p>
+	 * The visitor does not build new structures. Instead, it issues
+	 * modifications to the {@link TokenStreamRewriter}.
+	 * <p>
+	 * Main responsibilities:
+	 * <ul>
+	 * <li>Remove original parameter declarations and assignments</li>
+	 * <li>Replace parameter usages with lifted variables</li>
+	 * <li>Override solve/output sections if present</li>
+	 * </ul>
+	 */
 	private class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 
+		/**
+		 * Finds a lifted parameter by its original name.
+		 *
+		 * @param name the name of the {@link LiftedParameter}
+		 *
+		 * @return the optional parameter got by name
+		 */
 		private Optional<LiftedParameter> getByName(String name) {
 			return lifted.stream()
 				.filter(l -> l.getOriginalName().equals(name))
 				.findAny();
 		}
 
+		/**
+		 * Removes assignments of lifted parameters
+		 *
+		 * @returns null
+		 */
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.getText());
@@ -155,6 +255,11 @@ public class Lifter {
 			return null;
 		}
 
+		/**
+		 * Removes declarations of lifted parameters.
+		 *
+		 * @returns null
+		 */
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.getText());
@@ -164,6 +269,11 @@ public class Lifter {
 			return null;
 		}
 
+		/**
+		 * Replaces usages of lifted parameters with their new variable names.
+		 *
+		 * @returns null
+		 */
 		@Override
 		public Void visitIdent(IdentContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.getText());
@@ -176,6 +286,11 @@ public class Lifter {
 			return null;
 		}
 
+		/**
+		 * Replaces the solve statement with a generated one.
+		 *
+		 * @returns null
+		 */
 		@Override
 		public Void visitSolveItem(SolveItemContext ctx) {
 			isSolvePresent = true;
@@ -183,6 +298,11 @@ public class Lifter {
 			return null;
 		}
 
+		/**
+		 * Replaces the output statement with a generated one.
+		 *
+		 * @returns null
+		 */
 		@Override
 		public Void visitOutputItem(OutputItemContext ctx) {
 			isOutputPresent = true;
