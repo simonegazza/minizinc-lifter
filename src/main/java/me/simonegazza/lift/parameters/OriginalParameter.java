@@ -93,8 +93,8 @@ public class OriginalParameter {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof OriginalParameter)
-			return name.equals(((OriginalParameter) obj).name);
+		if (obj instanceof OriginalParameter objop)
+			return name.equals(objop.name);
 		else
 			return false;
 	}

@@ -165,8 +165,8 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 		if (ctx instanceof BaseTiExprContext) {
 			if (ctx.getChild(0).getText().equals("var"))
 				return true;
-		} else if (ctx instanceof ArrayTiExprContext)
-			return jumpVarDecl(((ArrayTiExprContext) ctx).baseTiExpr());
+		} else if (ctx instanceof ArrayTiExprContext arrayTiExprCtx)
+			return jumpVarDecl(arrayTiExprCtx.baseTiExpr());
 
 		return false;
 	}
@@ -200,8 +200,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 			return graph;
 
 		MiniZincType type = new TypeVisitor().visitTiExpr(typeCtx);
-		if (type instanceof MiniZincCompositeType) {
-			MiniZincCompositeType composite = (MiniZincCompositeType) type;
+		if (type instanceof MiniZincCompositeType composite) {
 			for (MiniZincIdentifier typeDependency : composite.getSubtypesIdentifier())
 				addDependency(ident.getText(), typeDependency.getName());
 		}
@@ -280,8 +279,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 			par.setValue(valueContext);
 
 			var type = par.getType();
-			if (type instanceof MiniZincCompositeType) {
-				var t = (MiniZincCompositeType) type;
+			if (type instanceof MiniZincCompositeType t) {
 				dependencies.get(par.getName()).addAll(
 					t.getSubtypesIdentifier().stream()
 						.map(s -> s.getName())
