@@ -18,7 +18,7 @@ public class LiftedSetParameter extends LiftedParameter {
 	 * @param parameter the original parameter
 	 * @param change    the lifting request
 	 */
-	public LiftedSetParameter(OriginalParameter parameter, LiftRequest change) {
+	protected LiftedSetParameter(OriginalParameter parameter, LiftRequest change) {
 		super(parameter, List.of(change));
 	}
 

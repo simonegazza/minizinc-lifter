@@ -8,7 +8,7 @@ import me.simonegazza.lift.types.MiniZincArrayType;
 
 public class LiftedArrayParameter extends LiftedParameter {
 
-	public LiftedArrayParameter(OriginalParameter parameter, LiftRequest change) {
+	protected LiftedArrayParameter(OriginalParameter parameter, LiftRequest change) {
 		super(parameter, List.of(change));
 	}
 

@@ -229,54 +229,35 @@ public class Lifter {
 	private class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 
 		/**
-		 * Finds a lifted parameter by its original name.
-		 *
-		 * @param name the name of the {@link LiftedParameter}
-		 *
-		 * @return the optional parameter got by name
-		 */
-		private Optional<LiftedParameter> getByName(String name) {
-			return lifted.stream()
-				.filter(l -> l.getOriginalName().equals(name))
-				.findAny();
-		}
-
-		/**
-		 * Removes assignments of lifted parameters
+		 * Do not touch any assignments.
 		 *
 		 * @returns null
 		 */
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
-			Optional<LiftedParameter> p = getByName(ctx.getText());
-			if (p.isPresent())
-				rewriter.delete(ctx.getStart(), ctx.getStop());
-
 			return null;
 		}
 
 		/**
-		 * Removes declarations of lifted parameters.
+		 * Do not touch any declaration.
 		 *
 		 * @returns null
 		 */
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
-			Optional<LiftedParameter> p = getByName(ctx.getText());
-			if (p.isPresent())
-				rewriter.delete(ctx.getStart(), ctx.getStop());
-
 			return null;
 		}
 
 		/**
-		 * Replaces usages of lifted parameters with their new variable names.
+		 * Replaces usages of lifted parameters with their new names.
 		 *
 		 * @returns null
 		 */
 		@Override
 		public Void visitIdent(IdentContext ctx) {
-			Optional<LiftedParameter> p = getByName(ctx.getText());
+			Optional<LiftedParameter> p = lifted.stream()
+				.filter(l -> l.getOriginalName().equals(ctx.getText()))
+				.findAny();
 			if (p.isPresent())
 				rewriter.replace(
 					ctx.getStart(),

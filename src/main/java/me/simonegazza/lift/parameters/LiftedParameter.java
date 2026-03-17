@@ -70,10 +70,9 @@ public abstract class LiftedParameter {
 				return new LiftedSetParameter(parameter, change);
 			else if (type instanceof MiniZincArrayType)
 				return new LiftedArrayParameter(parameter, change);
+		} else {
+			return new LiftedArrayElementParameter(parameter, changes);
 		}
-//		else {
-//			// multiple ArrayElementLiftRequest
-//		}
 
 		return null;
 	}
@@ -95,7 +94,7 @@ public abstract class LiftedParameter {
 	 *                      lift
 	 * @param changes   the list of lifts ({@link LiftRequest})
 	 */
-	public LiftedParameter(OriginalParameter parameter, List<LiftRequest> changes) {
+	protected LiftedParameter(OriginalParameter parameter, List<LiftRequest> changes) {
 		this.parameter = parameter;
 		this.changes = changes;
 

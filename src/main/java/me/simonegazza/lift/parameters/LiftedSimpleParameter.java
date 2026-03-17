@@ -20,7 +20,7 @@ public class LiftedSimpleParameter extends LiftedParameter {
 	 * @param parameter the original parameter
 	 * @param change    the lifting request associated with this parameter
 	 */
-	public LiftedSimpleParameter(OriginalParameter parameter, LiftRequest change) {
+	protected LiftedSimpleParameter(OriginalParameter parameter, LiftRequest change) {
 		super(parameter, List.of(change));
 	}
 

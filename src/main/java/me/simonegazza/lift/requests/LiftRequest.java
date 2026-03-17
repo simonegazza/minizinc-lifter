@@ -1,5 +1,6 @@
 package me.simonegazza.lift.requests;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -44,6 +45,11 @@ public interface LiftRequest {
 	public final static String LOCATION_DELIMITER = "\\[";
 
 	/**
+	 * Separator used to separate locations in {@link ArrayElementLiftRequest}.
+	 */
+	public final static String LOCATION_SEPARATOR = ",";
+
+	/**
 	 * Parses a CLI string into a {@link LiftRequest}.
 	 * <p>
 	 * This method supports:
@@ -73,8 +79,13 @@ public interface LiftRequest {
 		String[] nameAndLocations = name.split(LOCATION_DELIMITER);
 		name = nameAndLocations[0];
 		if (nameAndLocations.length > 1) {
-			String location = nameAndLocations[1].substring(0, nameAndLocations[1].length() - 1);
-			return new ArrayElementLiftRequest(name, bounds, Integer.parseInt(location));
+			String[] locations = nameAndLocations[1]
+				.substring(0, nameAndLocations[1].length() - 1)
+				.split(LOCATION_SEPARATOR);
+			return new ArrayElementLiftRequest(
+				name,
+				bounds,
+				List.of(locations));
 		}
 
 		return new SimpleLiftRequest(name, bounds);

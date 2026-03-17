@@ -12,6 +12,7 @@ import java.util.Optional;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.OriginalParameter;
+import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
 import me.simonegazza.lift.utils.DirectedGraph;
@@ -41,16 +42,23 @@ public class LifterTest {
 		return lv.execute(parser.model());
 	}
 
-	@Test
-	public void simpleLiftTest() throws IOException, URISyntaxException {
-		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
-		String testName = "simple";
+	private void testEnding(
+		String testName,
+		List<LiftRequest> requests)
+		throws IOException, URISyntaxException {
 
 		Path testDir = Path.of(
 			getClass().getClassLoader().getResource("lifter").toURI());
 		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
 		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
-		assertEquals(Files.readString(lifted), lift(original, r));
+		assertEquals(Files.readString(lifted), lift(original, requests));
+	}
+
+	@Test
+	public void simpleLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
+		String testName = "simple";
+		testEnding(testName, r);
 	}
 
 	@Test
@@ -58,11 +66,7 @@ public class LifterTest {
 		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
 		String testName = "simple_bounds";
 
-		Path testDir = Path.of(
-			getClass().getClassLoader().getResource("lifter").toURI());
-		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
-		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
-		assertEquals(Files.readString(lifted), lift(original, r));
+		testEnding(testName, r);
 	}
 
 	@Test
@@ -70,11 +74,7 @@ public class LifterTest {
 		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
 		String testName = "set";
 
-		Path testDir = Path.of(
-			getClass().getClassLoader().getResource("lifter").toURI());
-		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
-		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
-		assertEquals(Files.readString(lifted), lift(original, r));
+		testEnding(testName, r);
 	}
 
 	@Test
@@ -82,11 +82,7 @@ public class LifterTest {
 		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
 		String testName = "double_simple";
 
-		Path testDir = Path.of(
-			getClass().getClassLoader().getResource("lifter").toURI());
-		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
-		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
-		assertEquals(Files.readString(lifted), lift(original, r));
+		testEnding(testName, r);
 	}
 
 	@Test
@@ -96,11 +92,7 @@ public class LifterTest {
 			new SimpleLiftRequest("b", Optional.of("0..1")));
 		String testName = "double";
 
-		Path testDir = Path.of(
-			getClass().getClassLoader().getResource("lifter").toURI());
-		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
-		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
-		assertEquals(Files.readString(lifted), lift(original, r));
+		testEnding(testName, r);
 	}
 
 	@Test
@@ -108,11 +100,45 @@ public class LifterTest {
 		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
 		String testName = "array";
 
-		Path testDir = Path.of(
-			getClass().getClassLoader().getResource("lifter").toURI());
-		Path original = Paths.get(testDir.toString(), testName, "original.mzn");
-		Path lifted = Paths.get(testDir.toString(), testName, "lifted.mzn");
-		assertEquals(Files.readString(lifted), lift(original, r));
+		testEnding(testName, r);
+	}
+
+	@Test
+	public void arrayElementLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new ArrayElementLiftRequest(
+			"a",
+			Optional.empty(),
+			List.of("1")));
+		String testName = "array_element";
+
+		testEnding(testName, r);
+	}
+
+	@Test
+	public void arrayDoubleElementLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(
+			new ArrayElementLiftRequest(
+				"a",
+				Optional.empty(),
+				List.of("1")),
+			new ArrayElementLiftRequest(
+				"a",
+				Optional.empty(),
+				List.of("3")));
+		String testName = "array_element_double";
+
+		testEnding(testName, r);
+	}
+
+	@Test
+	public void array2DElementLiftTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new ArrayElementLiftRequest(
+			"a",
+			Optional.empty(),
+			List.of("2", "2")));
+		String testName = "double_array_element";
+
+		testEnding(testName, r);
 	}
 
 }
