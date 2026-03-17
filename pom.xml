@@ -3,44 +3,46 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>me.simonegazza</groupId>
-	<artifactId>mzn-parser</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>mzn-lift</artifactId>
+	<version>0.1</version>
 	<name>Parameter lifting parser</name>
-	<description>MiniZinc to MiniZinc parser for parameter lifting</description>
+	<description>MiniZinc to MiniZinc transpiler for parameter lifting</description>
 	<properties>
-        <maven.compiler.release>17</maven.compiler.release>
-    </properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.release>25</maven.compiler.release>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.antlr</groupId>
 			<artifactId>antlr4-runtime</artifactId>
-			<version>4.13.1</version>
+			<version>4.13.2</version>
 		</dependency>
 		<dependency>
-	        <groupId>org.junit.jupiter</groupId>
-	        <artifactId>junit-jupiter</artifactId>
-	        <version>5.10.0</version>
-	        <scope>test</scope>
-    	</dependency>
-    	<!-- Command line options -->
-    	<dependency>
-		    <groupId>info.picocli</groupId>
-		    <artifactId>picocli</artifactId>
-		    <version>4.7.7</version>
-		</dependency> 
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>6.1.0-M1</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Command line options -->
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli</artifactId>
+			<version>4.7.7</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
 			<!-- Tests -->
 			<plugin>
-	            <groupId>org.apache.maven.plugins</groupId>
-	            <artifactId>maven-surefire-plugin</artifactId>
-	            <version>3.1.2</version>
-	            <configuration>
-	            	<printSummary>true</printSummary>
-	                <reportFormat>plain</reportFormat>
-	            </configuration>
-	        </plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.1.2</version>
+				<configuration>
+					<printSummary>true</printSummary>
+					<reportFormat>plain</reportFormat>
+				</configuration>
+			</plugin>
 			<!-- Spotless - automatic with compile -->
 			<plugin>
 				<groupId>com.diffplug.spotless</groupId>
@@ -50,7 +52,7 @@
 					<java>
 						<eclipse>
 							<version>4.26</version>
-							<file>${project.basedir}/code-formatting.xml</file>
+							<file>${project.basedir}/code-style/code-style.xml</file>
 						</eclipse>
 						<removeUnusedImports />
 						<trimTrailingWhitespace />
@@ -70,24 +72,31 @@
 				</executions>
 			</plugin>
 			<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-checkstyle-plugin</artifactId>
-    <version>3.3.1</version>
-    <executions>
-        <execution>
-            <id>checkstyle</id>
-            <phase>verify</phase>
-            <goals>
-                <goal>check</goal>
-            </goals>
-        </execution>
-    </executions>
-    <configuration>
-        <configLocation>checkstyle.xml</configLocation>
-        <failOnViolation>false</failOnViolation>
-        <consoleOutput>true</consoleOutput>
-    </configuration>
-</plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.3.1</version>
+				<executions>
+					<execution>
+						<id>checkstyle-test</id>
+						<phase>test</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>checkstyle-verify</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<configLocation>${project.basedir}/code-style/doc-style.xml</configLocation>
+					<failOnViolation>true</failOnViolation>
+					<consoleOutput>true</consoleOutput>
+				</configuration>
+			</plugin>
 			<plugin>
 				<!-- exec:java -->
 				<groupId>org.codehaus.mojo</groupId>

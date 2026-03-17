@@ -45,11 +45,30 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
  * lifts all parameters that depend on it.
  */
 public class Lifter {
+
+	/**
+	 * Internal visitor that applies lifting rules to AST nodes.
+	 */
 	private final LiftingVisitor visitor;
+
+	/**
+	 * Token stream rewriter for modifying the MiniZinc model text.
+	 */
 	private final TokenStreamRewriter rewriter;
+
+	/**
+	 * List of parameters that have been lifted in the model.
+	 */
 	private final List<LiftedParameter> lifted;
 
+	/**
+	 * Flag indicating whether a solve block is present in the model.
+	 */
 	private boolean isSolvePresent;
+
+	/**
+	 * Flag indicating whether an output block is present in the model.
+	 */
 	private boolean isOutputPresent;
 
 	/**

@@ -17,9 +17,24 @@ import java.util.Optional;
  * prefixing them with {@code var}, optionally using user-provided bounds.
  */
 public enum MiniZincBasicType implements MiniZincType {
+	/**
+	 * Integer type in MiniZinc.
+	 */
 	INT,
+
+	/**
+	 * Floating-point type in MiniZinc.
+	 */
 	FLOAT,
+
+	/**
+	 * String type in MiniZinc.
+	 */
 	STRING,
+
+	/**
+	 * Boolean type in MiniZinc.
+	 */
 	BOOL;
 
 	@Override

@@ -71,12 +71,12 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 	public List<String> getDimensionsString() {
 		return dimensions.stream()
 			.map(d -> {
-				if (d instanceof MiniZincIdentifier) {
-					return ((MiniZincIdentifier) d).getName();
-				} else if (d instanceof MiniZincBasicType) {
-					return ((MiniZincBasicType) d).toString();
-				} else if (d instanceof MiniZincExpressionType) {
-					return ((MiniZincExpressionType) d).toString();
+				if (d instanceof MiniZincIdentifier i) {
+					return i.getName();
+				} else if (d instanceof MiniZincBasicType bt) {
+					return bt.toString();
+				} else if (d instanceof MiniZincExpressionType et) {
+					return et.toString();
 				} else
 					// Should not be possible to use a MiniZincSetType as a
 					// dimension

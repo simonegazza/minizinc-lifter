@@ -26,8 +26,20 @@ import org.antlr.v4.runtime.ParserRuleContext;
  * graph structures and sets without duplicating logical parameters.
  */
 public class OriginalParameter {
+
+	/**
+	 * The name of the parameter as declared in the MiniZinc model.
+	 */
 	private final String name;
+
+	/**
+	 * The MiniZinc type of the parameter.
+	 */
 	private final MiniZincType type;
+
+	/**
+	 * The parse tree representing the assigned value of the parameter, if any.
+	 */
 	private ParserRuleContext value;
 
 	/**

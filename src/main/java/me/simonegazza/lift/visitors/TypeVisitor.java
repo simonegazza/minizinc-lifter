@@ -100,9 +100,32 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 			return MiniZincBasicType.BOOL;
 	}
 
+	/**
+	 * Visitor used to extract identifier dependencies from type expressions.
+	 * <p>
+	 * This visitor does not attempt to evaluate or interpret expressions. Its
+	 * sole purpose is to collect identifiers appearing inside a type definition
+	 * (e.g. array bounds or dependent types).
+	 * <p>
+	 * Each encountered identifier is registered into the associated
+	 * {@link MiniZincExpressionType}, allowing the system to track parameter
+	 * dependencies without fully parsing the expression semantics.
+	 * <p>
+	 * This is part of the dependency analysis phase used to build the parameter
+	 * graph.
+	 */
 	private class TypeExpressionVisitor extends MiniZincBaseVisitor<Void> {
+
+		/**
+		 * Internal expression used for visiting.
+		 */
 		private final MiniZincExpressionType et;
 
+		/**
+		 * Creates a visitor bound to a specific expression type.
+		 *
+		 * @param et the expression type where identifiers will be collected
+		 */
 		public TypeExpressionVisitor(MiniZincExpressionType et) {
 			this.et = et;
 		}

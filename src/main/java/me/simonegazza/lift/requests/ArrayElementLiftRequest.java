@@ -40,9 +40,9 @@ public class ArrayElementLiftRequest implements LiftRequest {
 	/**
 	 * Creates an array element lift request.
 	 *
-	 * @param name     the parameter name
-	 * @param bounds   optional bounds
-	 * @param location index of the element to lift
+	 * @param name      the parameter name
+	 * @param bounds    optional bounds
+	 * @param locations index of the element to lift
 	 */
 	public ArrayElementLiftRequest(String name, Optional<String> bounds, List<String> locations) {
 		this.name = name;
@@ -70,10 +70,36 @@ public class ArrayElementLiftRequest implements LiftRequest {
 		return bounds;
 	}
 
+	/**
+	 * Returns the zero-based indices used internally to access the array.
+	 * <p>
+	 * These indices are adjusted to match Java's indexing convention and are
+	 * intended for navigating the parsed multi-dimensional array structure.
+	 * <p>
+	 * This method is used during the transformation phase to locate and modify
+	 * specific elements inside nested list representations.
+	 *
+	 * @return list of zero-based indices representing the target element
+	 *             position
+	 */
 	public List<Integer> getLocationsAdjusted() {
 		return locationsAdjusted;
 	}
 
+	/**
+	 * Returns the original index representation as it appears in the MiniZinc
+	 * model.
+	 * <p>
+	 * This is a textual representation of the array access (e.g.
+	 * {@code [1,2]}), preserving the original indexing convention used in the
+	 * source model.
+	 * <p>
+	 * It is used when generating MiniZinc code (e.g. in constraints and
+	 * objective functions), ensuring consistency with the original model
+	 * syntax.
+	 *
+	 * @return list of string indices representing the original array access
+	 */
 	public List<String> getOriginalLocations() {
 		return originalLocations;
 	}

@@ -23,7 +23,7 @@ public interface MiniZincType {
 	/**
 	 * Returns the MiniZinc textual representation of the type.
 	 * <p>
-	 * <b>Implementations must override this method.
+	 * <b>Implementations must override this method.</b>
 	 *
 	 * @return the type as it should appear in MiniZinc code
 	 */

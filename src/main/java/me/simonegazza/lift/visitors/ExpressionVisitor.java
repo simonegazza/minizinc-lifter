@@ -11,6 +11,30 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.LiteralContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SetLiteralContext;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 
+/**
+ * Visitor that evaluates MiniZinc expressions into Java objects.
+ * <p>
+ * This visitor is used to extract concrete values from the parse tree,
+ * primarily for array literals. It converts MiniZinc constructs into Java
+ * representations such as:
+ * <ul>
+ * <li>{@link List} for arrays and sets</li>
+ * <li>{@link Integer}, {@link Double}, {@link Boolean}, {@link String} for
+ * primitive literals</li>
+ * </ul>
+ * <p>
+ * The visitor does not aim to fully evaluate MiniZinc expressions, but rather
+ * to provide a structural representation of literal values that can be
+ * manipulated programmatically (e.g. for partial lifting).
+ * <p>
+ * Multi-dimensional arrays are represented as nested lists.
+ * <p>
+ * <b>Limitations:</b>
+ * <ul>
+ * <li>Set comprehensions (generators) are not supported</li>
+ * <li>Only literal-based expressions are handled</li>
+ * </ul>
+ */
 public class ExpressionVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
@@ -59,7 +83,6 @@ public class ExpressionVisitor extends MiniZincBaseVisitor<Object> {
 			return visitArrayLiteral2d(ctx.arrayLiteral2d());
 
 		throw new RuntimeException("Unsupported literal: " + ctx.getText());
-
 	}
 
 }

@@ -27,6 +27,9 @@ import me.simonegazza.lift.types.MiniZincType;
  */
 public class MiniZincIdentifier implements MiniZincType {
 
+	/**
+	 * The textual name of the MiniZinc identifier.
+	 */
 	private final String name;
 
 	/**
