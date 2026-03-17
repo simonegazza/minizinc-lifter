@@ -111,12 +111,12 @@ implExpr: orExpr ('->' orExpr)*;
 orExpr: xorExpr ('\\/' xorExpr)*;
 xorExpr: andExpr ('xor' andExpr)*;
 andExpr: compareExpr ('/\\' compareExpr)*;
-compareExpr: setExpr (('<' | '>' | '<=' | '>=' | EQ | '!=' | 'in' | 'subset' | 'superset') setExpr)*;
+compareExpr: setExpr (('<' | '>' | '<=' | '>=' | EQ | '!=' | 'in' | 'subset' | 'superset') setExpr)?;
 setExpr: rangeExpr (('union' | 'diff' | 'symdiff' | 'intersect') rangeExpr)*;
-rangeExpr: addExpr ('..' addExpr)*;
+rangeExpr: addExpr ('..' addExpr)?;
 addExpr: multExpr (('+' | '-' | '++') multExpr)*;
 multExpr: powExpr (('*' | '/' | 'div' | 'mod') powExpr)*;
-powExpr: unaryExpr ('pow' unaryExpr)*;
+powExpr: unaryExpr ('^' unaryExpr)*;
 unaryExpr
     : ('not' | '+' | '-') unaryExpr
     | primary
