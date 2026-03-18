@@ -154,8 +154,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 	 * @return true if the declaration should be ignored
 	 */
 	private boolean jumpVarDecl(ParserRuleContext ctx) {
-		if (ctx instanceof TiExprContext) {
-			var ti = (TiExprContext) ctx;
+		if (ctx instanceof TiExprContext ti) {
 			if (ti.baseTiExpr() != null)
 				return jumpVarDecl(ti.baseTiExpr());
 			else
@@ -166,7 +165,7 @@ public class ParameterVisitor extends MiniZincBaseVisitor<DirectedGraph<Original
 			if (ctx.getChild(0).getText().equals("var"))
 				return true;
 		} else if (ctx instanceof ArrayTiExprContext arrayTiExprCtx)
-			return jumpVarDecl(arrayTiExprCtx.baseTiExpr());
+			return jumpVarDecl(arrayTiExprCtx.tiExpr().getLast());
 
 		return false;
 	}

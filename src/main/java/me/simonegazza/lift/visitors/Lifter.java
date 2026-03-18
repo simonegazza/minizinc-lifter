@@ -164,7 +164,7 @@ public class Lifter {
 		isSolvePresent = false;
 		isOutputPresent = false;
 		visitor = new LiftingVisitor();
-		this.rewriter = new TokenStreamRewriter(tokens);
+		rewriter = new TokenStreamRewriter(tokens);
 
 		// collect all dependencies
 		var liftedStream = toLift.stream()
@@ -218,10 +218,12 @@ public class Lifter {
 	 * @return the rewritten MiniZinc model as a string
 	 */
 	public String execute(ModelContext ctx) {
-		visitor.visitModel(ctx);
+		visitor.visit(ctx);
 		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
-		for (LiftedParameter lp : this.lifted)
+		for (LiftedParameter lp : this.lifted) {
 			model.append(lp.getLiftedDeclaration() + "\n");
+			lp.getConstraints().forEach(c -> model.append(c + "\n"));
+		}
 
 		if (!isSolvePresent)
 			model.append(getSolve());
@@ -294,7 +296,7 @@ public class Lifter {
 		@Override
 		public Void visitSolveItem(SolveItemContext ctx) {
 			isSolvePresent = true;
-			rewriter.replace(ctx.getStart(), ctx.getStop(), getSolve());
+			rewriter.replace(ctx.start, ctx.stop, getSolve());
 			return null;
 		}
 
@@ -306,7 +308,7 @@ public class Lifter {
 		@Override
 		public Void visitOutputItem(OutputItemContext ctx) {
 			isOutputPresent = true;
-			rewriter.replace(ctx.getStart(), ctx.getStop(), getOutput());
+			rewriter.replace(ctx.start, ctx.stop, getOutput());
 			return null;
 		}
 

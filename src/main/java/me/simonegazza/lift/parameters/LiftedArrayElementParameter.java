@@ -2,6 +2,7 @@ package me.simonegazza.lift.parameters;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
@@ -47,13 +48,16 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		List<?> list = (List<?>) multidemensional;
 
 		// Traverse dimensions except the last
-		for (Integer l : locations.subList(0, locations.size() - 1))
+		for (Integer l : locations.subList(0, locations.size() - 1)) {
+			if (list.get(l) == null)
+				throw new IllegalStateException("Trying to get an element of the array using too many dimensions");
 			list = (List<?>) list.get(l);
+		}
 
 		// Safe cast since last wrap on this list is a List<String>
 		@SuppressWarnings("unchecked")
 		List<String> l = (List<String>) list;
-		Integer location = Integer.valueOf(locations.get(locations.size() - 1));
+		Integer location = Integer.valueOf(locations.getLast());
 		l.set(location, "_");
 	}
 
@@ -148,7 +152,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	@Override
 	public String getLiftedDeclaration() {
 		List<MiniZincType> dimensions = ((MiniZincArrayType) (parameter.getType())).getDimensions();
-		return parameter.getType().lift(changes.get(0).getBounds())
+		return parameter.getType().lift(Optional.empty())
 			+ ": "
 			+ getLiftedName()
 			+ " = array" + dimensions.size() + "d("

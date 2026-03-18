@@ -103,7 +103,7 @@
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>3.1.0</version>
 				<configuration>
-					<mainClass>me.simonegazza.lifting.Main</mainClass>
+					<mainClass>me.simonegazza.lift.Main</mainClass>
 				</configuration>
 			</plugin>
 			<plugin>

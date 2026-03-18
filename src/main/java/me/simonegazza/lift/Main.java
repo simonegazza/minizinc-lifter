@@ -146,6 +146,7 @@ public class Main implements Callable<Integer> {
 
 		ParameterVisitor pv = new ParameterVisitor();
 		DirectedGraph<OriginalParameter> graph = pv.visitModel(parser.model());
+		tokens.seek(0);
 
 		for (LiftRequest request : cliParameters) {
 			List<OriginalParameter> toLift = graph.getNodes().stream()

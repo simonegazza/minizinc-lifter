@@ -70,7 +70,7 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 
 		return new MiniZincArrayType(
 			dimensions,
-			visitTiExpr(ctx.tiExpr(ctx.tiExpr().size() - 1)));
+			visitTiExpr(ctx.tiExpr().getLast()));
 	}
 
 	@Override

@@ -2,38 +2,38 @@ grammar MiniZinc;
 
 model: (item)* EOF;
 item
-    : includeItem
-    | varDeclItem
-    | enumItem
-    | typeInstSynItem
-    | assignItem
-    | constraintItem
-    | solveItem
-    | outputItem
-    | predicateItem
-    | testItem
-    | functionItem
-    | annotationItem
+    : includeItem SEMI
+    | varDeclItem SEMI
+    | enumItem SEMI
+    | typeInstSynItem SEMI
+    | assignItem SEMI
+    | constraintItem SEMI
+    | solveItem SEMI
+    | outputItem SEMI
+    | predicateItem SEMI
+    | testItem SEMI
+    | functionItem SEMI
+    | annotationItem SEMI
     ;
-includeItem: 'include' STRING_LITERAL ';';
+includeItem: 'include' STRING_LITERAL;
 varDeclItem
-    : tiExprAndId annotations (EQ expr)? ';'
-    | 'any' ':' ident annotations (EQ expr)? ';'
+    : tiExprAndId annotations (EQ expr)?
+    | 'any' ':' ident annotations (EQ expr)? 
     ;
-enumItem: 'enum' ident annotations (EQ enumCasesList)? ';' ;
-typeInstSynItem: 'type' ident annotations EQ tiExpr ';';
-assignItem: ident EQ expr ';';
-constraintItem: 'constraint' ('::' STRING_LITERAL)? expr ';';
+enumItem: 'enum' ident annotations (EQ enumCasesList)?;
+typeInstSynItem: 'type' ident annotations EQ tiExpr;
+assignItem: ident EQ expr;
+constraintItem: 'constraint' ('::' STRING_LITERAL)? expr;
 solveItem
-    : 'solve' annotations 'satisfy' ';'
-    | 'solve' annotations 'minimize' expr ';'
-    | 'solve' annotations 'maximize' expr ';'
+    : 'solve' annotations 'satisfy' 
+    | 'solve' annotations 'minimize' expr 
+    | 'solve' annotations 'maximize' expr 
     ;
-outputItem: 'output' ('::' STRING_LITERAL)? expr ';';
-annotationItem: 'annotation' ident params (EQ expr)? ';';
-predicateItem: 'predicate' operationItemTail ';';
-testItem: 'test' operationItemTail ';';
-functionItem: 'function' tiExpr ':' operationItemTail ';';
+outputItem: 'output' ('::' STRING_LITERAL)? expr;
+annotationItem: 'annotation' ident params (EQ expr)?;
+predicateItem: 'predicate' operationItemTail;
+testItem: 'test' operationItemTail;
+functionItem: 'function' tiExpr ':' operationItemTail;
 
 
 enumCasesList: enumCases ('++' enumCases)*;
@@ -169,7 +169,7 @@ ifThenElseExpr
       'endif'
     ;
 
-letExpr: 'let' '{' letItem (';' letItem)* '}' 'in' expr;
+letExpr: 'let' '{' letItem (SEMI letItem)* '}' 'in' expr;
 letItem: varDeclItem | constraintItem;
 
 compTail: generator ('where' expr)? (',' generator)* ;
@@ -192,6 +192,7 @@ genCallExpr: ident '(' compTail ')' '(' expr ')';
 
 ident: IDENT;
 
+SEMI: ';';
 EQ : '=' | '==';
 INT_LITERAL: [0-9]+;
 FLOAT_LITERAL: [0-9]+ '.' [0-9]+ ([Ee] [+-]? [0-9]+)?;
