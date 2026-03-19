@@ -281,8 +281,7 @@ public class Lifter {
 				.findAny();
 			if (p.isPresent())
 				rewriter.replace(
-					ctx.getStart(),
-					ctx.getStop(),
+					ctx.IDENT().getSymbol(),
 					p.get().getLiftedName());
 
 			return null;
