@@ -158,7 +158,19 @@ public abstract class LiftedParameter {
 	}
 
 	/**
-	 * Generates the declaration of the lifted variable.
+	 * Return the declaration of the original parameter.
+	 * <p>
+	 * This uses the original parameter type and calls
+	 * {@link MiniZincType#getDeclaration()}.
+	 *
+	 * @return the original MiniZinc declaration (with initialization)
+	 */
+	public String getOriginalDeclaration() {
+		return parameter.getDeclaration();
+	}
+
+	/**
+	 * Generates the declaration of the lifted parameter.
 	 * <p>
 	 * This uses the original parameter type and applies the lifting
 	 * transformation defined by {@link MiniZincType#lift(Optional)}.

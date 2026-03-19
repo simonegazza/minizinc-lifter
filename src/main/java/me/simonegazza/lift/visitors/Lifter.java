@@ -1,7 +1,10 @@
 package me.simonegazza.lift.visitors;
 
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -119,24 +122,24 @@ public class Lifter {
 		DirectedGraph<OriginalParameter> parameterGraph,
 		String parameter) {
 
-		Set<String> dependents = Set.of(parameter);
-		while (true) {
-			final Set<String> currentDependents = dependents;
+		Queue<String> stack = new LinkedList<>();
+		Set<String> visited = new HashSet<>();
+		stack.add(parameter);
+		while (!stack.isEmpty()) {
+			String current = stack.poll();
+			visited.add(current);
 
-			Set<String> newDependents = parameterGraph.getNodes().stream()
+			Set<String> dependencies = parameterGraph.getNodes().stream()
 				.filter(p -> parameterGraph.getAdjacent(p).stream()
-					.anyMatch(a -> currentDependents.contains(a.getName())))
+					.anyMatch(a -> a.getName().equals(current)))
 				.map(OriginalParameter::getName)
 				.collect(Collectors.toSet());
 
-			if (dependents.equals(newDependents))
-				break;
-
-			dependents = newDependents;
+			for (String adj : dependencies)
+				stack.add(adj);
 		}
 
-		return dependents;
-
+		return visited;
 	}
 
 	/**
@@ -249,23 +252,46 @@ public class Lifter {
 	 */
 	private class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 
+		private Optional<LiftedParameter> getByName(String name) {
+			return lifted.stream()
+				.filter(l -> l.getOriginalName().equals(name))
+				.findAny();
+		}
+
 		/**
-		 * Do not touch any assignments.
+		 * Remove the assignment completely.
 		 *
 		 * @returns null
 		 */
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
+			Optional<LiftedParameter> p = getByName(ctx.ident().getText());
+			if (p.isPresent())
+				rewriter.delete(ctx.getStart(), ctx.getStop());
+
 			return null;
 		}
 
 		/**
-		 * Do not touch any declaration.
+		 * Modify the declaration by adding the value found during the
+		 * assignment phase.
 		 *
 		 * @returns null
 		 */
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
+			Optional<LiftedParameter> p = getByName(ctx.tiExprAndId().ident().getText());
+			if (p.isPresent())
+				rewriter.replace(
+					ctx.getStart(),
+					ctx.getStop(),
+					p.get().getOriginalDeclaration()
+						// I need to add this to the end of the statement
+						// because apparently the stop token for the tiExprAndId
+						// expression goes over the semi-colon. This is so
+						// ugly and weird...
+						+ ";");
+
 			return null;
 		}
 
@@ -276,9 +302,7 @@ public class Lifter {
 		 */
 		@Override
 		public Void visitIdent(IdentContext ctx) {
-			Optional<LiftedParameter> p = lifted.stream()
-				.filter(l -> l.getOriginalName().equals(ctx.getText()))
-				.findAny();
+			Optional<LiftedParameter> p = getByName(ctx.getText());
 			if (p.isPresent())
 				rewriter.replace(
 					ctx.IDENT().getSymbol(),
