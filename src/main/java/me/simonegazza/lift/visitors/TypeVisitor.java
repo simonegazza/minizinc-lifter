@@ -35,8 +35,10 @@ class TypeVisitor extends MiniZincBaseVisitor<MiniZincType> {
 		// there's a rule in the grammar that says
 		// ... baseTiExprTail ('++' baseTiExpr)?
 		// but I do not think that the "'++' baseTiExpr" part is legal
-		if (ctx.baseTiExpr() != null)
-			throw new UnimplementedException("Found a \"++\" symbol after type. This is not implemented");
+		// if (ctx.baseTiExpr() != null)
+		// throw new UnimplementedException("Found a \"++\" symbol after type.
+		// This is not implemented");
+		// After some consideration, I changed the grammar
 
 		if (ctx.getText().contains("set of")) {
 			MiniZincType innerType = visitBaseTiExprTail(ctx.baseTiExprTail());

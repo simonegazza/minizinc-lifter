@@ -52,7 +52,7 @@ params: ('(' tiExprAndId (',' tiExprAndId)* ')')?;
 tiExprAndId: tiExpr ':' ident;
 tiExpr: baseTiExpr | arrayTiExpr;
 baseTiExpr
-    : ('var' | 'par')? 'opt'? 'set of'? baseTiExprTail ('++' baseTiExpr)?
+    : ('var' | 'par')? 'opt'? 'set of'? baseTiExprTail //('++' baseTiExpr)? // I don't think this part of the rule is actually legal
     | 'any' DOLLAR_IDENT
     ;
 baseTiExprTail
