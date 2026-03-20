@@ -8,7 +8,7 @@ import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.utils.DirectedGraph;
-import me.simonegazza.lift.visitors.ParameterVisitor;
+import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -22,8 +22,9 @@ public class TypeVisitorTest {
 		Lexer lexer = new MiniZincLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
+		ParameterExtractor pe = new ParameterExtractor();
 
-		return new ParameterVisitor().visitModel(parser.model());
+		return pe.execute(parser.model());
 	}
 
 	@Test

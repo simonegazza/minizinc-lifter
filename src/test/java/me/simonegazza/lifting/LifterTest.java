@@ -17,7 +17,7 @@ import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
 import me.simonegazza.lift.utils.DirectedGraph;
 import me.simonegazza.lift.visitors.Lifter;
-import me.simonegazza.lift.visitors.ParameterVisitor;
+import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -34,8 +34,8 @@ public class LifterTest {
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
 
-		ParameterVisitor pv = new ParameterVisitor();
-		DirectedGraph<OriginalParameter> graph = pv.visitModel(parser.model());
+		ParameterExtractor pv = new ParameterExtractor();
+		DirectedGraph<OriginalParameter> graph = pv.execute(parser.model());
 
 		Lifter lv = new Lifter(tokens, cliParameters, graph);
 

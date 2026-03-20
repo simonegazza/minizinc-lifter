@@ -291,6 +291,8 @@ public class Lifter {
 						// expression goes over the semi-colon. This is so
 						// ugly and weird...
 						+ ";");
+			else
+				return super.visitVarDeclItem(ctx);
 
 			return null;
 		}
