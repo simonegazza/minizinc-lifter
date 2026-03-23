@@ -1179,26 +1179,6 @@ public class MiniZincBaseListener implements MiniZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterCompTail(MiniZincParser.CompTailContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitCompTail(MiniZincParser.CompTailContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
 	public void enterGeneratorList(MiniZincParser.GeneratorListContext ctx) {
 	}
 

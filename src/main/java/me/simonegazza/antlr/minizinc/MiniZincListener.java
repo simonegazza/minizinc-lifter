@@ -821,20 +821,6 @@ public interface MiniZincListener extends ParseTreeListener {
 	void exitLetItem(MiniZincParser.LetItemContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link MiniZincParser#compTail}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterCompTail(MiniZincParser.CompTailContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link MiniZincParser#compTail}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitCompTail(MiniZincParser.CompTailContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link MiniZincParser#generatorList}.
 	 *
 	 * @param ctx the parse tree

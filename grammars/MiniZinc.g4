@@ -40,7 +40,7 @@ enumCasesList: enumCases ('++' enumCases)*;
 enumCases
     : '{' ident (',' ident)* '}'
     | '_' '(' expr ')'
-    | ident '(' ident ')'
+    | ident '(' ident ')' // I think there's a bug here: this could also be an entire expr as long as it returns a ranged value
     | 'anon_enum' '(' expr ')'
     ;
 
@@ -73,7 +73,6 @@ fieldAccessTail: '.' ident | '.' INT_LITERAL;
 
 annotations: ('::' annotation)*;
 annotation: exprAtomHead exprAtomTail;
-
 exprAtomHead
     : '(' expr ')'
     | ident callSuffix?
@@ -97,7 +96,6 @@ exprAtomHead
     | callExpr
     | genCallExpr
     ;
-
 annLiteral: ident ('(' expr (',' expr)* ')')?;
 
 exprAtomTail: 
@@ -150,11 +148,13 @@ literal
     ;
 setLiteral
     : '{' (expr (',' expr)*)? '}'
-    | '{' expr '|' compTail '}'
+    //| '{' expr '|' compTail '}'
+    | '{' expr '|' generatorList '}'
     ;
 arrayLiteral
     : '[' (expr (',' expr)*)? ','? ']'
-    | '[' expr '|' compTail ']'
+    //| '[' expr '|' compTail ']'
+    | '[' expr '|' generatorList ']'
     ;
 arrayLiteral2d: '[|' (arrayRow ('|' arrayRow)*)? '|]';
 arrayRow: expr (',' expr)*;
@@ -172,9 +172,9 @@ ifThenElseExpr
 letExpr: 'let' '{' letItem (SEMI letItem)* '}' 'in' expr;
 letItem: varDeclItem | constraintItem;
 
-compTail: generator ('where' expr)? (',' generator)* ;
-generatorList: generator (',' generator)*;
-generator: (ident | '_') (',' (ident | '_'))* 'in' expr ( 'where' expr )? ','?;
+//compTail: generator ('where' expr)? (',' generator)* ;
+generatorList: generator ('where' expr)? ','? (',' generator ('where' expr)? ','?)*;
+generator: (ident | '_') (',' (ident | '_'))* 'in' expr;
 
 indexedArrayLiteral
     : '[' (indexTuple ':' expr (',' indexTuple ':' expr)*)? ']'
@@ -183,12 +183,15 @@ indexedArrayLiteral
 indexedArrayLiteral2d: '[|' (indexedArrayRow ('|' indexedArrayRow)*)? '|]';
 indexedArrayRow: (indexTuple ':' expr) (',' (indexTuple ':' expr))*;
 indexTuple: expr | '(' expr (',' expr)* ')';
-arrayComp: '[' expr '|' compTail ']';
-indexedArrayComp: '[' indexTuple ':' expr '|' compTail ']';
+arrayComp: '[' expr '|' generatorList ']';
+// arrayComp: '[' expr '|' compTail ']';
+// indexedArrayComp: '[' indexTuple ':' expr '|' compTail ']';
+indexedArrayComp: '[' indexTuple ':' expr '|' generatorList ']';
 
 callExpr: ident '(' (expr (',' expr)*)? ')';
 
-genCallExpr: ident '(' compTail ')' '(' expr ')';
+genCallExpr: ident '(' generatorList ')' '(' expr ')';
+// genCallExpr: ident '(' compTail ')' '(' expr ')';
 
 ident: IDENT;
 

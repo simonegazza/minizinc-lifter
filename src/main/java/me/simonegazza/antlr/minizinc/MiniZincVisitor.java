@@ -534,15 +534,6 @@ public interface MiniZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitLetItem(MiniZincParser.LetItemContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link MiniZincParser#compTail}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitCompTail(MiniZincParser.CompTailContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link MiniZincParser#generatorList}.
 	 *
 	 * @param ctx the parse tree
