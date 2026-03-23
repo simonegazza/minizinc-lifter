@@ -14,13 +14,10 @@ import me.simonegazza.lift.requests.LiftRequest;
  */
 public class LiftedSimpleParameter extends LiftedParameter {
 
-	/**
-	 * Creates a lifted parameter from an original one and a lift request.
-	 *
-	 * @param parameter the original parameter
-	 * @param change    the lifting request associated with this parameter
-	 */
-	protected LiftedSimpleParameter(OriginalParameter parameter, LiftRequest change) {
+	protected LiftedSimpleParameter(
+		OriginalParameter parameter,
+		LiftRequest change) {
+
 		super(parameter, List.of(change));
 	}
 

@@ -45,6 +45,11 @@ public class OriginalParameter {
 	private ParserRuleContext expression;
 
 	/**
+	 * The expression text of the assignment of the parameter, if any.
+	 */
+	private String expressionText;
+
+	/**
 	 * The value obtained from the parse tree expression, if any.
 	 */
 	private Object value;
@@ -67,8 +72,12 @@ public class OriginalParameter {
 	 *
 	 * @param expression the expression representing the parameter value
 	 */
-	public void setExpression(ParserRuleContext expression) {
+	public void setExpression(
+		ParserRuleContext expression,
+		String expressionText) {
+
 		this.expression = expression;
+		this.expressionText = expressionText;
 	}
 
 	/**
@@ -85,29 +94,24 @@ public class OriginalParameter {
 		return name;
 	}
 
+	public String getExpressionText() {
+		return expressionText;
+	}
+
 	/**
 	 * Reconstructs the original MiniZinc declaration.
 	 * <p>
 	 * Example:
 	 *
 	 * <pre>
-	 * int: n = 10
+	 * int: n = 10;
 	 * </pre>
 	 * <p>
-	 * This method uses {@link ParserRuleContext#getText()}, meaning that
-	 * formatting (e.g. spaces) may not exactly match the original source.
 	 *
 	 * @return the parameter declaration as a string
 	 */
 	public String getDeclaration() {
-		return type.toString() + ": " + name + " = " + expression.getText();
-	}
-
-	/**
-	 * @return the parse tree representing the parameter value
-	 */
-	public ParserRuleContext getExpression() {
-		return expression;
+		return type.toString() + ": " + name + " = " + expressionText + ";";
 	}
 
 	public Object evaluate(Map<String, Object> environment) {

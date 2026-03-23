@@ -24,6 +24,7 @@ import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.DirectedGraph;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.misc.Interval;
 
 /**
  * Extractor responsible for extracting parameters from a MiniZinc model and
@@ -292,9 +293,12 @@ public class ParameterExtractor {
 				if (valueContext == null)
 					throw new IllegalStateException("Parameter " + par.getName() + " left undefined.");
 
-				par.setExpression(valueContext);
+				String value = ctx.getStart().getInputStream().getText(new Interval(
+					valueContext.getStart().getStartIndex(),
+					valueContext.getStop().getStopIndex()));
+				par.setExpression(valueContext, value);
 
-				var type = par.getType();
+				MiniZincType type = par.getType();
 				if (type instanceof MiniZincCompositeType t)
 					dependencies.get(par.getName()).addAll(
 						t.getSubtypesIdentifier().stream()
@@ -308,9 +312,9 @@ public class ParameterExtractor {
 
 					// if there is an element, it means that it is a proper
 					// parameter (because it was caught during a
-					// visitVarDelcItem,
-					// otherwise it's not and it was just an identifier used for
-					// other purposes (e.g., temporary name in a generator)
+					// visitVarDelcItem, otherwise it's not and it was just an
+					// identifier used for other purposes (e.g., temporary name
+					// in a generator)
 					if (!dependency.isEmpty())
 						graph.addEdge(par, dependency.get());
 				}

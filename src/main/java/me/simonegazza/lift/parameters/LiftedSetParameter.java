@@ -12,13 +12,10 @@ import me.simonegazza.lift.requests.LiftRequest;
  */
 public class LiftedSetParameter extends LiftedParameter {
 
-	/**
-	 * Creates a lifted set parameter.
-	 *
-	 * @param parameter the original parameter
-	 * @param change    the lifting request
-	 */
-	protected LiftedSetParameter(OriginalParameter parameter, LiftRequest change) {
+	protected LiftedSetParameter(
+		OriginalParameter parameter,
+		LiftRequest change) {
+
 		super(parameter, List.of(change));
 	}
 

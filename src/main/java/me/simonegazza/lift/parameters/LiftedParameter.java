@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
@@ -58,26 +59,22 @@ public abstract class LiftedParameter {
 		OriginalParameter parameter,
 		List<LiftRequest> changes) {
 
-		if (changes.size() == 0)
-			System.out.println("% WARNING: lifting also " + parameter + "\n");
-
-		if (changes.get(0) instanceof SimpleLiftRequest) {
-			if (changes.size() > 1)
-				throw new IllegalArgumentException(
-					"Trying multiple lifts of different kinds on " + parameter.getName());
-
-			LiftRequest change = changes.get(0);
+		List<LiftRequest> allChanges = new ArrayList<>(changes);
+		if (changes.size() == 0) {
+			System.out.println("% WARNING: lifting " + parameter + " too");
+			return new LiftedDependencyParameter(parameter);
+		} else if (allChanges.get(0) instanceof SimpleLiftRequest slc) {
 			MiniZincType type = parameter.getType();
 			if (type instanceof MiniZincBasicType)
-				return new LiftedSimpleParameter(parameter, change);
+				return new LiftedSimpleParameter(parameter, slc);
 			else if (type instanceof MiniZincSetType)
-				return new LiftedSetParameter(parameter, change);
+				return new LiftedSetParameter(parameter, slc);
 			else if (type instanceof MiniZincArrayType)
-				return new LiftedArrayParameter(parameter, change);
-		} else {
-			return new LiftedArrayElementParameter(parameter, changes);
-		}
-
+				return new LiftedArrayParameter(parameter, slc);
+		} else if (allChanges.get(0) instanceof ArrayElementLiftRequest) {
+			return new LiftedArrayElementParameter(parameter, allChanges);
+		} else
+			throw new IllegalStateException("Unkown type of lift request for " + parameter.getName());
 		return null;
 	}
 
@@ -92,11 +89,10 @@ public abstract class LiftedParameter {
 	protected final List<LiftRequest> changes;
 
 	/**
-	 * The list of lift requests applied to this parameter.
+	 * Creates a lifted parameter from an original one and some lift requests.
 	 *
-	 * @param parameter the {@link OriginalParameter} onto which construct the
-	 *                      lift
-	 * @param changes   the list of lifts ({@link LiftRequest})
+	 * @param parameter the original parameter
+	 * @param changes   a list of lifting request associated with this parameter
 	 */
 	protected LiftedParameter(OriginalParameter parameter, List<LiftRequest> changes) {
 		this.parameter = parameter;

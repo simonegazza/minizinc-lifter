@@ -313,12 +313,7 @@ public class Lifter {
 				rewriter.replace(
 					ctx.getStart(),
 					ctx.getStop(),
-					p.get().getOriginalDeclaration()
-						// I need to add this to the end of the statement
-						// because apparently the stop token for the tiExprAndId
-						// expression goes over the semi-colon. This is so
-						// ugly and weird...
-						+ ";");
+					p.get().getOriginalDeclaration());
 			else
 				return super.visitVarDeclItem(ctx);
 
