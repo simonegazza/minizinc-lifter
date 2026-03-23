@@ -1,6 +1,8 @@
 package me.simonegazza.lift.parameters;
 
+import java.util.Map;
 import me.simonegazza.lift.types.MiniZincType;
+import me.simonegazza.lift.visitors.EvaluatorVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**
@@ -40,7 +42,12 @@ public class OriginalParameter {
 	/**
 	 * The parse tree representing the assigned value of the parameter, if any.
 	 */
-	private ParserRuleContext value;
+	private ParserRuleContext expression;
+
+	/**
+	 * The value obtained from the parse tree expression, if any.
+	 */
+	private Object value;
 
 	/**
 	 * Creates a parameter with a given type and name.
@@ -54,14 +61,14 @@ public class OriginalParameter {
 	}
 
 	/**
-	 * Assigns the value expression of this parameter.
+	 * Assigns the expression of this parameter.
 	 * <p>
 	 * The value is stored as a parse tree to preserve exact source information.
 	 *
-	 * @param expr the expression representing the parameter value
+	 * @param expression the expression representing the parameter value
 	 */
-	public void setValue(ParserRuleContext expr) {
-		this.value = expr;
+	public void setExpression(ParserRuleContext expression) {
+		this.expression = expression;
 	}
 
 	/**
@@ -93,13 +100,25 @@ public class OriginalParameter {
 	 * @return the parameter declaration as a string
 	 */
 	public String getDeclaration() {
-		return type.toString() + ": " + name + " = " + value.getText();
+		return type.toString() + ": " + name + " = " + expression.getText();
 	}
 
 	/**
 	 * @return the parse tree representing the parameter value
 	 */
-	public ParserRuleContext getValue() {
+	public ParserRuleContext getExpression() {
+		return expression;
+	}
+
+	public Object evaluate(Map<String, Object> environment) {
+		if (value == null)
+			value = new EvaluatorVisitor(environment).visit(expression);
+		return value;
+	}
+
+	public Object getValue() {
+		if (value == null)
+			throw new IllegalStateException("Asked value of " + name + " before computing it");
 		return value;
 	}
 

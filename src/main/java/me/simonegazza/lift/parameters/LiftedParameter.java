@@ -2,6 +2,8 @@ package me.simonegazza.lift.parameters;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
@@ -52,10 +54,12 @@ public abstract class LiftedParameter {
 	 * @throws IllegalStateException    if no changes are provided
 	 * @throws IllegalArgumentException if incompatible changes are requested
 	 */
-	public static LiftedParameter create(OriginalParameter parameter, List<LiftRequest> changes) {
+	public static LiftedParameter create(
+		OriginalParameter parameter,
+		List<LiftRequest> changes) {
+
 		if (changes.size() == 0)
-			throw new IllegalStateException(
-				"Asked to modify parameter " + parameter.getName() + " but no changes were asked");
+			System.out.println("% WARNING: lifting also " + parameter + "\n");
 
 		if (changes.get(0) instanceof SimpleLiftRequest) {
 			if (changes.size() > 1)
@@ -98,10 +102,6 @@ public abstract class LiftedParameter {
 		this.parameter = parameter;
 		this.changes = changes;
 
-		if (this.changes.size() == 0)
-			throw new IllegalStateException(
-				"Cannot construct a lift for " + parameter.getName() + " from an empty list");
-
 		boolean nameMatch = changes.stream()
 			.map(LiftRequest::getName)
 			.allMatch(n -> n.equals(parameter.getName()));
@@ -116,7 +116,15 @@ public abstract class LiftedParameter {
 		if (!sameConcreteType)
 			throw new IllegalStateException(
 				"Asking different kinds of lifts for " + parameter.getName());
+	}
 
+	/**
+	 * Initial parameter.
+	 *
+	 * @return the parameter to call the lift onto.
+	 */
+	public OriginalParameter getParameter() {
+		return parameter;
 	}
 
 	/**
@@ -170,15 +178,22 @@ public abstract class LiftedParameter {
 	}
 
 	/**
-	 * Generates the declaration of the lifted parameter.
+	 * Lift the parameter declaration
 	 * <p>
 	 * This uses the original parameter type and applies the lifting
 	 * transformation defined by {@link MiniZincType#lift(Optional)}.
+	 * <p>
+	 * <b>This can modify the environment</b> (by adding the calculated value as
+	 * a new key), especially in {@link LiftedArrayElementParameter}
 	 *
 	 * @return a MiniZinc declaration (without initialization)
 	 */
-	public String getLiftedDeclaration() {
-		return parameter.getType().lift(changes.get(0).getBounds())
+	public String liftDeclaration(Map<String, Object> environment) {
+		Optional<String> bound = changes.size() > 0
+			? changes.get(0).getBounds()
+			: Optional.empty();
+
+		return parameter.getType().lift(bound)
 			+ ": "
 			+ getLiftedName()
 			+ ";";

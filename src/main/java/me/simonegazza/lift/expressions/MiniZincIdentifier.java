@@ -48,9 +48,6 @@ public class MiniZincIdentifier implements MiniZincType {
 		return name;
 	}
 
-	/**
-	 * Returns the textual representation of the identifier.
-	 */
 	@Override
 	public String toString() {
 		return name;

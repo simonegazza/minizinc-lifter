@@ -1,6 +1,7 @@
 package me.simonegazza.lift.requests;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 
@@ -29,7 +30,7 @@ public class ArrayElementLiftRequest implements LiftRequest {
 	/**
 	 * Adjusted and transformed indexes for the target array.
 	 */
-	private final List<Integer> locationsAdjusted;
+	private List<Integer> locationsAdjusted;
 
 	/**
 	 * Indexes of the targeted element. This is a list of String because a
@@ -44,20 +45,14 @@ public class ArrayElementLiftRequest implements LiftRequest {
 	 * @param bounds    optional bounds
 	 * @param locations index of the element to lift
 	 */
-	public ArrayElementLiftRequest(String name, Optional<String> bounds, List<String> locations) {
+	public ArrayElementLiftRequest(
+		String name,
+		Optional<String> bounds,
+		List<String> locations) {
+
 		this.name = name;
 		this.bounds = bounds;
 		this.originalLocations = locations;
-		this.locationsAdjusted = locations.stream()
-			.map(l -> {
-				try {
-					// MiniZinc arrays are 1-based, hence why the + 1
-					return Integer.parseInt(l) - 1;
-				} catch (NumberFormatException e) {
-					throw new UnimplementedException("No conversion for enum indices in locations");
-				}
-			})
-			.toList();
 	}
 
 	@Override
@@ -68,22 +63,6 @@ public class ArrayElementLiftRequest implements LiftRequest {
 	@Override
 	public Optional<String> getBounds() {
 		return bounds;
-	}
-
-	/**
-	 * Returns the zero-based indices used internally to access the array.
-	 * <p>
-	 * These indices are adjusted to match Java's indexing convention and are
-	 * intended for navigating the parsed multi-dimensional array structure.
-	 * <p>
-	 * This method is used during the transformation phase to locate and modify
-	 * specific elements inside nested list representations.
-	 *
-	 * @return list of zero-based indices representing the target element
-	 *             position
-	 */
-	public List<Integer> getLocationsAdjusted() {
-		return locationsAdjusted;
 	}
 
 	/**
@@ -102,6 +81,36 @@ public class ArrayElementLiftRequest implements LiftRequest {
 	 */
 	public List<String> getOriginalLocations() {
 		return originalLocations;
+	}
+
+	/**
+	 * Compute and returns the zero-based indices used internally to access the
+	 * array.
+	 * <p>
+	 * These indices are adjusted to match Java's indexing convention and are
+	 * intended for navigating the parsed multi-dimensional array structure.
+	 * <p>
+	 * This method is used during the transformation phase to locate and modify
+	 * specific elements inside nested list representations.
+	 *
+	 * @return list of zero-based indices representing the target element
+	 *             position
+	 */
+	public List<Integer> getLocationsAdjusted(Map<String, Object> environment) {
+		if (locationsAdjusted == null)
+			locationsAdjusted = originalLocations.stream().map(l -> {
+				if (environment.containsKey(l))
+					return Integer.parseInt((String) environment.get(l));
+				else
+					try {
+						// MiniZinc arrays are 1-based, hence why the - 1
+						return Integer.parseInt(l) - 1;
+					} catch (Exception e) {
+						throw new UnimplementedException("Unimplemented type of index for lift " + name);
+					}
+			}).toList();
+
+		return locationsAdjusted;
 	}
 
 }

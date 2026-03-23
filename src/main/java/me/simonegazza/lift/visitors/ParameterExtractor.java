@@ -9,6 +9,7 @@ import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayTiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.EnumCasesContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.EnumItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
@@ -111,16 +112,6 @@ public class ParameterExtractor {
 			assignments.putIfAbsent(ident, exprCtx);
 		}
 
-		/**
-		 * Handles enum declarations.
-		 * <p>
-		 * Enums are treated as parameters and added as graph nodes. If the enum
-		 * has explicit cases, they are treated as an assignment and analyzed
-		 * for dependencies.
-		 *
-		 * @param ident      the identifier name
-		 * @param dependency the dependency name
-		 */
 		private void addDependency(String ident, String dependency) {
 			dependencies.putIfAbsent(ident, new ArrayList<String>());
 			dependencies.get(ident).add(dependency);
@@ -179,7 +170,22 @@ public class ParameterExtractor {
 
 			if (ctx.enumCasesList() != null) {
 				currentIdentifier = enumName;
+
 				addAssignment(ctx.ident(), ctx.enumCasesList());
+
+				for (EnumCasesContext eclctx : ctx.enumCasesList().enumCases()) {
+					String caseText = eclctx.getText();
+					if (caseText.startsWith("{") || caseText.startsWith("anon_enum"))
+						// first and last rule
+						eclctx.ident().forEach(e -> addDependency(enumName, e.getText()));
+					else if (caseText.startsWith("{"))
+						// second rule
+						visitExpr(eclctx.expr());
+					else
+						// third rule, ignore the first ident which should alway
+						// be the weird cast rule of the enums
+						addDependency(enumName, eclctx.ident(1).getText());
+				}
 			}
 
 			return null;
@@ -222,6 +228,7 @@ public class ParameterExtractor {
 			if (ctx.expr() != null) {
 				ExprContext value = ctx.expr();
 				addAssignment(ident, value);
+				currentIdentifier = ident.getText();
 				visitExpr(value);
 			}
 
@@ -232,18 +239,13 @@ public class ParameterExtractor {
 			return null;
 		}
 
-		/**
-		 * Processes assignment statements.
-		 * <p>
-		 * Registers the assigned expression and extracts dependencies from it.
-		 *
-		 * @return a parameter graph with the current assignation added to the
-		 *             corresponding parameter
-		 */
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
 			ExprContext value = ctx.expr();
-			addAssignment(ctx.ident(), value);
+			IdentContext idctx = ctx.ident();
+			currentIdentifier = idctx.getText();
+			addAssignment(idctx, value);
+			visitExpr(ctx.expr());
 			return null;
 		}
 
@@ -290,7 +292,7 @@ public class ParameterExtractor {
 				if (valueContext == null)
 					throw new IllegalStateException("Parameter " + par.getName() + " left undefined.");
 
-				par.setValue(valueContext);
+				par.setExpression(valueContext);
 
 				var type = par.getType();
 				if (type instanceof MiniZincCompositeType t)

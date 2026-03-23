@@ -1,8 +1,10 @@
 package me.simonegazza.lift.visitors;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -63,6 +65,8 @@ public class Lifter {
 	 * List of parameters that have been lifted in the model.
 	 */
 	private final List<LiftedParameter> lifted;
+
+	private final Map<String, Object> env;
 
 	/**
 	 * Flag indicating whether a solve block is present in the model.
@@ -142,6 +146,24 @@ public class Lifter {
 		return visited;
 	}
 
+	private Object computeValue(
+		OriginalParameter p,
+		DirectedGraph<OriginalParameter> parameters,
+		Map<String, Object> env) {
+
+		if (env.containsKey(p.getName()))
+			return env.get(p.getName());
+
+		for (OriginalParameter dependency : parameters.getAdjacent(p)) {
+			Object result = computeValue(dependency, parameters, env);
+			env.put(p.getName(), result);
+		}
+
+		Object value = p.evaluate(env);
+		env.put(p.getName(), value);
+		return value;
+	}
+
 	/**
 	 * Construct and prepares the lifting transformation.
 	 * <p>
@@ -169,6 +191,8 @@ public class Lifter {
 		visitor = new LiftingVisitor();
 		rewriter = new TokenStreamRewriter(tokens);
 
+		this.env = new HashMap<String, Object>();
+
 		// collect all dependencies
 		var liftedStream = toLift.stream()
 			// get all names
@@ -177,8 +201,8 @@ public class Lifter {
 			.distinct()
 			// flat the dependencies for each lift
 			.flatMap(pName -> dependsOn(parameters, pName).stream())
-			// some parameters could have the same dependencies, we eant to
-			// avoid counting them twice
+			// some parameters could have the same dependencies, we avoid
+			// having them twice
 			.distinct();
 
 		this.lifted = Stream.concat(liftedStream, toLift.stream().map(LiftRequest::getName))
@@ -198,12 +222,15 @@ public class Lifter {
 			// for that parameter (it could be an empty list if the parameter
 			// was just a dependency and was not requested for an
 			// actual lift)
-			.map(op -> LiftedParameter.create(
-				op,
-				toLift.stream()
-					.filter(l -> l.getName().equals(op.getName()))
-					.toList()))
-			.toList();
+			.map(op -> {
+				computeValue(op, parameters, env);
+
+				return LiftedParameter.create(
+					op,
+					toLift.stream()
+						.filter(l -> l.getName().equals(op.getName()))
+						.toList());
+			}).toList();
 	}
 
 	/**
@@ -223,8 +250,9 @@ public class Lifter {
 	public String execute(ModelContext ctx) {
 		visitor.visit(ctx);
 		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
+
 		for (LiftedParameter lp : this.lifted) {
-			model.append(lp.getLiftedDeclaration() + "\n");
+			model.append(lp.liftDeclaration(env) + "\n");
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
 		}
 

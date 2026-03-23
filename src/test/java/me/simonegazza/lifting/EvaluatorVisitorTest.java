@@ -4,20 +4,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
-import me.simonegazza.lift.visitors.ExpressionVisitor;
+import me.simonegazza.lift.visitors.EvaluatorVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-public class ExpressionVisitorTest {
+public class EvaluatorVisitorTest {
 
 	private Object eval(String expr) {
 		MiniZincLexer lexer = new MiniZincLexer(CharStreams.fromString(expr));
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
-		return new ExpressionVisitor().visit(parser.expr());
+		return new EvaluatorVisitor(new HashMap<String, Object>()).visit(parser.expr());
 	}
 
 	// @Test

@@ -39,15 +39,12 @@ public class MiniZincSetType extends MiniZincCompositeType {
 	public List<MiniZincIdentifier> getSubtypesIdentifier() {
 		if (subtype instanceof MiniZincExpressionType et)
 			return et.getIdentifiers();
-		else {
-			if (subtype instanceof MiniZincBasicType)
-				return new ArrayList<>();
-			else if (subtype instanceof MiniZincIdentifier i)
-				return List.of(i);
-			else
-				throw new IllegalStateException("Impossible subtype of a non-basic type");
-		}
-
+		else if (subtype instanceof MiniZincBasicType)
+			return new ArrayList<>();
+		else if (subtype instanceof MiniZincIdentifier i)
+			return List.of(i);
+		else
+			throw new IllegalStateException("Impossible subtype of a non-basic type");
 	}
 
 }

@@ -1,14 +1,14 @@
 package me.simonegazza.lift.parameters;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincType;
-import me.simonegazza.lift.visitors.ExpressionVisitor;
+import me.simonegazza.lift.visitors.EvaluatorVisitor;
 
 /**
  * Represents a lifted parameter where only specific elements of an array are
@@ -32,56 +32,64 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	 * This is a nested list structure mirroring the original array shape, where
 	 * lifted elements are replaced with "_".
 	 */
-	private final List<?> liftedValue;
+	private List<Object> liftedValue;
 
 	/**
-	 * Replaces a specific element inside a multi-dimensional array structure
-	 * with the anonymous placeholder "_".
-	 * <p>
-	 * The method navigates the nested list using the provided indices and
-	 * updates the target position.
-	 *
-	 * @param multidemensional the nested list representing the array
-	 * @param locations        the indices identifying the element to lift
+	 * This modifies the env by putting the calculated value into the
+	 * environment
 	 */
-	private void liftValueInMultidimensional(Object multidemensional, List<Integer> locations) {
-		List<?> list = (List<?>) multidemensional;
+	private List<Object> liftValue(Map<String, Object> environment) {
+		if (liftedValue != null)
+			return this.liftedValue;
 
-		// Traverse dimensions except the last
-		for (Integer l : locations.subList(0, locations.size() - 1)) {
-			if (list.get(l) == null)
-				throw new IllegalStateException("Trying to get an element of the array using too many dimensions");
-			list = (List<?>) list.get(l);
-		}
-
-		// Safe cast since last wrap on this list is a List<String>
+		// Evaluate the expression to get the actual value for the parameter.
+		// Since this is an array, it must be an array too
 		@SuppressWarnings("unchecked")
-		List<String> l = (List<String>) list;
-		Integer location = Integer.valueOf(locations.getLast());
-		l.set(location, "_");
+		List<Object> result = (List<Object>) parameter.getValue();
+
+		this.changes.forEach(c -> {
+			List<Integer> locations = c.getLocationsAdjusted(environment);
+			// EvaluatorVisitor.get returns an Object, that can actually be a
+			// list, so this cast is safe
+			@SuppressWarnings("unchecked")
+			List<Object> lastDimension = (List<Object>) (EvaluatorVisitor.get(
+				result,
+				locations.subList(0, locations.size() - 1)));
+			// then we can just set it to the placeholder value.
+			lastDimension.set(locations.getLast(), "_");
+		});
+
+		this.liftedValue = EvaluatorVisitor.flatten(result);
+
+		return liftedValue;
 	}
 
-	/**
-	 * Flattens a multi-dimensional array (nested lists) into a linear list.
-	 * <p>
-	 * This is required to generate MiniZinc {@code arrayXd(...)} declarations,
-	 * which expect a flat list of values.
-	 *
-	 * @param obj nested list or string
-	 *
-	 * @return flattened list of values
-	 */
-	public static List<String> flattenMultidimensional(Object obj) {
-		List<String> result = new ArrayList<>();
-
-		if (obj instanceof List<?> objList)
-			for (Object item : objList)
-				result.addAll(flattenMultidimensional(item));
-		else if (obj instanceof String)
-			result.add((String) obj);
-
-		return result;
-	}
+//	/**
+//	 * Replaces a specific element inside a multi-dimensional array structure
+//	 * with the anonymous placeholder "_".
+//	 * <p>
+//	 * The method navigates the nested list using the provided indices and
+//	 * updates the target position.
+//	 *
+//	 * @param multidemensional the nested list representing the array
+//	 * @param locations        the indices identifying the element to lift
+//	 */
+//	private void liftValueInMultidimensional(Object multidemensional, List<Integer> locations) {
+//		List<?> list = (List<?>) multidemensional;
+//
+//		// Traverse dimensions except the last
+//		for (Integer l : locations.subList(0, locations.size() - 1)) {
+//			if (list.get(l) == null)
+//				throw new IllegalStateException("Trying to get an element of the array using too many dimensions");
+//			list = (List<?>) list.get(l);
+//		}
+//
+//		// Safe cast since last wrap on this list is a List<Object>
+//		@SuppressWarnings("unchecked")
+//		List<Object> l = (List<Object>) list;
+//		Integer location = Integer.valueOf(locations.getLast());
+//		l.set(location, "_");
+//	}
 
 	/**
 	 * Constructs a lifted array element parameter.
@@ -98,7 +106,10 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	 * @param parameter the original array parameter
 	 * @param changes   the list of element-wise lift requests
 	 */
-	protected LiftedArrayElementParameter(OriginalParameter parameter, List<LiftRequest> changes) {
+	protected LiftedArrayElementParameter(
+		OriginalParameter parameter,
+		List<LiftRequest> changes) {
+
 		super(parameter, changes);
 
 		if (!(parameter.getType() instanceof MiniZincArrayType))
@@ -110,11 +121,6 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 			throw new IllegalStateException(
 				"Asking for an array element lift for " + parameter.getName() + " but other kinds of lift found");
 		this.changes = changes.stream().map(ArrayElementLiftRequest.class::cast).toList();
-
-		// Put the "_" in the right place
-		Object arrParsed = new ExpressionVisitor().visit(parameter.getValue());
-		this.changes.forEach(c -> liftValueInMultidimensional(arrParsed, c.getLocationsAdjusted()));
-		this.liftedValue = (List<?>) arrParsed;
 	}
 
 	/**
@@ -150,7 +156,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String getLiftedDeclaration() {
+	public String liftDeclaration(Map<String, Object> environment) {
 		List<MiniZincType> dimensions = ((MiniZincArrayType) (parameter.getType())).getDimensions();
 		return parameter.getType().lift(Optional.empty())
 			+ ": "
@@ -160,7 +166,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 				.map(MiniZincType::toString)
 				.collect(Collectors.joining(", "))
 			+ ", "
-			+ flattenMultidimensional(liftedValue)
+			+ liftValue(environment)
 			+ ");";
 	}
 

@@ -52,15 +52,19 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 	public List<MiniZincIdentifier> getSubtypesIdentifier() {
 		List<MiniZincIdentifier> ids = new ArrayList<>();
 
-		if (subtype instanceof MiniZincExpressionType et)
-			ids.addAll(et.getIdentifiers());
-		else if (subtype instanceof MiniZincCompositeType ct)
-			ids.addAll(ct.getSubtypesIdentifier());
-		else if (subtype instanceof MiniZincIdentifier it)
-			ids.add(it);
-		else {
-			if (!(subtype instanceof MiniZincBasicType))
-				throw new IllegalStateException("Impossible subtype of a non-basic type: " + subtype);
+		List<MiniZincType> toScan = new ArrayList<>(dimensions);
+		toScan.add(subtype);
+		for (MiniZincType t : toScan) {
+			if (t instanceof MiniZincExpressionType et)
+				ids.addAll(et.getIdentifiers());
+			else if (t instanceof MiniZincCompositeType ct)
+				ids.addAll(ct.getSubtypesIdentifier());
+			else if (t instanceof MiniZincIdentifier it)
+				ids.add(it);
+			else {
+				if (!(t instanceof MiniZincBasicType))
+					throw new IllegalStateException("Unkown Minizinc subtype: " + t);
+			}
 		}
 		return ids;
 	}
