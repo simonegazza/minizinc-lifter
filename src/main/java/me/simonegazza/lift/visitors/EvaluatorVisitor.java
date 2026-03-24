@@ -617,6 +617,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			.map(this::visitExpr)
 			.map(e -> {
 				if (e instanceof Integer ei)
+					// MiniZinc array start at one
 					return ei - 1;
 				else
 					throw new IllegalStateException("Trying to access an array without using an integer: " + e);
@@ -697,7 +698,10 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
 				.toList();
 		} else
-			return ctx.expr().stream().map(this::visitExpr).toList();
+			return ctx.expr().stream()
+				.map(this::visitExpr)
+				// List needs to be modifiable for future lifting
+				.collect(Collectors.toCollection(ArrayList::new));
 	}
 
 	@Override
@@ -767,7 +771,10 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	public List<List<Object>> visitArrayLiteral2d(ArrayLiteral2dContext ctx) {
 		List<List<Object>> result = new ArrayList<>();
 		for (ArrayRowContext row : ctx.arrayRow())
-			result.add(row.expr().stream().map(this::visitExpr).toList());
+			result.add(row.expr().stream()
+				.map(this::visitExpr)
+				// List may need to be modifiable at the end
+				.collect(Collectors.toCollection(ArrayList::new)));
 
 		return result;
 	}
