@@ -490,8 +490,10 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitPrimary(PrimaryContext ctx) {
-		if (ctx.ident() != null) {
+		if (ctx.letExpr() != null)
+			throw new UnimplementedException("Let expressions are not implemented");
 
+		if (ctx.ident() != null) {
 			// Try to see if this is a function call first
 			if (!ctx.postfix().isEmpty() && ctx.postfix(0).callSuffix() != null) {
 				CallSuffixContext cfctx = ctx.postfix(0).callSuffix();
@@ -545,14 +547,15 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 						throw new UnimplementedException("Unkown function");
 				}
 				}
-			} else {
-				return visitIdent(ctx.ident());
 			}
 
 		}
 
 		Object result;
-		if (ctx.literal() != null)
+		if (ctx.ident() != null)
+			result = visitIdent(ctx.ident());
+
+		else if (ctx.literal() != null)
 			result = visitLiteral(ctx.literal());
 
 		else if (ctx.expr() != null)
@@ -560,9 +563,6 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 		else if (ctx.ifThenElseExpr() != null)
 			result = visitIfThenElseExpr(ctx.ifThenElseExpr());
-
-		else if (ctx.letExpr() != null)
-			throw new UnimplementedException("Let expressions not implemented");
 
 		else
 			result = visitQuantifierExpr(ctx.quantifierExpr());
@@ -583,10 +583,10 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	public List<Integer> visitPostfix(PostfixContext ctx) {
 		if (ctx.callSuffix() != null)
 			throw new IllegalStateException(
-				"Should be able to reach this callSuffix since it was intercepted in the previous rule");
+				"Shouldn't be able to reach this callSuffix since it was intercepted in the previous rule");
 
 		if (ctx.fieldAccessTail() != null)
-			throw new UnimplementedException("field access is not implemented");
+			throw new UnimplementedException("Field access is not implemented");
 
 		return visitArrayAccessTail(ctx.arrayAccessTail());
 	}
@@ -617,7 +617,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			.map(this::visitExpr)
 			.map(e -> {
 				if (e instanceof Integer ei)
-					return ei;
+					return ei - 1;
 				else
 					throw new IllegalStateException("Trying to access an array without using an integer: " + e);
 			})
@@ -691,7 +691,6 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public List<Object> visitArrayLiteral(ArrayLiteralContext ctx) {
-
 		if (ctx.generatorList() != null) {
 			List<Map<String, Object>> values = visitGeneratorList(ctx.generatorList());
 			return values.stream()

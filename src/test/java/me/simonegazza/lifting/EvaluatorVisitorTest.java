@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.visitors.EvaluatorVisitor;
@@ -15,11 +17,15 @@ import org.junit.jupiter.api.Test;
 
 public class EvaluatorVisitorTest {
 
-	private Object eval(String expr) {
+	private Object eval(String expr, Map<String, Object> env) {
 		MiniZincLexer lexer = new MiniZincLexer(CharStreams.fromString(expr));
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
-		return new EvaluatorVisitor(new HashMap<String, Object>()).visit(parser.expr());
+		return new EvaluatorVisitor(env).visit(parser.expr());
+	}
+
+	private Object eval(String expr) {
+		return eval(expr, new HashMap<String, Object>());
 	}
 
 	@Test
@@ -33,6 +39,19 @@ public class EvaluatorVisitorTest {
 	}
 
 	@Test
+	public void testArrayAccess() {
+		Map<String, Object> env = new HashMap<>();
+		env.put("Res", IntStream.rangeClosed(1, 5).boxed().toList());
+		env.put("bestBounds", IntStream.rangeClosed(1, 5).boxed().toList());
+		env.put("cpu", 1);
+		env.put("ram", 2);
+
+		assertEquals(1, eval("bestBounds[1]", env));
+		assertEquals(1, eval("bestBounds[cpu]", env));
+		assertEquals(2, eval("bestBounds[ram]", env));
+	}
+
+	@Test
 	@SuppressWarnings("unchecked")
 	public void testArrays() {
 		Object result = eval("[1, 2, 3]");
@@ -43,6 +62,19 @@ public class EvaluatorVisitorTest {
 		assertTrue(result instanceof List<?>);
 		List<Object> arr2d = (List<Object>) result;
 		List<Object> firstRow = (List<Object>) arr2d.get(0);
+		assertEquals(1, firstRow.get(0));
+
+		Map<String, Object> env = new HashMap<>();
+		env.put("Nodes0", IntStream.rangeClosed(1, 3).boxed().toList());
+		env.put("Res", IntStream.rangeClosed(1, 5).boxed().toList());
+		env.put("bestBounds", IntStream.rangeClosed(1, 5).boxed().toList());
+		result = eval(
+			"array2d(Nodes0, Res,\n"
+				+ "	[bestBounds[r] | r in Res] ++ [\n"
+				+ "	3, 16, 512, 99, 0, 1, 1, 1, 1, 0])",
+			env);
+		arr2d = (List<Object>) result;
+		firstRow = (List<Object>) arr2d.get(0);
 		assertEquals(1, firstRow.get(0));
 	}
 
