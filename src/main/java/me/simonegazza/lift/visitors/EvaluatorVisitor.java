@@ -16,6 +16,7 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.AndExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayAccessTailContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayLiteral2dContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayLiteralContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayRowContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.CallSuffixContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.CompareExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.EnumCasesContext;
@@ -250,7 +251,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			// This cast is safe since the visit should return a list of string,
 			// i.e., the list of the values of the enum
 			@SuppressWarnings("unchecked")
-			List<Object> range = (List<Object>) visit(ctx.ident(1));
+			List<Object> range = (List<Object>) visitIdent(ctx.ident(1));
 			return range;
 		} else
 			// first rule
@@ -262,14 +263,14 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitExpr(ExprContext ctx) {
-		return visit(ctx.iffExpr());
+		return visitIffExpr(ctx.iffExpr());
 	}
 
 	@Override
 	public Object visitIffExpr(IffExprContext ctx) {
-		Object result = visit(ctx.implExpr(0));
+		Object result = visitImplExpr(ctx.implExpr(0));
 		for (int i = 1; i < ctx.implExpr().size(); i++) {
-			Object rhs = visit(ctx.implExpr(i));
+			Object rhs = visitImplExpr(ctx.implExpr(i));
 			result = result.equals(rhs);
 		}
 		return result;
@@ -277,9 +278,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitImplExpr(ImplExprContext ctx) {
-		Object result = visit(ctx.orExpr(0));
+		Object result = visitOrExpr(ctx.orExpr(0));
 		for (int i = 1; i < ctx.orExpr().size(); i++) {
-			Object rhs = visit(ctx.orExpr(i));
+			Object rhs = visitOrExpr(ctx.orExpr(i));
 			result = !((Boolean) result) || ((Boolean) rhs);
 		}
 		return result;
@@ -287,9 +288,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitOrExpr(OrExprContext ctx) {
-		Object result = visit(ctx.xorExpr(0));
+		Object result = visitXorExpr(ctx.xorExpr(0));
 		for (int i = 1; i < ctx.xorExpr().size(); i++) {
-			Object rhs = visit(ctx.xorExpr(i));
+			Object rhs = visitXorExpr(ctx.xorExpr(i));
 			result = ((Boolean) result) || ((Boolean) rhs);
 		}
 		return result;
@@ -297,9 +298,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitXorExpr(XorExprContext ctx) {
-		Object result = visit(ctx.andExpr(0));
+		Object result = visitAndExpr(ctx.andExpr(0));
 		for (int i = 1; i < ctx.andExpr().size(); i++) {
-			Object rhs = visit(ctx.andExpr(i));
+			Object rhs = visitAndExpr(ctx.andExpr(i));
 			result = ((Boolean) result) ^ ((Boolean) rhs);
 		}
 		return result;
@@ -307,9 +308,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitAndExpr(AndExprContext ctx) {
-		Object result = visit(ctx.compareExpr(0));
+		Object result = visitCompareExpr(ctx.compareExpr(0));
 		for (int i = 1; i < ctx.compareExpr().size(); i++) {
-			Object rhs = visit(ctx.compareExpr(i));
+			Object rhs = visitCompareExpr(ctx.compareExpr(i));
 			result = ((Boolean) result) && ((Boolean) rhs);
 		}
 		return result;
@@ -317,11 +318,11 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitCompareExpr(CompareExprContext ctx) {
-		Object lhs = visit(ctx.setExpr(0));
+		Object lhs = visitSetExpr(ctx.setExpr(0));
 		if (ctx.setExpr().size() == 1)
 			return lhs;
 
-		Object rhs = visit(ctx.setExpr(1));
+		Object rhs = visitSetExpr(ctx.setExpr(1));
 		String op = ctx.getChild(1).getText();
 
 		return switch (op) {
@@ -348,9 +349,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitSetExpr(SetExprContext ctx) {
-		Object result = visit(ctx.rangeExpr(0));
+		Object result = visitRangeExpr(ctx.rangeExpr(0));
 		for (int i = 1; i < ctx.rangeExpr().size(); i++) {
-			Object rhs = visit(ctx.rangeExpr(i));
+			Object rhs = visitRangeExpr(ctx.rangeExpr(i));
 			String op = ctx.getChild(2 * i - 1).getText();
 
 			result = switch (op) {
@@ -386,19 +387,19 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitRangeExpr(RangeExprContext ctx) {
-		Object lhs = visit(ctx.addExpr(0));
+		Object lhs = visitAddExpr(ctx.addExpr(0));
 		if (ctx.addExpr().size() == 1)
 			return lhs;
 
-		Object rhs = visit(ctx.addExpr(1));
+		Object rhs = visitAddExpr(ctx.addExpr(1));
 		return IntStream.rangeClosed((Integer) lhs, (Integer) rhs).boxed().toList();
 	}
 
 	@Override
 	public Object visitAddExpr(AddExprContext ctx) {
-		Object result = visit(ctx.multExpr(0));
+		Object result = visitMultExpr(ctx.multExpr(0));
 		for (int i = 1; i < ctx.multExpr().size(); i++) {
-			Object rhs = visit(ctx.multExpr(i));
+			Object rhs = visitMultExpr(ctx.multExpr(i));
 			String op = ctx.getChild(2 * i - 1).getText();
 
 			result = switch (op) {
@@ -421,9 +422,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitMultExpr(MultExprContext ctx) {
-		Object result = visit(ctx.powExpr(0));
+		Object result = visitPowExpr(ctx.powExpr(0));
 		for (int i = 1; i < ctx.powExpr().size(); i++) {
-			Object rhs = visit(ctx.powExpr(i));
+			Object rhs = visitPowExpr(ctx.powExpr(i));
 			String op = ctx.getChild(2 * i - 1).getText();
 
 			result = switch (op) {
@@ -441,9 +442,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitPowExpr(PowExprContext ctx) {
-		Object result = visit(ctx.unaryExpr(0));
+		Object result = visitUnaryExpr(ctx.unaryExpr(0));
 		for (int i = 1; i < ctx.unaryExpr().size(); i++) {
-			Object rhs = visit(ctx.unaryExpr(i));
+			Object rhs = visitUnaryExpr(ctx.unaryExpr(i));
 			result = (result instanceof Integer)
 				? Math.pow((Integer) result, (Integer) rhs)
 				: Math.pow((Double) result, (Double) rhs);
@@ -454,7 +455,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	@Override
 	public Object visitUnaryExpr(UnaryExprContext ctx) {
 		if (ctx.unaryExpr() != null) {
-			Object val = visit(ctx.unaryExpr());
+			Object val = visitUnaryExpr(ctx.unaryExpr());
 			String op = ctx.getChild(0).getText();
 			return switch (op) {
 			case "not" -> !((Boolean) val);
@@ -463,7 +464,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			default -> throw new UnimplementedException(op);
 			};
 		}
-		return visit(ctx.primary());
+		return visitPrimary(ctx.primary());
 	}
 
 	@Override
@@ -523,16 +524,16 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			result = visitLiteral(ctx.literal());
 
 		else if (ctx.expr() != null)
-			result = visit(ctx.expr());
+			result = visitExpr(ctx.expr());
 
 		else if (ctx.ifThenElseExpr() != null)
-			result = visit(ctx.ifThenElseExpr());
+			result = visitIfThenElseExpr(ctx.ifThenElseExpr());
 
 		else if (ctx.letExpr() != null)
-			result = visit(ctx.letExpr());
+			throw new UnimplementedException("Let expressions not implemented");
 
 		else
-			result = visit(ctx.quantifierExpr());
+			result = visitQuantifierExpr(ctx.quantifierExpr());
 
 		for (PostfixContext p : ctx.postfix()) {
 			List<Integer> locations = visitPostfix(p);
@@ -595,33 +596,39 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	public Object visitLiteral(LiteralContext ctx) {
 		if (ctx.INT_LITERAL() != null)
 			return Integer.parseInt(ctx.INT_LITERAL().getText());
+
 		if (ctx.FLOAT_LITERAL() != null)
 			return Double.parseDouble(ctx.FLOAT_LITERAL().getText());
+
 		if (ctx.STRING_LITERAL() != null)
 			return ctx.STRING_LITERAL().getText();
+
 		if (ctx.getText().equals("true"))
 			return true;
 		if (ctx.getText().equals("false"))
 			return false;
+
 		if (ctx.setLiteral() != null)
-			return visit(ctx.setLiteral());
+			return visitSetLiteral(ctx.setLiteral());
+
 		if (ctx.arrayLiteral() != null)
-			return visit(ctx.arrayLiteral());
+			return visitArrayLiteral(ctx.arrayLiteral());
+
 		if (ctx.arrayLiteral2d() != null)
-			return visit(ctx.arrayLiteral2d());
+			return visitArrayLiteral2d(ctx.arrayLiteral2d());
+
 		if (ctx.tupleLiteral() != null)
-			throw new UnimplementedException("tupleLiteral");
+			throw new UnimplementedException("Tuples are not implemented");
 		if (ctx.recordLiteral() != null)
-			throw new UnimplementedException("recordLiteral");
-		throw new UnimplementedException("literal");
+			throw new UnimplementedException("Records are not implemented");
+		throw new UnimplementedException("Unkown type of literal");
 	}
 
 	@Override
 	public List<Object> visitSetLiteral(SetLiteralContext ctx) {
-		List<Object> result;
 		if (ctx.generatorList() != null) {
 			List<Map<String, Object>> values = visitGeneratorList(ctx.generatorList());
-			result = values.stream()
+			return values.stream()
 				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
 				.toList();
 		} else {
@@ -631,7 +638,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			// means that this literal is an enum. So if it fails, we parse the
 			// expression directly, if not it means that it was a proper one
 			try {
-				result = ctx.expr().stream().map(this::visitExpr).toList();
+				return ctx.expr().stream().map(this::visitExpr).toList();
 			} catch (IllegalStateException e) {
 				List<String> identifiers = ctx.expr().stream()
 					.map(ParseTree::getText)
@@ -642,28 +649,21 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 						Collectors.summingInt(_ -> 1)));
 				env.putAll(valueAssigned);
 
-				result = identifiers.stream().map(Object.class::cast).toList();
+				return identifiers.stream().map(Object.class::cast).toList();
 			}
 		}
-
-		return result;
 	}
 
 	@Override
 	public List<Object> visitArrayLiteral(ArrayLiteralContext ctx) {
-		List<Object> result;
+
 		if (ctx.generatorList() != null) {
 			List<Map<String, Object>> values = visitGeneratorList(ctx.generatorList());
-			result = values.stream()
+			return values.stream()
 				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
 				.toList();
-		} else {
-			result = new ArrayList<>();
-			for (ExprContext e : ctx.expr())
-				result.add(visit(e));
-
-		}
-		return result;
+		} else
+			return ctx.expr().stream().map(this::visitExpr).toList();
 	}
 
 	/**
@@ -729,24 +729,20 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	@Override
 	public List<List<Object>> visitArrayLiteral2d(ArrayLiteral2dContext ctx) {
 		List<List<Object>> result = new ArrayList<>();
-		for (var row : ctx.arrayRow()) {
-			List<Object> r = new ArrayList<>();
-			for (ExprContext e : row.expr())
-				r.add(visit(e));
+		for (ArrayRowContext row : ctx.arrayRow())
+			result.add(row.expr().stream().map(this::visitExpr).toList());
 
-			result.add(r);
-		}
 		return result;
 	}
 
 	@Override
 	public Object visitIfThenElseExpr(IfThenElseExprContext ctx) {
 		for (int i = 0; i < ctx.expr().size() - 1; i += 2)
-			if ((Boolean) visit(ctx.expr(i)))
-				return visit(ctx.expr(i + 1));
+			if ((Boolean) visitExpr(ctx.expr(i)))
+				return visitExpr(ctx.expr(i + 1));
 
 		if (ctx.expr().size() % 2 == 1)
-			return visit(ctx.expr(ctx.expr().size() - 1));
+			return visitExpr(ctx.expr(ctx.expr().size() - 1));
 
 		throw new IllegalStateException("Didn't match an else case in " + ctx.getText());
 	}

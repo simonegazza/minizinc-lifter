@@ -60,7 +60,7 @@ public class ParameterExtractor {
 	}
 
 	public DirectedGraph<OriginalParameter> execute(ModelContext ctx) {
-		visitor.visit(ctx);
+		visitor.visitModel(ctx);
 		return this.graph;
 	}
 

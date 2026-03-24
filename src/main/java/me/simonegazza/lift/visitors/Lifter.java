@@ -248,7 +248,7 @@ public class Lifter {
 	 * @return the rewritten MiniZinc model as a string
 	 */
 	public String execute(ModelContext ctx) {
-		visitor.visit(ctx);
+		visitor.visitModel(ctx);
 		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
 
 		for (LiftedParameter lp : this.lifted) {
