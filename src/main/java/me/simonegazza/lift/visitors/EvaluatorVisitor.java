@@ -397,47 +397,63 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitAddExpr(AddExprContext ctx) {
-		Object result = visitMultExpr(ctx.multExpr(0));
+		Object lhs = visitMultExpr(ctx.multExpr(0));
+
 		for (int i = 1; i < ctx.multExpr().size(); i++) {
 			Object rhs = visitMultExpr(ctx.multExpr(i));
 			String op = ctx.getChild(2 * i - 1).getText();
 
-			result = switch (op) {
-			case "+" -> (result instanceof Integer)
-				? (Integer) result + (Integer) rhs
-				: (Double) result + (Double) rhs;
-			case "-" -> (result instanceof Integer)
-				? (Integer) result - (Integer) rhs
-				: (Double) result - (Double) rhs;
-			case "++" -> {
-				List<Object> l = new ArrayList<>((Collection<?>) result);
-				l.addAll((Collection<?>) rhs);
-				yield l;
+			lhs = switch (op) {
+			case "+" -> {
+				if (lhs instanceof Integer li && rhs instanceof Integer ri)
+					yield li + ri;
+				else
+					yield ((Double) lhs) + ((Double) rhs);
 			}
-			default -> throw new UnimplementedException(op);
+			case "-" -> {
+				if (lhs instanceof Integer li && rhs instanceof Integer ri)
+					yield li - ri;
+				else
+					yield ((Double) lhs) - ((Double) rhs);
+			}
+			case "++" -> {
+				if (lhs instanceof String ls && rhs instanceof String rs)
+					yield ls + rs;
+				else if (lhs instanceof Collection<?> lc && rhs instanceof Collection<?> rc) {
+					List<Object> l = new ArrayList<>(lc);
+					l.addAll(rc);
+					yield l;
+				} else
+					throw new IllegalStateException("Unrecognized types");
+			}
+			default -> throw new UnimplementedException("Unkown operator: " + op);
 			};
 		}
-		return result;
+
+		return lhs;
 	}
 
 	@Override
 	public Object visitMultExpr(MultExprContext ctx) {
-		Object result = visitPowExpr(ctx.powExpr(0));
+		Object lhs = visitPowExpr(ctx.powExpr(0));
 		for (int i = 1; i < ctx.powExpr().size(); i++) {
 			Object rhs = visitPowExpr(ctx.powExpr(i));
 			String op = ctx.getChild(2 * i - 1).getText();
 
-			result = switch (op) {
-			case "*" -> (result instanceof Integer)
-				? (Integer) result * (Integer) rhs
-				: (Double) result * (Double) rhs;
-			case "/" -> (Double) result / (Double) rhs;
-			case "div" -> (Integer) result / (Integer) rhs;
-			case "mod" -> (Integer) result % (Integer) rhs;
+			lhs = switch (op) {
+			case "*" -> {
+				if (lhs instanceof Integer li && rhs instanceof Integer ri)
+					yield li * ri;
+				else
+					yield ((Double) lhs) * ((Double) rhs);
+			}
+			case "/" -> (Double) lhs / (Double) rhs;
+			case "div" -> (Integer) lhs / (Integer) rhs;
+			case "mod" -> (Integer) lhs % (Integer) rhs;
 			default -> throw new UnimplementedException(op);
 			};
 		}
-		return result;
+		return lhs;
 	}
 
 	@Override
@@ -460,7 +476,12 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			return switch (op) {
 			case "not" -> !((Boolean) val);
 			case "+" -> val;
-			case "-" -> (val instanceof Integer) ? -(Integer) val : -((Double) val);
+			case "-" -> {
+				if (val instanceof Integer vali)
+					yield -vali;
+				else
+					yield -((Double) val);
+			}
 			default -> throw new UnimplementedException(op);
 			};
 		}
@@ -482,16 +503,27 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					if (cfctx.expr().size() > 1)
 						throw new IllegalStateException("Unkown function call sum with multiple arguments");
 
-					List<Object> array = flatten(cfctx.expr(0));
+					List<Object> array = flatten(visitExpr(cfctx.expr(0)));
 
 					if (array.get(0) instanceof Integer)
 						return array.stream().mapToInt(Integer.class::cast).sum();
 					else
 						return array.stream().mapToDouble(Double.class::cast).sum();
 				}
+				case "length" -> {
+					if (cfctx.expr().size() > 1)
+						throw new IllegalStateException("Unkown function call length with multiple arguments");
+
+					Object argument = visitExpr(cfctx.expr(0));
+					if (argument instanceof String argStr)
+						return argStr.length();
+					else if (argument instanceof Collection<?> ac)
+						return ac.size();
+					else
+						throw new UnimplementedException("Length function not implemented for this type");
+				}
 
 				default -> {
-
 					// case of the arrayXd function call
 					if (functionName.startsWith("array")) {
 
@@ -600,8 +632,11 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 		if (ctx.FLOAT_LITERAL() != null)
 			return Double.parseDouble(ctx.FLOAT_LITERAL().getText());
 
-		if (ctx.STRING_LITERAL() != null)
-			return ctx.STRING_LITERAL().getText();
+		if (ctx.STRING_LITERAL() != null) {
+			// Remove the " at the begin and end of the string
+			String result = ctx.STRING_LITERAL().getText();
+			return result.substring(1, result.length() - 1);
+		}
 
 		if (ctx.getText().equals("true"))
 			return true;
@@ -666,6 +701,48 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			return ctx.expr().stream().map(this::visitExpr).toList();
 	}
 
+	@Override
+	public List<Map<String, Object>> visitGeneratorList(GeneratorListContext ctx) {
+		Map<String, Collection<?>> generators = ctx.generator().stream()
+			// get all the generators
+			.map(this::visitGenerator)
+			// flatten them in case there are multiple generators in one
+			// visitGenerator (see the grammar)
+			.flatMap(List::stream)
+			// since the keys are always different (since the model compiles) we
+			// can transform the stream of maps in a stream of map-entries
+			.flatMap(m -> m.entrySet().stream())
+			// and then we put the map back together
+			.collect(Collectors.toMap(
+				Map.Entry::getKey,
+				Map.Entry::getValue));
+
+		// now we can compute the cartesian product
+		List<Map<String, Object>> product = new ArrayList<>();
+		product.add(new HashMap<>());
+		for (Map.Entry<String, Collection<?>> entry : generators.entrySet()) {
+			List<Map<String, Object>> newResult = new ArrayList<>();
+
+			for (Map<String, Object> partial : product) {
+				for (Object v : entry.getValue()) {
+					Map<String, Object> newMap = new HashMap<>(partial);
+					newMap.put(entry.getKey(), v);
+					newResult.add(newMap);
+				}
+			}
+
+			product = newResult;
+		}
+
+		// filter where cases
+		return product.stream().filter(genEnv -> ctx.expr().stream()
+			.allMatch(e -> {
+				Map<String, Object> augmented = augmentEnv(genEnv);
+				Object accepted = new EvaluatorVisitor(augmented).visitExpr(e);
+				return (Boolean) accepted;
+			})).toList();
+	}
+
 	/**
 	 * Since a generator can generate multiple identifiers, it returns a list of
 	 * singled key maps that contains the collection of elements
@@ -680,49 +757,10 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			.map(i -> i.equals("_") ? i + (underscoreCounter++) : i)
 			.toList();
 		Map<String, Collection<?>> acc = new HashMap<>();
-		for (String id : identifiers) {
-			Collection<?> values = ((Collection<?>) visitExpr(ctx.expr()));
-			acc.put(id, values);
-			result.add(acc);
-		}
-		return result;
-	}
+		for (String id : identifiers)
+			acc.put(id, (Collection<?>) visitExpr(ctx.expr()));
 
-	@Override
-	public List<Map<String, Object>> visitGeneratorList(GeneratorListContext ctx) {
-		List<Map<String, Object>> start = new ArrayList<Map<String, Object>>();
-		start.add(new HashMap<String, Object>());
-
-		List<Map<String, Object>> result = ctx.generator().stream()
-			// visit each generator and return the maps
-			.flatMap(gCtx -> visitGenerator(gCtx).stream())
-			.reduce(
-				// the accumulator is a list of maps
-				start, (acc, singleMap) -> {
-					// There's only a single collection in each map
-					String key = singleMap.keySet().iterator().next();
-					Collection<?> values = singleMap.get(key);
-
-					return acc.stream()
-						.flatMap(partial -> values.stream().map(v -> {
-							Map<String, Object> newMap = new HashMap<>();
-							newMap.putAll(partial);
-							newMap.put(key, v);
-							return newMap;
-						}))
-						.toList();
-				},
-				(_, _) -> { // No collisions meant to happen
-					throw new IllegalStateException("Two identifiers have the same key");
-				});
-
-		// Filter the values based on the where
-		for (ExprContext eCtx : ctx.expr())
-			result = result.stream()
-				.filter(currentValues -> (Boolean) (new EvaluatorVisitor(
-					augmentEnv(currentValues)).visitExpr(eCtx)))
-				.toList();
-
+		result.add(acc);
 		return result;
 	}
 
