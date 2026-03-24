@@ -19,14 +19,9 @@ public class LiftedSetParameter extends LiftedParameter {
 		super(parameter, List.of(change));
 	}
 
-	/**
-	 * Contribution to the solve objective.
-	 *
-	 * @return a MiniZinc expression computing the distance between lifted and
-	 *             original parameter
-	 */
 	@Override
 	public String getSolvePiece() {
+		// TODO: this probably does not work
 		return "abs(" + getLiftedName() + " - " + getOriginalName() + ")";
 	}
 

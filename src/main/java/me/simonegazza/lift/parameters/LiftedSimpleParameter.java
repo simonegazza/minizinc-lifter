@@ -21,14 +21,6 @@ public class LiftedSimpleParameter extends LiftedParameter {
 		super(parameter, List.of(change));
 	}
 
-	/**
-	 * Contribution to the solve objective.
-	 * <p>
-	 * The objective minimizes the absolute difference between the lifted
-	 * variable and the original parameter value.
-	 *
-	 * @return a MiniZinc expression for the solve objective
-	 */
 	@Override
 	public String getSolvePiece() {
 		return "abs(" + getLiftedName() + " - " + getOriginalName() + ")";

@@ -34,10 +34,6 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	 */
 	private List<Object> liftedValue;
 
-	/**
-	 * This modifies the env by putting the calculated value into the
-	 * environment
-	 */
 	private List<Object> liftValue(Map<String, Object> environment) {
 		if (liftedValue != null)
 			return this.liftedValue;
@@ -63,33 +59,6 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 
 		return liftedValue;
 	}
-
-//	/**
-//	 * Replaces a specific element inside a multi-dimensional array structure
-//	 * with the anonymous placeholder "_".
-//	 * <p>
-//	 * The method navigates the nested list using the provided indices and
-//	 * updates the target position.
-//	 *
-//	 * @param multidemensional the nested list representing the array
-//	 * @param locations        the indices identifying the element to lift
-//	 */
-//	private void liftValueInMultidimensional(Object multidemensional, List<Integer> locations) {
-//		List<?> list = (List<?>) multidemensional;
-//
-//		// Traverse dimensions except the last
-//		for (Integer l : locations.subList(0, locations.size() - 1)) {
-//			if (list.get(l) == null)
-//				throw new IllegalStateException("Trying to get an element of the array using too many dimensions");
-//			list = (List<?>) list.get(l);
-//		}
-//
-//		// Safe cast since last wrap on this list is a List<Object>
-//		@SuppressWarnings("unchecked")
-//		List<Object> l = (List<Object>) list;
-//		Integer location = Integer.valueOf(locations.getLast());
-//		l.set(location, "_");
-//	}
 
 	/**
 	 * Constructs a lifted array element parameter.
@@ -123,14 +92,6 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		this.changes = changes.stream().map(ArrayElementLiftRequest.class::cast).toList();
 	}
 
-	/**
-	 * Generates the contribution to the objective function.
-	 * <p>
-	 * Only lifted elements contribute to the objective, each minimizing the
-	 * absolute difference with the original value.
-	 *
-	 * @return a sum of absolute differences over selected indices
-	 */
 	@Override
 	public String getSolvePiece() {
 		return this.changes.stream()
@@ -143,14 +104,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 			.collect(Collectors.joining(" + "));
 	}
 
-	/**
-	 * Generates the contribution to the objective function.
-	 * <p>
-	 * Only lifted elements contribute to the objective, each minimizing the
-	 * absolute difference with the original value.
-	 *
-	 * @return a sum of absolute differences over selected indices
-	 */
+	@Override
 	public String getOutputPiece() {
 		return "\"" + getOriginalName() + " = \\(" + getLiftedName() + ")\"";
 	}

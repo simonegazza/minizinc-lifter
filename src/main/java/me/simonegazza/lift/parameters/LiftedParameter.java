@@ -196,12 +196,12 @@ public abstract class LiftedParameter {
 	}
 
 	/**
-	 * Generates the declaration of the lifted variable.
+	 * Generates the contribution to the objective function.
 	 * <p>
-	 * This uses the original parameter type and applies the lifting
-	 * transformation defined by {@link MiniZincType#lift(Optional)}.
+	 * Only lifted elements contribute to the objective, each minimizing the
+	 * absolute difference with the original value.
 	 *
-	 * @return a MiniZinc declaration (without initialization)
+	 * @return a sum of absolute differences over selected indices
 	 */
 	public abstract String getSolvePiece();
 
