@@ -748,7 +748,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	/**
 	 * Since a generator can generate multiple identifiers, it returns a list of
-	 * singled key maps that contains the collection of elements
+	 * singled keyed-maps, each containing a list of elements.
 	 */
 	@Override
 	public List<Map<String, Collection<?>>> visitGenerator(GeneratorContext ctx) {

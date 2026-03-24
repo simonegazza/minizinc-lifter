@@ -178,9 +178,9 @@ public abstract class LiftedParameter {
 	 * <p>
 	 * This uses the original parameter type and applies the lifting
 	 * transformation defined by {@link MiniZincType#lift(Optional)}.
-	 * <p>
-	 * <b>This can modify the environment</b> (by adding the calculated value as
-	 * a new key), especially in {@link LiftedArrayElementParameter}
+	 *
+	 * @param environment the environment used to evaluate expressions that are
+	 *                        identifiers
 	 *
 	 * @return a MiniZinc declaration (without initialization)
 	 */

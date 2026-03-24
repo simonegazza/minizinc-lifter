@@ -93,6 +93,9 @@ public class ArrayElementLiftRequest implements LiftRequest {
 	 * This method is used during the transformation phase to locate and modify
 	 * specific elements inside nested list representations.
 	 *
+	 * @param environment the environment used to evaluate index keys that are
+	 *                        not integers
+	 *
 	 * @return list of zero-based indices representing the target element
 	 *             position
 	 */

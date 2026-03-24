@@ -66,6 +66,9 @@ public class Lifter {
 	 */
 	private final List<LiftedParameter> lifted;
 
+	/**
+	 * The environment in which the expressions should be evaluated.
+	 */
 	private final Map<String, Object> env;
 
 	/**

@@ -66,11 +66,13 @@ public class OriginalParameter {
 	}
 
 	/**
-	 * Assigns the expression of this parameter.
+	 * Assigns the expression (text and parser tree) of this parameter.
 	 * <p>
-	 * The value is stored as a parse tree to preserve exact source information.
+	 * The value is stored both as a parse tree to preserve value information
+	 * and as a string to preserve spaces.
 	 *
-	 * @param expression the expression representing the parameter value
+	 * @param expression     the expression representing the parameter value
+	 * @param expressionText the expression text of this value
 	 */
 	public void setExpression(
 		ParserRuleContext expression,
