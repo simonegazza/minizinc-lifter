@@ -70,45 +70,74 @@ public class MiniZincArrayType extends MiniZincCompositeType {
 	}
 
 	/**
-	 * Returns the textual representation of dimensions.
+	 * Returns the textual representation of the array dimensions.
+	 *
+	 * @param hided whether to return a list of "int" or the actual types
 	 *
 	 * @return a list of strings for the dimensions of this type
 	 */
-	public List<String> getDimensionsString() {
+	public List<String> getDimensionsString(boolean hided) {
 		return dimensions.stream()
 			.map(d -> {
-				if (d instanceof MiniZincIdentifier i) {
+				if (hided)
+					return "int";
+				else if (d instanceof MiniZincIdentifier i)
 					return i.getName();
-				} else if (d instanceof MiniZincBasicType bt) {
+				else if (d instanceof MiniZincBasicType bt)
 					return bt.toString();
-				} else if (d instanceof MiniZincExpressionType et) {
+				else if (d instanceof MiniZincExpressionType et)
 					return et.toString();
-				} else
+				else
 					// Should not be possible to use a MiniZincSetType as a
 					// dimension
 					throw new IllegalStateException();
 			}).toList();
 	}
 
-	@Override
-	public String toString() {
-		String ranges = getDimensionsString().stream()
+	/**
+	 * Produces the original declaration of this type.
+	 * <p>
+	 * If {@code var} is true, it hides the expressions in the dimension
+	 * definition with an "int"
+	 *
+	 * @param hided whether to hide the dimensions of this type
+	 *
+	 * @return the MiniZinc Type declaration fragment
+	 */
+	public String toString(boolean hided) {
+		String ranges = getDimensionsString(hided).stream()
 			.collect(Collectors.joining(", "));
 
 		return "array[" + ranges + "] of " + subtype.toString();
 	}
 
-	/**
-	 * Produces the lifted version of the array type.
-	 * <p>
-	 * The array structure is preserved, but the inner type is lifted.
-	 */
 	@Override
-	public String lift(Optional<String> bounding) {
+	public String toString() {
+		return toString(false);
+	}
+
+	/**
+	 * Produces the lifted version of this type.
+	 * <p>
+	 * Converts the type into a {@code var} declaration, optionally constrained
+	 * by bounds. When {@code var} is true, it hides the expressions in the
+	 * dimension definition with an "int"
+	 *
+	 * @param bounding optional bounds provided by the user
+	 * @param hided    whether to hide the dimensions of this type
+	 *
+	 * @return the MiniZinc Type declaration fragment for the lift
+	 */
+	public String lift(Optional<String> bounding, boolean hided) {
 		return "array["
-			+ getDimensionsString().stream().collect(Collectors.joining(", "))
+			+ getDimensionsString(hided).stream().collect(Collectors.joining(", "))
 			+ "] of "
 			+ subtype.lift(bounding);
+	}
+
+	@Override
+	public String lift(Optional<String> bounding) {
+		return lift(bounding, false);
 	}
 
 }

@@ -103,7 +103,7 @@ public class ArrayElementLiftRequest implements LiftRequest {
 		if (locationsAdjusted == null)
 			locationsAdjusted = originalLocations.stream().map(l -> {
 				if (environment.containsKey(l))
-					return Integer.parseInt((String) environment.get(l));
+					return ((Integer) environment.get(l)) - 1;
 				else
 					try {
 						// MiniZinc arrays are 1-based, hence why the - 1

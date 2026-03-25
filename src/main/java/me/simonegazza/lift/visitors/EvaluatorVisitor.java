@@ -619,6 +619,8 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				if (e instanceof Integer ei)
 					// MiniZinc array start at one
 					return ei - 1;
+				else if (e instanceof String es)
+					return (Integer) env.get(es);
 				else
 					throw new IllegalStateException("Trying to access an array without using an integer: " + e);
 			})

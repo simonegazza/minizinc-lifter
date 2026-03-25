@@ -18,7 +18,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 	@Override
 	public String getSolvePiece() {
 		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
-		List<String> dimensionsExpression = ct.getDimensionsString();
+		List<String> dimensionsExpression = ct.getDimensionsString(false);
 		List<String> indices = IntStream
 			.range(0, dimensionsExpression.size())
 			.mapToObj(e -> "i" + e)

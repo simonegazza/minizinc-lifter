@@ -93,6 +93,17 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	}
 
 	@Override
+	public String getOriginalDeclaration() {
+		MiniZincArrayType type = (MiniZincArrayType) parameter.getType();
+		return type.toString(true)
+			+ ": "
+			+ parameter.getName()
+			+ " = "
+			+ parameter.getExpressionText()
+			+ ";";
+	}
+
+	@Override
 	public String getSolvePiece() {
 		return this.changes.stream()
 			.map(c -> c.getOriginalLocations().toString())
@@ -111,11 +122,13 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 
 	@Override
 	public String liftDeclaration(Map<String, Object> environment) {
-		List<MiniZincType> dimensions = ((MiniZincArrayType) (parameter.getType())).getDimensions();
-		return parameter.getType().lift(Optional.empty())
+		MiniZincArrayType type = (MiniZincArrayType) parameter.getType();
+		List<MiniZincType> dimensions = type.getDimensions();
+		int size = dimensions.size();
+		return type.lift(Optional.empty(), true)
 			+ ": "
 			+ getLiftedName()
-			+ " = array" + dimensions.size() + "d("
+			+ " = array" + size + "d("
 			+ dimensions.stream()
 				.map(MiniZincType::toString)
 				.collect(Collectors.joining(", "))
