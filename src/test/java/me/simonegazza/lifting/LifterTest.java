@@ -71,7 +71,7 @@ public class LifterTest {
 
 	@Test
 	public void setLiftWithBoundsTest() throws IOException, URISyntaxException {
-		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.empty()));
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("a", Optional.of("0..1")));
 		String testName = "set";
 
 		testEnding(testName, r);

@@ -17,12 +17,19 @@ public class LiftedSetParameter extends LiftedParameter {
 		LiftRequest change) {
 
 		super(parameter, List.of(change));
+
+		if (change.getBounds().isEmpty())
+			throw new IllegalStateException("Cannot lift a set without bounding");
 	}
 
 	@Override
 	public String getSolvePiece() {
-		// TODO: this probably does not work
-		return "abs(" + getLiftedName() + " - " + getOriginalName() + ")";
+		// Jaccard distance
+		return "("
+			+ "card(" + getLiftedName() + " symdiff " + getOriginalName() + ")"
+			+ " / "
+			+ "card(" + getLiftedName() + " union " + getOriginalName() + ")"
+			+ ")";
 	}
 
 }
