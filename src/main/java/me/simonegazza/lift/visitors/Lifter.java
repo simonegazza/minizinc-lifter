@@ -149,6 +149,32 @@ public class Lifter {
 		return visited;
 	}
 
+	/**
+	 * Computes the value of the given parameter by recursively evaluating all
+	 * of its dependencies.
+	 * <p>
+	 * This method traverses the dependency graph starting from the specified
+	 * parameter, ensuring that each dependent parameter is evaluated before
+	 * evaluating the parameter itself. Computed values are stored in the
+	 * provided {@code env} map to avoid redundant computations (memoization).
+	 * <p>
+	 * If the value of the parameter is already present in {@code env}, it is
+	 * returned immediately. Otherwise, all dependent (adjacent) parameters are
+	 * recursively evaluated, and their values are added to {@code env}.
+	 * Finally, the value of the parameter is computed using
+	 * {@link OriginalParameter#evaluate(Map)} and stored in {@code env}.
+	 *
+	 * @param p          the parameter whose value must be computed
+	 * @param parameters the directed graph representing dependencies between
+	 *                       parameters
+	 * @param env        a mutable mapping from parameter names to their
+	 *                       computed values; it is updated with newly computed
+	 *                       results during execution
+	 *
+	 * @return the computed value of the given parameter
+	 *
+	 * @throws StackOverflowError if the dependency graph contains cycles
+	 */
 	private Object computeValue(
 		OriginalParameter p,
 		DirectedGraph<OriginalParameter> parameters,
