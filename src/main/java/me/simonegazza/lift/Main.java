@@ -37,8 +37,8 @@ import picocli.CommandLine.Option;
  * <li>Load the input MiniZinc files.</li>
  * <li>Parse them using ANTLR ({@link MiniZincLexer} and
  * {@link MiniZincParser}).</li>
- * <li>Traverse the AST with {@link ParameterVisitor} to discover parameters and
- * their dependencies.</li>
+ * <li>Traverse the AST with {@link ParameterExtractor} to discover parameters
+ * and their dependencies.</li>
  * <li>Validate the parameters requested via CLI.</li>
  * <li>Apply the lifting transformation using {@link Lifter}.</li>
  * <li>Output the transformed model.</li>

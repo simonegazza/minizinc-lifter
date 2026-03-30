@@ -127,7 +127,7 @@ public abstract class LiftedParameter {
 	 * Return the declaration of the original parameter.
 	 * <p>
 	 * This uses the original parameter type and calls
-	 * {@link MiniZincType#getDeclaration()}.
+	 * {@link OriginalParameter#getDeclaration()}.
 	 *
 	 * @return the original MiniZinc declaration (with initialization)
 	 */

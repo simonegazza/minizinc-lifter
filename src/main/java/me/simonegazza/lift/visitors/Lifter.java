@@ -48,8 +48,8 @@ import org.antlr.v4.runtime.misc.Interval;
  * <li>Generating a {@code solve} and {@code output} section if missing</li>
  * </ul>
  * <p>
- * Unlike {@link ParameterVisitor}, this class does not build a semantic model.
- * Instead, it operates directly on the token stream using
+ * Unlike {@link ParameterExtractor}, this class does not build a semantic
+ * model. Instead, it operates directly on the token stream using
  * {@link TokenStreamRewriter}, making it a purely syntactic transformation
  * step.
  * <p>
