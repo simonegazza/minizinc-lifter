@@ -66,16 +66,13 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	 * Validates that:
 	 * <ul>
 	 * <li>The parameter is an array</li>
-	 * <li>All lift requests are element-based</li>
+	 * <li>All lift requests are {@link ArrayElementLiftRequest}</li>
 	 * </ul>
-	 * <p>
-	 * The original array value is parsed and transformed by replacing selected
-	 * elements with placeholders.
 	 *
 	 * @param parameter the original array parameter
 	 * @param changes   the list of element-wise lift requests
 	 */
-	protected LiftedArrayElementParameter(
+	public LiftedArrayElementParameter(
 		OriginalParameter parameter,
 		List<LiftRequest> changes) {
 
@@ -89,7 +86,9 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		if (!allArrayElementLifts)
 			throw new IllegalStateException(
 				"Asking for an array element lift for " + parameter.getName() + " but other kinds of lift found");
-		this.changes = changes.stream().map(ArrayElementLiftRequest.class::cast).toList();
+		this.changes = changes.stream()
+			.map(ArrayElementLiftRequest.class::cast)
+			.toList();
 	}
 
 	@Override

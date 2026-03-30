@@ -4,12 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
-import me.simonegazza.lift.requests.SimpleLiftRequest;
-import me.simonegazza.lift.types.MiniZincArrayType;
-import me.simonegazza.lift.types.MiniZincBasicType;
-import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 
 /**
@@ -35,47 +30,14 @@ import me.simonegazza.lift.types.MiniZincType;
 public abstract class LiftedParameter {
 
 	/**
-	 * Factory method that creates the appropriate {@link LiftedParameter}
-	 * implementation based on the parameter type and requested changes.
-	 * <p>
-	 * Currently supports:
-	 * <ul>
-	 * <li>Scalar parameters transforms into {@link LiftedSimpleParameter}</li>
-	 * <li>Set parameters transforms into {@link LiftedSetParameter}</li>
-	 * <li>Array parameters transforms into {@link LiftedArrayParameter}</li>
-	 * </ul>
-	 * <p>
-	 * Multiple or mixed requests will result in an exception.
+	 * Auxiliary method for returning a lifted name.
 	 *
-	 * @param parameter the original parameter
-	 * @param changes   the list of lift requests for this parameter
+	 * @param name the name to lift
 	 *
-	 * @return a concrete {@code LiftedParameter}
-	 *
-	 * @throws IllegalStateException    if no changes are provided
-	 * @throws IllegalArgumentException if incompatible changes are requested
+	 * @return the lifted name
 	 */
-	public static LiftedParameter create(
-		OriginalParameter parameter,
-		List<LiftRequest> changes) {
-
-		List<LiftRequest> allChanges = new ArrayList<>(changes);
-		if (changes.size() == 0) {
-			System.out.println("% WARNING: lifting " + parameter + " too");
-			return new LiftedDependencyParameter(parameter);
-		} else if (allChanges.get(0) instanceof SimpleLiftRequest slc) {
-			MiniZincType type = parameter.getType();
-			if (type instanceof MiniZincBasicType)
-				return new LiftedSimpleParameter(parameter, slc);
-			else if (type instanceof MiniZincSetType)
-				return new LiftedSetParameter(parameter, slc);
-			else if (type instanceof MiniZincArrayType)
-				return new LiftedArrayParameter(parameter, slc);
-		} else if (allChanges.get(0) instanceof ArrayElementLiftRequest) {
-			return new LiftedArrayElementParameter(parameter, allChanges);
-		} else
-			throw new IllegalStateException("Unkown type of lift request for " + parameter.getName());
-		return null;
+	public final static String liftString(final String name) {
+		return name + "_lifted";
 	}
 
 	/**
@@ -94,7 +56,7 @@ public abstract class LiftedParameter {
 	 * @param parameter the original parameter
 	 * @param changes   a list of lifting request associated with this parameter
 	 */
-	protected LiftedParameter(OriginalParameter parameter, List<LiftRequest> changes) {
+	public LiftedParameter(OriginalParameter parameter, List<LiftRequest> changes) {
 		this.parameter = parameter;
 		this.changes = changes;
 
@@ -134,7 +96,7 @@ public abstract class LiftedParameter {
 	 * @return the original parameter name
 	 */
 	public String getLiftedName() {
-		return parameter.getName() + "_lifted";
+		return liftString(parameter.getName());
 	}
 
 	/**

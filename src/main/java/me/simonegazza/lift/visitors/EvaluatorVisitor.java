@@ -524,6 +524,37 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					else
 						throw new UnimplementedException("Length function not implemented for this type");
 				}
+				case "int2float" -> {
+					if (cfctx.expr().size() > 1)
+						throw new IllegalStateException("Unkown function call int2float with multiple arguments");
+
+					Object argument = visitExpr(cfctx.expr(0));
+					if (argument instanceof Integer ai)
+						return ai.doubleValue();
+					else
+						throw new UnimplementedException("Argument was not an Integer for int2float");
+				}
+				case "log" -> {
+					if (cfctx.expr().size() != 2)
+						throw new IllegalStateException("Unkown function call log with this amount of arguments");
+
+					Object base = visitExpr(cfctx.expr(0));
+					Object argument = visitExpr(cfctx.expr(1));
+					if (base instanceof Double bd && argument instanceof Double ad)
+						return Math.log(ad) / Math.log(bd);
+					else
+						throw new UnimplementedException("Argument was not an Integer for int2float");
+				}
+				case "ceil" -> {
+					if (cfctx.expr().size() > 1)
+						throw new IllegalStateException("Unkown function call ceil with multiple arguments");
+
+					Object argument = visitExpr(cfctx.expr(0));
+					if (argument instanceof Double ad)
+						return Math.ceil(ad);
+					else
+						throw new UnimplementedException("Argument was not an Double for ceil");
+				}
 
 				default -> {
 					// case of the arrayXd function call

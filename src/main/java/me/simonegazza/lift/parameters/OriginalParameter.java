@@ -96,8 +96,18 @@ public class OriginalParameter {
 		return name;
 	}
 
+	/**
+	 * @return the text of the expression
+	 */
 	public String getExpressionText() {
 		return expressionText;
+	}
+
+	/**
+	 * @return the expression
+	 */
+	public ParserRuleContext getExpression() {
+		return expression;
 	}
 
 	/**
@@ -116,12 +126,38 @@ public class OriginalParameter {
 		return type.toString() + ": " + name + " = " + expressionText + ";";
 	}
 
+	/**
+	 * Evaluates the expression associated with this parameter using the
+	 * provided environment.
+	 * <p>
+	 * The evaluation is performed lazily: the expression is evaluated only the
+	 * first time this method is invoked, and the result is cached for
+	 * subsequent calls.
+	 * </p>
+	 *
+	 * @param environment a mapping from variable names to their corresponding
+	 *                        values, used during expression evaluation
+	 *
+	 * @return the computed value of the expression
+	 */
 	public Object evaluate(Map<String, Object> environment) {
 		if (value == null)
 			value = new EvaluatorVisitor(environment).visit(expression);
 		return value;
 	}
 
+	/**
+	 * Returns the previously computed value of this parameter.
+	 * <p>
+	 * This method does not trigger evaluation. If the value has not been
+	 * computed yet (i.e., {@link #evaluate(Map)} has not been called), an
+	 * exception is thrown.
+	 * </p>
+	 *
+	 * @return the computed value of this parameter
+	 *
+	 * @throws IllegalStateException if the value has not been computed yet
+	 */
 	public Object getValue() {
 		if (value == null)
 			throw new IllegalStateException("Asked value of " + name + " before computing it");

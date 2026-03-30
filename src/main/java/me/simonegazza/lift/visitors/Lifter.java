@@ -1,5 +1,6 @@
 package me.simonegazza.lift.visitors;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -9,7 +10,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
@@ -17,9 +17,20 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SolveItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
+import me.simonegazza.lift.parameters.LiftedArrayElementParameter;
+import me.simonegazza.lift.parameters.LiftedArrayParameter;
+import me.simonegazza.lift.parameters.LiftedDependencyParameter;
 import me.simonegazza.lift.parameters.LiftedParameter;
+import me.simonegazza.lift.parameters.LiftedSetParameter;
+import me.simonegazza.lift.parameters.LiftedSimpleParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
+import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
+import me.simonegazza.lift.requests.SimpleLiftRequest;
+import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincBasicType;
+import me.simonegazza.lift.types.MiniZincSetType;
+import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.DirectedGraph;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
@@ -123,26 +134,25 @@ public class Lifter {
 	 * @param parameterGraph the dependency graph
 	 * @param parameter      the starting parameter
 	 *
-	 * @return the set of dependent parameter names (including the input)
+	 * @return the set of dependent parameters (including the input)
 	 */
-	private static Set<String> dependsOn(
+	private static Set<OriginalParameter> dependsOn(
 		DirectedGraph<OriginalParameter> parameterGraph,
-		String parameter) {
+		OriginalParameter parameter) {
 
-		Queue<String> stack = new LinkedList<>();
-		Set<String> visited = new HashSet<>();
+		Queue<OriginalParameter> stack = new LinkedList<>();
+		Set<OriginalParameter> visited = new HashSet<>();
 		stack.add(parameter);
 		while (!stack.isEmpty()) {
-			String current = stack.poll();
+			OriginalParameter current = stack.poll();
 			visited.add(current);
 
-			Set<String> dependencies = parameterGraph.getNodes().stream()
+			Set<OriginalParameter> dependencies = parameterGraph.getNodes().stream()
 				.filter(p -> parameterGraph.getAdjacent(p).stream()
-					.anyMatch(a -> a.getName().equals(current)))
-				.map(OriginalParameter::getName)
+					.anyMatch(a -> a.equals(current)))
 				.collect(Collectors.toSet());
 
-			for (String adj : dependencies)
+			for (OriginalParameter adj : dependencies)
 				stack.add(adj);
 		}
 
@@ -194,6 +204,45 @@ public class Lifter {
 	}
 
 	/**
+	 * Factory method that creates the appropriate {@link LiftedParameter}
+	 * implementation based on the parameter type and requested changes.
+	 * <p>
+	 * Multiple or mixed request types will result in an exception.
+	 *
+	 * @param parameter          the original parameter
+	 * @param toLiftDependencies the dependencies of this lift
+	 * @param changes            the list of lift requests for this parameter
+	 *
+	 * @return a concrete {@code LiftedParameter}
+	 *
+	 * @throws IllegalStateException    if no changes are provided
+	 * @throws IllegalArgumentException if incompatible changes are requested
+	 */
+	public LiftedParameter create(
+		OriginalParameter parameter,
+		Set<OriginalParameter> toLiftDependencies,
+		List<LiftRequest> changes) {
+
+		List<LiftRequest> allChanges = new ArrayList<>(changes);
+		if (changes.size() == 0) {
+			System.out.println("% WARNING: lifting " + parameter + " too");
+			return new LiftedDependencyParameter(parameter, toLiftDependencies);
+		} else if (allChanges.get(0) instanceof SimpleLiftRequest slc) {
+			MiniZincType type = parameter.getType();
+			if (type instanceof MiniZincBasicType)
+				return new LiftedSimpleParameter(parameter, slc);
+			else if (type instanceof MiniZincSetType)
+				return new LiftedSetParameter(parameter, slc);
+			else if (type instanceof MiniZincArrayType)
+				return new LiftedArrayParameter(parameter, slc);
+		} else if (allChanges.get(0) instanceof ArrayElementLiftRequest) {
+			return new LiftedArrayElementParameter(parameter, allChanges);
+		} else
+			throw new IllegalStateException("Unkown type of lift request for " + parameter.getName());
+		return null;
+	}
+
+	/**
 	 * Construct and prepares the lifting transformation.
 	 * <p>
 	 * This constructor:
@@ -223,41 +272,40 @@ public class Lifter {
 		this.env = new HashMap<String, Object>();
 
 		// collect all dependencies
-		var liftedStream = toLift.stream()
+		Set<OriginalParameter> toLiftAll = toLift.stream()
 			// get all names
 			.map(LiftRequest::getName)
 			// avoid duplicates
 			.distinct()
-			// flat the dependencies for each lift
-			.flatMap(pName -> dependsOn(parameters, pName).stream())
-			// some parameters could have the same dependencies, we avoid
-			// having them twice
-			.distinct();
-
-		this.lifted = Stream.concat(liftedStream, toLift.stream().map(LiftRequest::getName))
-			// get back the OriginalParameter based on the name
+			// get the original parameter back
 			.map(s -> parameters.getNodes().stream()
 				.filter(p -> p.getName().equals(s))
 				.findAny())
-
 			// if something fails here, the error is very weird. It would mean
 			// that the name of the parameters used to asking a lift does not
 			// match with any of the parameter found in the model (even though
 			// we already check before that such parameter would exists). So it
 			// is safe to Optional::get here without checking
 			.map(Optional::get)
-			.distinct()
+			// get all parameters, even with their dependencies
+			.map(op -> dependsOn(parameters, op))
+			// return a set
+			.flatMap(Set::stream)
+			.collect(Collectors.toSet());
+
+		this.lifted = toLiftAll.stream()
 			// now, for each parameter we got, we get a list of all the lifts
 			// for that parameter (it could be an empty list if the parameter
 			// was just a dependency and was not requested for an
 			// actual lift)
-			.map(op -> {
-				computeValue(op, parameters, env);
+			.map(original -> {
+				computeValue(original, parameters, env);
 
-				return LiftedParameter.create(
-					op,
+				return create(
+					original,
+					toLiftAll,
 					toLift.stream()
-						.filter(l -> l.getName().equals(op.getName()))
+						.filter(l -> l.getName().equals(original.getName()))
 						.toList());
 			}).toList();
 	}
@@ -309,6 +357,13 @@ public class Lifter {
 	 */
 	private class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 
+		/**
+		 * Get the lifted parameter by name.
+		 *
+		 * @param name the name of the {@link LiftedParameter}
+		 *
+		 * @return an {@link Optional} {@link LiftedParameter}
+		 */
 		private Optional<LiftedParameter> getByName(String name) {
 			return lifted.stream()
 				.filter(l -> l.getOriginalName().equals(name))
@@ -318,7 +373,7 @@ public class Lifter {
 		/**
 		 * Remove the assignment completely.
 		 *
-		 * @returns null
+		 * @return null
 		 */
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
@@ -333,7 +388,7 @@ public class Lifter {
 		 * Modify the declaration by adding the value found during the
 		 * assignment phase.
 		 *
-		 * @returns null
+		 * @return null
 		 */
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
@@ -352,7 +407,7 @@ public class Lifter {
 		/**
 		 * Replaces usages of lifted parameters with their new names.
 		 *
-		 * @returns null
+		 * @return null
 		 */
 		@Override
 		public Void visitIdent(IdentContext ctx) {
@@ -368,7 +423,7 @@ public class Lifter {
 		/**
 		 * Replaces the solve statement with a generated one.
 		 *
-		 * @returns null
+		 * @return null
 		 */
 		@Override
 		public Void visitSolveItem(SolveItemContext ctx) {
@@ -380,7 +435,7 @@ public class Lifter {
 		/**
 		 * Replaces the output statement with a generated one.
 		 *
-		 * @returns null
+		 * @return null
 		 */
 		@Override
 		public Void visitOutputItem(OutputItemContext ctx) {

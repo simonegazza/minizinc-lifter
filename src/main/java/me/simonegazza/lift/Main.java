@@ -159,8 +159,8 @@ public class Main implements Callable<Integer> {
 					"Requested lift for " + request.getName() + " but it does not exists");
 		}
 
-		Lifter lv = new Lifter(tokens, cliParameters, graph);
-		String liftedModel = lv.execute(parser.model());
+		Lifter lifter = new Lifter(tokens, cliParameters, graph);
+		String liftedModel = lifter.execute(parser.model());
 
 		if (outputFile.isEmpty()) {
 			System.out.println(liftedModel);

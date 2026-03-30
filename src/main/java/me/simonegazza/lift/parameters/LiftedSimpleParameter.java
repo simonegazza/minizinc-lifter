@@ -14,7 +14,7 @@ import me.simonegazza.lift.requests.LiftRequest;
  */
 public class LiftedSimpleParameter extends LiftedParameter {
 
-	protected LiftedSimpleParameter(
+	public LiftedSimpleParameter(
 		OriginalParameter parameter,
 		LiftRequest change) {
 
