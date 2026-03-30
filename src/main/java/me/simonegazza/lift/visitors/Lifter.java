@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.ExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
@@ -34,6 +35,7 @@ import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.DirectedGraph;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.misc.Interval;
 
 /**
  * Applies the parameter lifting transformation to a MiniZinc model.
@@ -434,6 +436,47 @@ public class Lifter {
 		public Void visitOutputItem(OutputItemContext ctx) {
 			isOutputPresent = true;
 			rewriter.replace(ctx.start, ctx.stop, getOutput());
+			return null;
+		}
+
+		/**
+		 * Replaces asserts with inner expression.
+		 *
+		 * @return null
+		 */
+		@Override
+		public Void visitExpr(ExprContext ctx) {
+			boolean isAssert = ctx.getText().startsWith("assert");
+			boolean hasIdentifier = lifted.stream()
+				.anyMatch(l -> ctx.getText().contains(l.getOriginalName()));
+			if (isAssert && hasIdentifier) {
+				// Descend the entire parsing line
+				ExprContext argument = ctx.iffExpr()
+					.implExpr(0).orExpr(0).xorExpr(0).andExpr(0)
+					.compareExpr(0)
+					.setExpr(0).rangeExpr(0)
+					.addExpr(0).multExpr(0).powExpr(0)
+					.unaryExpr(0)
+					.primary().postfix(0).callSuffix()
+					.expr(0);
+
+				Interval interval = new Interval(
+					argument.getStart().getStartIndex(),
+					// The trailing comma must be removed
+					argument.getStop().getStopIndex() - 1);
+				String toReplace = ctx.getStart().getInputStream().getText(interval);
+				// A semicolon must be added
+				toReplace += ";";
+
+				for (LiftedParameter l : lifted)
+					toReplace = toReplace.replaceAll(
+						"\\b" + l.getOriginalName() + "\\b",
+						l.getLiftedName());
+
+				rewriter.replace(ctx.getStart(), ctx.getStop(), toReplace);
+
+			}
+
 			return null;
 		}
 
