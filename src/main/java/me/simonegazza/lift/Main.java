@@ -144,16 +144,14 @@ public class Main implements Callable<Integer> {
 		TokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
 
-		ParameterExtractor pv = new ParameterExtractor();
-		DirectedGraph<OriginalParameter> graph = pv.execute(parser.model());
+		ParameterExtractor pe = new ParameterExtractor();
+		DirectedGraph<OriginalParameter> graph = pe.execute(parser.model());
 		tokens.seek(0);
 
 		for (LiftRequest request : cliParameters) {
-			List<OriginalParameter> toLift = graph.getNodes().stream()
+			Optional<OriginalParameter> toLift = graph.getNodes().stream()
 				.filter(p -> p.getName().equals(request.getName()))
-				.toList();
-
-			// Check parameter existence
+				.findAny();
 			if (toLift.isEmpty())
 				throw new IllegalArgumentException(
 					"Requested lift for " + request.getName() + " but it does not exists");
