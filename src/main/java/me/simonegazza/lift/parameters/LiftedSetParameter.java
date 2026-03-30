@@ -12,7 +12,7 @@ import me.simonegazza.lift.requests.LiftRequest;
  */
 public class LiftedSetParameter extends LiftedParameter {
 
-	protected LiftedSetParameter(
+	public LiftedSetParameter(
 		OriginalParameter parameter,
 		LiftRequest change) {
 
@@ -27,8 +27,9 @@ public class LiftedSetParameter extends LiftedParameter {
 		// Jaccard distance
 		return "("
 			+ "card(" + getLiftedName() + " symdiff " + getOriginalName() + ")"
-			+ " / "
-			+ "card(" + getLiftedName() + " union " + getOriginalName() + ")"
+			// commented to avoid performance loss
+			// + " / "
+			// + "card(" + getLiftedName() + " union " + getOriginalName() + ")"
 			+ ")";
 	}
 
