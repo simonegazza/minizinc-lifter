@@ -636,7 +636,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 						return ad + bd;
 					else
 						throw new IllegalStateException("Non-homogenous type in the sum");
-				});
+				})
+				// Since the model compiles, there should always be a value here
+				.get();
 		}
 		default -> throw new UnimplementedException("Unkown generator function name: " + ctx.getText());
 		}
