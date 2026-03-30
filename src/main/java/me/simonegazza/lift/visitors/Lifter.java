@@ -347,13 +347,6 @@ public class Lifter {
 	 * <p>
 	 * The visitor does not build new structures. Instead, it issues
 	 * modifications to the {@link TokenStreamRewriter}.
-	 * <p>
-	 * Main responsibilities:
-	 * <ul>
-	 * <li>Remove original parameter declarations and assignments</li>
-	 * <li>Replace parameter usages with lifted variables</li>
-	 * <li>Override solve/output sections if present</li>
-	 * </ul>
 	 */
 	private class LiftingVisitor extends MiniZincBaseVisitor<Void> {
 
