@@ -17,7 +17,7 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
 public class LiftedDependencyParameter extends LiftedParameter {
 
 	/**
-	 *
+	 * Set of dependencies for this parameter.
 	 */
 	private final Set<OriginalParameter> dependencies;
 
@@ -57,7 +57,7 @@ public class LiftedDependencyParameter extends LiftedParameter {
 	}
 
 	/**
-	 *
+	 * Internal rewriter used to rewrite identifiers.
 	 */
 	private class Rewriter extends MiniZincBaseVisitor<Void> {
 
