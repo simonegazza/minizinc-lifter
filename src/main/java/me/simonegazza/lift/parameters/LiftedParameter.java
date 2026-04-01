@@ -4,8 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
+import me.simonegazza.antlr.minizinc.MiniZincLexer;
+import me.simonegazza.antlr.minizinc.MiniZincParser;
+import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
+import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
+import me.simonegazza.lift.requests.SimpleLiftRequest;
+import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincBasicType;
+import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.TokenStreamRewriter;
 
 /**
  * Represents a lifted version of an {@link OriginalParameter}.
@@ -41,6 +56,50 @@ public abstract class LiftedParameter {
 	}
 
 	/**
+	 * Factory method that creates the appropriate {@link LiftedParameter}
+	 * implementation based on the parameter type and requested changes.
+	 * <p>
+	 * Multiple or mixed request types will result in an exception.
+	 *
+	 * @param parameter the original parameter
+	 * @param allLifts  all the parameter that are being lifted of this lift
+	 * @param changes   the list of lift requests for this parameter
+	 *
+	 * @return a concrete {@code LiftedParameter}
+	 *
+	 * @throws IllegalStateException    if no changes are provided
+	 * @throws IllegalArgumentException if incompatible changes are requested
+	 */
+	public static LiftedParameter create(
+		OriginalParameter parameter,
+		Set<OriginalParameter> allLifts,
+		List<LiftRequest> changes) {
+
+		List<LiftRequest> allChanges = new ArrayList<>(changes);
+		// If there is no actual request, then this means that this lift is a
+		// dependency one, so we create an artificial SimpleLiftRequest
+		if (allChanges.size() == 0) {
+			allChanges.add(new SimpleLiftRequest(parameter.getName(), Optional.of("int")));
+		}
+
+		if (allChanges.get(0) instanceof SimpleLiftRequest slr) {
+			MiniZincType type = parameter.getType();
+			if (type instanceof MiniZincBasicType) {
+				return new LiftedSimpleParameter(parameter, slr, allLifts);
+			} else if (type instanceof MiniZincSetType) {
+				return new LiftedSetParameter(parameter, slr, allLifts);
+			} else if (type instanceof MiniZincArrayType) {
+				return new LiftedArrayParameter(parameter, slr, allLifts);
+			}
+		} else if (changes.get(0) instanceof ArrayElementLiftRequest) {
+			return new LiftedArrayElementParameter(parameter, changes, allLifts);
+		} else {
+			throw new IllegalStateException("Unkown type of lift request for " + parameter.getName());
+		}
+		return null;
+	}
+
+	/**
 	 * The original parameter being lifted.
 	 */
 	protected final OriginalParameter parameter;
@@ -51,29 +110,94 @@ public abstract class LiftedParameter {
 	protected final List<LiftRequest> changes;
 
 	/**
+	 * Set of dependencies for this parameter.
+	 */
+	protected final Set<OriginalParameter> dependencies;
+
+	/**
+	 * Internal rewriter used to rewrite identifiers.
+	 */
+	protected class Rewriter extends MiniZincBaseVisitor<Void> {
+
+		/**
+		 * Token stream rewriter for modifying the expression text.
+		 */
+		private final TokenStreamRewriter rewriter;
+
+		/**
+		 * Get the original parameter by name.
+		 *
+		 * @param name the name of the {@link OriginalParameter}
+		 *
+		 * @return an {@link Optional} {@link OriginalParameter}
+		 */
+		private Optional<OriginalParameter> getByName(String name) {
+			return dependencies.stream()
+				.filter(l -> l.getName().equals(name))
+				.findAny();
+		}
+
+		public Rewriter(TokenStream tokens) {
+			rewriter = new TokenStreamRewriter(tokens);
+		}
+
+		@Override
+		public Void visitIdent(IdentContext ctx) {
+			Optional<OriginalParameter> op = getByName(ctx.getText());
+			if (op.isPresent()) {
+				rewriter.replace(
+					ctx.IDENT().getSymbol(),
+					LiftedParameter.liftString(op.get().getName()));
+			}
+
+			return null;
+		}
+
+		/**
+		 * Get the text from the internal rewriter.
+		 *
+		 * @return the text of this rewriter
+		 */
+		public String getText() {
+			return rewriter.getText();
+		}
+
+	}
+
+	/**
 	 * Creates a lifted parameter from an original one and some lift requests.
 	 *
-	 * @param parameter the original parameter
-	 * @param changes   a list of lifting request associated with this parameter
+	 * @param parameter    the original parameter
+	 * @param changes      a list of lifting request associated with this
+	 *                         parameter
+	 * @param dependencies a list of containing all the dependencies for this
+	 *                         parameter
 	 */
-	public LiftedParameter(OriginalParameter parameter, List<LiftRequest> changes) {
+	protected LiftedParameter(
+		OriginalParameter parameter,
+		List<LiftRequest> changes,
+		Set<OriginalParameter> dependencies) {
+
 		this.parameter = parameter;
 		this.changes = changes;
+		this.dependencies = dependencies;
 
 		boolean nameMatch = changes.stream()
 			.map(LiftRequest::getName)
 			.allMatch(n -> n.equals(parameter.getName()));
-		if (!nameMatch)
+		if (!nameMatch) {
 			throw new IllegalStateException(
 				"A lift requested for " + parameter.getName() + " had the wrong identifier");
+		}
 
 		boolean sameConcreteType = changes.stream()
 			.map(Object::getClass)
 			.distinct()
 			.count() <= 1;
-		if (!sameConcreteType)
+		if (!sameConcreteType) {
 			throw new IllegalStateException(
 				"Asking different kinds of lifts for " + parameter.getName());
+		}
 	}
 
 	/**
@@ -144,16 +268,26 @@ public abstract class LiftedParameter {
 	 * @param environment the environment used to evaluate expressions that are
 	 *                        identifiers
 	 *
-	 * @return a MiniZinc declaration (without initialization)
+	 * @return a MiniZinc declaration (with initialization)
 	 */
 	public String liftDeclaration(Map<String, Object> environment) {
 		Optional<String> bound = changes.size() > 0
 			? changes.get(0).getBounds()
 			: Optional.empty();
 
+		CharStream input = CharStreams.fromString(parameter.getExpressionText());
+		MiniZincLexer lexer = new MiniZincLexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		MiniZincParser parser = new MiniZincParser(tokens);
+
+		Rewriter rewriter = new Rewriter(tokens);
+		rewriter.visit(parser.expr());
+
 		return parameter.getType().lift(bound)
 			+ ": "
 			+ getLiftedName()
+			+ " = "
+			+ rewriter.getText()
 			+ ";";
 	}
 

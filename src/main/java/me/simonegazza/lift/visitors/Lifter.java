@@ -1,6 +1,5 @@
 package me.simonegazza.lift.visitors;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,20 +17,9 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SolveItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
-import me.simonegazza.lift.parameters.LiftedArrayElementParameter;
-import me.simonegazza.lift.parameters.LiftedArrayParameter;
-import me.simonegazza.lift.parameters.LiftedDependencyParameter;
 import me.simonegazza.lift.parameters.LiftedParameter;
-import me.simonegazza.lift.parameters.LiftedSetParameter;
-import me.simonegazza.lift.parameters.LiftedSimpleParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
-import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
-import me.simonegazza.lift.requests.SimpleLiftRequest;
-import me.simonegazza.lift.types.MiniZincArrayType;
-import me.simonegazza.lift.types.MiniZincBasicType;
-import me.simonegazza.lift.types.MiniZincSetType;
-import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.DirectedGraph;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
@@ -154,8 +142,9 @@ public class Lifter {
 					.anyMatch(a -> a.equals(current)))
 				.collect(Collectors.toSet());
 
-			for (OriginalParameter adj : dependencies)
+			for (OriginalParameter adj : dependencies) {
 				stack.add(adj);
+			}
 		}
 
 		return visited;
@@ -192,8 +181,9 @@ public class Lifter {
 		DirectedGraph<OriginalParameter> parameters,
 		Map<String, Object> env) {
 
-		if (env.containsKey(p.getName()))
+		if (env.containsKey(p.getName())) {
 			return env.get(p.getName());
+		}
 
 		for (OriginalParameter dependency : parameters.getAdjacent(p)) {
 			Object result = computeValue(dependency, parameters, env);
@@ -203,45 +193,6 @@ public class Lifter {
 		Object value = p.evaluate(env);
 		env.put(p.getName(), value);
 		return value;
-	}
-
-	/**
-	 * Factory method that creates the appropriate {@link LiftedParameter}
-	 * implementation based on the parameter type and requested changes.
-	 * <p>
-	 * Multiple or mixed request types will result in an exception.
-	 *
-	 * @param parameter          the original parameter
-	 * @param toLiftDependencies the dependencies of this lift
-	 * @param changes            the list of lift requests for this parameter
-	 *
-	 * @return a concrete {@code LiftedParameter}
-	 *
-	 * @throws IllegalStateException    if no changes are provided
-	 * @throws IllegalArgumentException if incompatible changes are requested
-	 */
-	public LiftedParameter create(
-		OriginalParameter parameter,
-		Set<OriginalParameter> toLiftDependencies,
-		List<LiftRequest> changes) {
-
-		List<LiftRequest> allChanges = new ArrayList<>(changes);
-		if (changes.size() == 0) {
-			System.out.println("% WARNING: lifting " + parameter + " too");
-			return new LiftedDependencyParameter(parameter, toLiftDependencies);
-		} else if (allChanges.get(0) instanceof SimpleLiftRequest slc) {
-			MiniZincType type = parameter.getType();
-			if (type instanceof MiniZincBasicType)
-				return new LiftedSimpleParameter(parameter, slc);
-			else if (type instanceof MiniZincSetType)
-				return new LiftedSetParameter(parameter, slc);
-			else if (type instanceof MiniZincArrayType)
-				return new LiftedArrayParameter(parameter, slc);
-		} else if (allChanges.get(0) instanceof ArrayElementLiftRequest) {
-			return new LiftedArrayElementParameter(parameter, allChanges);
-		} else
-			throw new IllegalStateException("Unkown type of lift request for " + parameter.getName());
-		return null;
 	}
 
 	/**
@@ -271,7 +222,7 @@ public class Lifter {
 		visitor = new LiftingVisitor();
 		rewriter = new TokenStreamRewriter(tokens);
 
-		this.env = new HashMap<String, Object>();
+		env = new HashMap<String, Object>();
 
 		// collect all dependencies
 		Set<OriginalParameter> toLiftAll = toLift.stream()
@@ -295,7 +246,7 @@ public class Lifter {
 			.flatMap(Set::stream)
 			.collect(Collectors.toSet());
 
-		this.lifted = toLiftAll.stream()
+		lifted = toLiftAll.stream()
 			// now, for each parameter we got, we get a list of all the lifts
 			// for that parameter (it could be an empty list if the parameter
 			// was just a dependency and was not requested for an
@@ -303,7 +254,7 @@ public class Lifter {
 			.map(original -> {
 				computeValue(original, parameters, env);
 
-				return create(
+				return LiftedParameter.create(
 					original,
 					toLiftAll,
 					toLift.stream()
@@ -330,16 +281,18 @@ public class Lifter {
 		visitor.visitModel(ctx);
 		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
 
-		for (LiftedParameter lp : this.lifted) {
+		for (LiftedParameter lp : lifted) {
 			model.append(lp.liftDeclaration(env) + "\n");
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
 		}
 
-		if (!isSolvePresent)
+		if (!isSolvePresent) {
 			model.append(getSolve());
+		}
 
-		if (!isOutputPresent)
+		if (!isOutputPresent) {
 			model.append(getOutput());
+		}
 
 		return model.toString();
 	}
@@ -373,8 +326,9 @@ public class Lifter {
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.ident().getText());
-			if (p.isPresent())
+			if (p.isPresent()) {
 				rewriter.delete(ctx.getStart(), ctx.getStop());
+			}
 
 			return null;
 		}
@@ -388,13 +342,14 @@ public class Lifter {
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.tiExprAndId().ident().getText());
-			if (p.isPresent())
+			if (p.isPresent()) {
 				rewriter.replace(
 					ctx.getStart(),
 					ctx.getStop(),
 					p.get().getOriginalDeclaration());
-			else
+			} else {
 				return super.visitVarDeclItem(ctx);
+			}
 
 			return null;
 		}
@@ -407,10 +362,11 @@ public class Lifter {
 		@Override
 		public Void visitIdent(IdentContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.getText());
-			if (p.isPresent())
+			if (p.isPresent()) {
 				rewriter.replace(
 					ctx.IDENT().getSymbol(),
 					p.get().getLiftedName());
+			}
 
 			return null;
 		}
@@ -468,10 +424,11 @@ public class Lifter {
 				// A semicolon must be added
 				toReplace += ";";
 
-				for (LiftedParameter l : lifted)
+				for (LiftedParameter l : lifted) {
 					toReplace = toReplace.replaceAll(
 						"\\b" + l.getOriginalName() + "\\b",
 						l.getLiftedName());
+				}
 
 				rewriter.replace(ctx.getStart(), ctx.getStop(), toReplace);
 

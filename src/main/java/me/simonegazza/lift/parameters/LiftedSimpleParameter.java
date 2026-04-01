@@ -1,6 +1,9 @@
 package me.simonegazza.lift.parameters;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import me.simonegazza.lift.requests.LiftRequest;
 
 /**
@@ -14,11 +17,24 @@ import me.simonegazza.lift.requests.LiftRequest;
  */
 public class LiftedSimpleParameter extends LiftedParameter {
 
-	public LiftedSimpleParameter(
+	protected LiftedSimpleParameter(
 		OriginalParameter parameter,
-		LiftRequest change) {
+		LiftRequest change,
+		Set<OriginalParameter> dependencies) {
 
-		super(parameter, List.of(change));
+		super(parameter, List.of(change), dependencies);
+	}
+
+	@Override
+	public String liftDeclaration(Map<String, Object> environment) {
+		Optional<String> bound = changes.size() > 0
+			? changes.get(0).getBounds()
+			: Optional.empty();
+
+		return parameter.getType().lift(bound)
+			+ ": "
+			+ getLiftedName()
+			+ ";";
 	}
 
 	@Override

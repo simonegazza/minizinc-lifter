@@ -3,6 +3,7 @@ package me.simonegazza.lift.parameters;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
@@ -35,15 +36,16 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	private List<Object> liftedValue;
 
 	private List<Object> liftValue(Map<String, Object> environment) {
-		if (liftedValue != null)
-			return this.liftedValue;
+		if (liftedValue != null) {
+			return liftedValue;
+		}
 
 		// Evaluate the expression to get the actual value for the parameter.
 		// Since this is an array, it must be an array too
 		@SuppressWarnings("unchecked")
 		List<Object> result = (List<Object>) parameter.getValue();
 
-		this.changes.forEach(c -> {
+		changes.forEach(c -> {
 			List<Integer> locations = c.getLocationsAdjusted(environment);
 			// EvaluatorVisitor.get returns an Object, that can actually be a
 			// list, so this cast is safe
@@ -55,37 +57,28 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 			lastDimension.set(locations.getLast(), "_");
 		});
 
-		this.liftedValue = EvaluatorVisitor.flatten(result);
+		liftedValue = EvaluatorVisitor.flatten(result);
 
 		return liftedValue;
 	}
 
-	/**
-	 * Constructs a lifted array element parameter.
-	 * <p>
-	 * Validates that:
-	 * <ul>
-	 * <li>The parameter is an array</li>
-	 * <li>All lift requests are {@link ArrayElementLiftRequest}</li>
-	 * </ul>
-	 *
-	 * @param parameter the original array parameter
-	 * @param changes   the list of element-wise lift requests
-	 */
 	public LiftedArrayElementParameter(
 		OriginalParameter parameter,
-		List<LiftRequest> changes) {
+		List<LiftRequest> changes,
+		Set<OriginalParameter> dependencies) {
 
-		super(parameter, changes);
+		super(parameter, changes, dependencies);
 
-		if (!(parameter.getType() instanceof MiniZincArrayType))
+		if (!(parameter.getType() instanceof MiniZincArrayType)) {
 			throw new IllegalArgumentException("Cannot lift single array elements for non-array parameters");
+		}
 
 		boolean allArrayElementLifts = changes.stream()
 			.allMatch(l -> l.getClass().equals(ArrayElementLiftRequest.class));
-		if (!allArrayElementLifts)
+		if (!allArrayElementLifts) {
 			throw new IllegalStateException(
 				"Asking for an array element lift for " + parameter.getName() + " but other kinds of lift found");
+		}
 		this.changes = changes.stream()
 			.map(ArrayElementLiftRequest.class::cast)
 			.toList();
@@ -104,7 +97,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 
 	@Override
 	public String getSolvePiece() {
-		return this.changes.stream()
+		return changes.stream()
 			.map(c -> c.getOriginalLocations().toString())
 			.map(location -> "abs("
 				+ getLiftedName() + location
