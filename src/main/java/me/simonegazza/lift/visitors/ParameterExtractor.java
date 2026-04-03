@@ -21,7 +21,7 @@ import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.types.MiniZincCompositeType;
 import me.simonegazza.lift.types.MiniZincType;
-import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.utils.ParameterGraph;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Interval;
@@ -33,7 +33,7 @@ import org.antlr.v4.runtime.misc.Interval;
  * The inner visitor walks the MiniZinc AST and identifies all parameter
  * entities
  * <p>
- * The result is a {@link DirectedGraph} where:
+ * The result is a {@link ParameterGraph} where:
  * <ul>
  * <li>Nodes are {@link OriginalParameter}</li>
  * <li>Edges represent "depends on" relationships</li>
@@ -47,7 +47,7 @@ public class ParameterExtractor {
 	/**
 	 * The resulting dependency graph.
 	 */
-	private DirectedGraph<OriginalParameter> graph;
+	private ParameterGraph graph;
 
 	/**
 	 * The inner visitor that will perform the visit and fill the graph.
@@ -55,13 +55,20 @@ public class ParameterExtractor {
 	private Visitor visitor;
 
 	public ParameterExtractor() {
-		this.graph = new DirectedGraph<>();
-		this.visitor = new Visitor();
+		graph = new ParameterGraph();
+		visitor = new Visitor();
 	}
 
-	public DirectedGraph<OriginalParameter> execute(ModelContext ctx) {
+	/**
+	 * Executes a visit of the model and returns the graph.
+	 *
+	 * @param ctx the {@link ModelContext}
+	 *
+	 * @return the {@link ParameterGraph}
+	 */
+	public ParameterGraph execute(ModelContext ctx) {
 		visitor.visitModel(ctx);
-		return this.graph;
+		return graph;
 	}
 
 	/**
@@ -134,30 +141,34 @@ public class ParameterExtractor {
 		 */
 		private boolean jumpVarDecl(ParserRuleContext ctx) {
 			if (ctx instanceof TiExprContext ti) {
-				if (ti.baseTiExpr() != null)
+				if (ti.baseTiExpr() != null) {
 					return jumpVarDecl(ti.baseTiExpr());
-				else
+				} else {
 					return jumpVarDecl(ti.arrayTiExpr());
+				}
 			}
 
 			if (ctx instanceof BaseTiExprContext) {
-				if (ctx.getChild(0).getText().equals("var"))
+				if ("var".equals(ctx.getChild(0).getText())) {
 					return true;
-			} else if (ctx instanceof ArrayTiExprContext arrayTiExprCtx)
+				}
+			} else if (ctx instanceof ArrayTiExprContext arrayTiExprCtx) {
 				return jumpVarDecl(arrayTiExprCtx.tiExpr().getLast());
+			}
 
 			return false;
 		}
 
 		private Visitor() {
-			this.assignments = new HashMap<>();
-			this.dependencies = new HashMap<>();
+			assignments = new HashMap<>();
+			dependencies = new HashMap<>();
 		}
 
 		@Override
 		public Void visitIdent(IdentContext ctx) {
-			if (currentIdentifier != null)
+			if (currentIdentifier != null) {
 				addDependency(currentIdentifier, ctx.getText());
+			}
 			return null;
 		}
 
@@ -176,16 +187,18 @@ public class ParameterExtractor {
 
 				for (EnumCasesContext eclctx : ctx.enumCasesList().enumCases()) {
 					String caseText = eclctx.getText();
-					if (caseText.startsWith("{") || caseText.startsWith("anon_enum"))
+					if (caseText.startsWith("{") || caseText.startsWith("anon_enum")) {
 						// first and last rule
 						eclctx.ident().forEach(e -> addDependency(enumName, e.getText()));
-					else if (caseText.startsWith("{"))
+					} else if (caseText.startsWith("{")) {
 						// second rule
 						visitExpr(eclctx.expr());
-					else
+					} else { // third rule, ignore the first ident which should
+						// always be the weird cast rule of the enums
 						// third rule, ignore the first ident which should alway
 						// be the weird cast rule of the enums
 						addDependency(enumName, eclctx.ident(1).getText());
+					}
 				}
 			}
 
@@ -210,20 +223,24 @@ public class ParameterExtractor {
 		 */
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
-			if (ctx.getChild(0).getText().startsWith("any"))
+			if (ctx.getChild(0).getText().startsWith("any")) {
 				throw new UnimplementedException("Unimplemented \"any\" delcaration");
+			}
 
 			TiExprContext typeCtx = ctx.tiExprAndId().tiExpr();
 			IdentContext ident = ctx.tiExprAndId().ident();
 
-			if (jumpVarDecl(typeCtx))
+			if (jumpVarDecl(typeCtx)) {
 				// Ignore variables
 				return null;
+			}
 
 			MiniZincType type = new TypeVisitor().visitTiExpr(typeCtx);
-			if (type instanceof MiniZincCompositeType composite)
-				for (MiniZincIdentifier typeDependency : composite.getSubtypesIdentifier())
+			if (type instanceof MiniZincCompositeType composite) {
+				for (MiniZincIdentifier typeDependency : composite.getSubtypesIdentifier()) {
 					addDependency(ident.getText(), typeDependency.getName());
+				}
+			}
 
 			OriginalParameter parameter = new OriginalParameter(type, ident.getText());
 			if (ctx.expr() != null) {
@@ -252,14 +269,15 @@ public class ParameterExtractor {
 
 		@Override
 		public Void visitItem(ItemContext ctx) {
-			if (ctx.varDeclItem() != null)
-				return this.visitVarDeclItem(ctx.varDeclItem());
-			else if (ctx.enumItem() != null)
-				return this.visitEnumItem(ctx.enumItem());
-			else if (ctx.assignItem() != null)
-				return this.visitAssignItem(ctx.assignItem());
-			else
+			if (ctx.varDeclItem() != null) {
+				return visitVarDeclItem(ctx.varDeclItem());
+			} else if (ctx.enumItem() != null) {
+				return visitEnumItem(ctx.enumItem());
+			} else if (ctx.assignItem() != null) {
+				return visitAssignItem(ctx.assignItem());
+			} else {
 				return null;
+			}
 		}
 
 		/**
@@ -290,8 +308,9 @@ public class ParameterExtractor {
 				ParserRuleContext valueContext = assignments.get(par.getName());
 				// There must be a value, otherwise the MiniZinc model won't
 				// compile
-				if (valueContext == null)
+				if (valueContext == null) {
 					throw new IllegalStateException("Parameter " + par.getName() + " left undefined.");
+				}
 
 				String value = ctx.getStart().getInputStream().getText(new Interval(
 					valueContext.getStart().getStartIndex(),
@@ -299,24 +318,24 @@ public class ParameterExtractor {
 				par.setExpression(valueContext, value);
 
 				MiniZincType type = par.getType();
-				if (type instanceof MiniZincCompositeType t)
+				if (type instanceof MiniZincCompositeType t) {
 					dependencies.get(par.getName()).addAll(
 						t.getSubtypesIdentifier().stream()
 							.map(s -> s.getName())
 							.toList());
+				}
 
 				for (String d : dependencies.get(par.getName())) {
-					Optional<OriginalParameter> dependency = graph.getNodes().stream()
-						.filter(p -> p.getName().equals(d))
-						.findFirst();
+					Optional<OriginalParameter> dependency = graph.getByName(d);
 
 					// if there is an element, it means that it is a proper
 					// parameter (because it was caught during a
 					// visitVarDelcItem, otherwise it's not and it was just an
 					// identifier used for other purposes (e.g., temporary name
 					// in a generator)
-					if (!dependency.isEmpty())
+					if (!dependency.isEmpty()) {
 						graph.addEdge(par, dependency.get());
+					}
 				}
 
 			}

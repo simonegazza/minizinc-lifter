@@ -7,7 +7,7 @@ import java.util.Optional;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.OriginalParameter;
-import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.utils.ParameterGraph;
 import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.Lexer;
 import org.junit.jupiter.api.Test;
 
 public class TypeVisitorTest {
-	private DirectedGraph<OriginalParameter> parse(String model) {
+	private ParameterGraph parse(String model) {
 		CharStream input = CharStreams.fromString(model);
 
 		Lexer lexer = new MiniZincLexer(input);

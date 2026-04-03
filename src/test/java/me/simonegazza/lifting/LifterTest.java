@@ -11,11 +11,10 @@ import java.util.List;
 import java.util.Optional;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
-import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
-import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.utils.ParameterGraph;
 import me.simonegazza.lift.visitors.Lifter;
 import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
@@ -35,7 +34,7 @@ public class LifterTest {
 		MiniZincParser parser = new MiniZincParser(tokens);
 
 		ParameterExtractor pv = new ParameterExtractor();
-		DirectedGraph<OriginalParameter> graph = pv.execute(parser.model());
+		ParameterGraph graph = pv.execute(parser.model());
 
 		Lifter lv = new Lifter(tokens, cliParameters, graph);
 

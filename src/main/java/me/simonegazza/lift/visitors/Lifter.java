@@ -1,12 +1,9 @@
 package me.simonegazza.lift.visitors;
 
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
@@ -20,7 +17,7 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
-import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.utils.ParameterGraph;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.misc.Interval;
@@ -112,45 +109,6 @@ public class Lifter {
 	}
 
 	/**
-	 * Computes the transitive closure of dependencies for a given parameter.
-	 * <p>
-	 * This method returns all parameters that directly or indirectly depend on
-	 * the given one. It iteratively expands the set until a fixpoint is
-	 * reached.
-	 * <p>
-	 * <b>Important:</b> This assumes the graph is acyclic (topological),
-	 * otherwise termination is not guaranteed.
-	 *
-	 * @param parameterGraph the dependency graph
-	 * @param parameter      the starting parameter
-	 *
-	 * @return the set of dependent parameters (including the input)
-	 */
-	private static Set<OriginalParameter> dependsOn(
-		DirectedGraph<OriginalParameter> parameterGraph,
-		OriginalParameter parameter) {
-
-		Queue<OriginalParameter> stack = new LinkedList<>();
-		Set<OriginalParameter> visited = new HashSet<>();
-		stack.add(parameter);
-		while (!stack.isEmpty()) {
-			OriginalParameter current = stack.poll();
-			visited.add(current);
-
-			Set<OriginalParameter> dependencies = parameterGraph.getNodes().stream()
-				.filter(p -> parameterGraph.getAdjacent(p).stream()
-					.anyMatch(a -> a.equals(current)))
-				.collect(Collectors.toSet());
-
-			for (OriginalParameter adj : dependencies) {
-				stack.add(adj);
-			}
-		}
-
-		return visited;
-	}
-
-	/**
 	 * Computes the value of the given parameter by recursively evaluating all
 	 * of its dependencies.
 	 * <p>
@@ -165,12 +123,12 @@ public class Lifter {
 	 * Finally, the value of the parameter is computed using
 	 * {@link OriginalParameter#evaluate(Map)} and stored in {@code env}.
 	 *
-	 * @param p          the parameter whose value must be computed
-	 * @param parameters the directed graph representing dependencies between
-	 *                       parameters
-	 * @param env        a mutable mapping from parameter names to their
-	 *                       computed values; it is updated with newly computed
-	 *                       results during execution
+	 * @param p     the parameter whose value must be computed
+	 * @param graph the directed graph representing dependencies between
+	 *                  parameters
+	 * @param env   a mutable mapping from parameter names to their computed
+	 *                  values; it is updated with newly computed results during
+	 *                  execution
 	 *
 	 * @return the computed value of the given parameter
 	 *
@@ -178,15 +136,15 @@ public class Lifter {
 	 */
 	private Object computeValue(
 		OriginalParameter p,
-		DirectedGraph<OriginalParameter> parameters,
+		ParameterGraph graph,
 		Map<String, Object> env) {
 
 		if (env.containsKey(p.getName())) {
 			return env.get(p.getName());
 		}
 
-		for (OriginalParameter dependency : parameters.getAdjacent(p)) {
-			Object result = computeValue(dependency, parameters, env);
+		for (OriginalParameter dependency : graph.getAdjacent(p)) {
+			Object result = computeValue(dependency, graph, env);
 			env.put(p.getName(), result);
 		}
 
@@ -208,14 +166,14 @@ public class Lifter {
 	 * Note that even parameters not explicitly requested may be lifted if they
 	 * are required to preserve correctness.
 	 *
-	 * @param tokens     the token stream of the parsed model
-	 * @param toLift     the user-provided lift requests
-	 * @param parameters the parameter dependency graph
+	 * @param tokens the token stream of the parsed model
+	 * @param toLift the user-provided lift requests
+	 * @param graph  the parameter dependency graph
 	 */
 	public Lifter(
 		TokenStream tokens,
 		List<LiftRequest> toLift,
-		DirectedGraph<OriginalParameter> parameters) {
+		ParameterGraph graph) {
 
 		isSolvePresent = false;
 		isOutputPresent = false;
@@ -231,9 +189,7 @@ public class Lifter {
 			// avoid duplicates
 			.distinct()
 			// get the original parameter back
-			.map(s -> parameters.getNodes().stream()
-				.filter(p -> p.getName().equals(s))
-				.findAny())
+			.map(graph::getByName)
 			// if something fails here, the error is very weird. It would mean
 			// that the name of the parameters used to asking a lift does not
 			// match with any of the parameter found in the model (even though
@@ -241,7 +197,7 @@ public class Lifter {
 			// is safe to Optional::get here without checking
 			.map(Optional::get)
 			// get all parameters, even with their dependencies
-			.map(op -> dependsOn(parameters, op))
+			.map(graph::dependsOn)
 			// return a set
 			.flatMap(Set::stream)
 			.collect(Collectors.toSet());
@@ -252,7 +208,7 @@ public class Lifter {
 			// was just a dependency and was not requested for an
 			// actual lift)
 			.map(original -> {
-				computeValue(original, parameters, env);
+				computeValue(original, graph, env);
 
 				return LiftedParameter.create(
 					original,

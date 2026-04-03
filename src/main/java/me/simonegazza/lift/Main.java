@@ -12,7 +12,7 @@ import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
-import me.simonegazza.lift.utils.DirectedGraph;
+import me.simonegazza.lift.utils.ParameterGraph;
 import me.simonegazza.lift.visitors.Lifter;
 import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
@@ -127,17 +127,19 @@ public class Main implements Callable<Integer> {
 	 */
 	@Override
 	public Integer call() throws Exception {
-		if (filePaths == null)
+		if (filePaths == null) {
 			throw new IllegalArgumentException("No file to parse, exiting");
-		else if (parameters == null)
+		} else if (parameters == null) {
 			throw new IllegalArgumentException("No lifting asked, nothing to do");
+		}
 
 		List<LiftRequest> cliParameters = parameters.stream()
 			.map(LiftRequest::parse).toList();
 
 		StringBuilder sb = new StringBuilder();
-		for (String fp : filePaths)
+		for (String fp : filePaths) {
 			sb.append(Files.readString(Path.of(fp)) + "\n");
+		}
 
 		CharStream input = CharStreams.fromString(sb.toString());
 		Lexer lexer = new MiniZincLexer(input);
@@ -145,16 +147,16 @@ public class Main implements Callable<Integer> {
 		MiniZincParser parser = new MiniZincParser(tokens);
 
 		ParameterExtractor pe = new ParameterExtractor();
-		DirectedGraph<OriginalParameter> graph = pe.execute(parser.model());
+		ParameterGraph graph = pe.execute(parser.model());
 		tokens.seek(0);
 
 		for (LiftRequest request : cliParameters) {
-			Optional<OriginalParameter> toLift = graph.getNodes().stream()
-				.filter(p -> p.getName().equals(request.getName()))
-				.findAny();
-			if (toLift.isEmpty())
+			Optional<OriginalParameter> toLift = graph.getByName(request.getName());
+			if (toLift.isEmpty()) {
 				throw new IllegalArgumentException(
 					"Requested lift for " + request.getName() + " but it does not exists");
+			}
+
 		}
 
 		Lifter lifter = new Lifter(tokens, cliParameters, graph);

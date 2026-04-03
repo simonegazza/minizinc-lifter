@@ -34,13 +34,13 @@ public class DirectedGraph<K> {
 	 * <p>
 	 * Each key maps to the set of nodes it has outgoing edges to.
 	 */
-	private Map<K, Set<K>> graph;
+	protected Map<K, Set<K>> graph;
 
 	/**
 	 * Creates an empty directed graph.
 	 */
 	public DirectedGraph() {
-		this.graph = new HashMap<K, Set<K>>();
+		graph = new HashMap<K, Set<K>>();
 	}
 
 	/**
