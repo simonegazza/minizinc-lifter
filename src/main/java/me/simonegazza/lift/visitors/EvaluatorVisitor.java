@@ -242,6 +242,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public List<Object> visitEnumCases(EnumCasesContext ctx) {
 		if (ctx.ident().isEmpty()) { // second and last rules, anon enum
 			// This should always evaluate to an Integer
