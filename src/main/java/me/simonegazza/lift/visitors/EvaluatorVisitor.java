@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
@@ -98,11 +97,13 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	public static List<Object> flatten(Object obj) {
 		List<Object> result = new ArrayList<>();
 
-		if (obj instanceof List<?> objList)
-			for (Object item : objList)
+		if (obj instanceof List<?> objList) {
+			for (Object item : objList) {
 				result.addAll(flatten(item));
-		else
+			}
+		} else {
 			result.add(obj);
+		}
 
 		return result;
 	}
@@ -184,8 +185,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	public static Object get(Object array, List<Integer> locations) {
 		Object current = array;
 
-		for (int i = 0; i < locations.size(); i++)
+		for (int i = 0; i < locations.size(); i++) {
 			current = ((List<Object>) current).get(locations.get(i));
+		}
 
 		return current;
 	}
@@ -205,15 +207,14 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	 * @return a new {@link Map} containing the merged environment
 	 */
 	private Map<String, Object> augmentEnv(Map<String, Object> augmentation) {
-		Map<String, Object> augmented = new HashMap<>();
-		augmented.putAll(this.env);
+		Map<String, Object> augmented = new HashMap<>(env);
 		augmented.putAll(augmentation);
 		return augmented;
 	}
 
 	public EvaluatorVisitor(Map<String, Object> env) {
 		this.env = env;
-		this.underscoreCounter = 0;
+		underscoreCounter = 0;
 	}
 
 	@Override
@@ -224,15 +225,17 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			List<Object> l = visitEnumCases(ecctx);
 			for (Object e : l) {
 				Integer toPush;
-				if (e instanceof String es)
-					toPush = ((Integer) env.get(es)) + (index++);
-				else if (e instanceof Integer ei)
+				if (e instanceof String es) {
+					toPush = ((Integer) env.get(es)) + index;
+				} else if (e instanceof Integer ei) {
 					toPush = ei + index;
-				else
+				} else {
 					throw new IllegalStateException("Undefined type of value for this expression: " + ctx.getText());
+				}
 
 				result.add(toPush);
 			}
+			index = l.size();
 		}
 
 		return result;
@@ -248,17 +251,13 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				.map(Object.class::cast)
 				.toList();
 		} else if (!ctx.getText().startsWith("{")) { // last-but-one rule
-			// This cast is safe since the visit should return a list of string,
-			// i.e., the list of the values of the enum
-			@SuppressWarnings("unchecked")
-			List<Object> range = (List<Object>) visitIdent(ctx.ident(1));
-			return range;
-		} else
-			// first rule
+			return (List<Object>) visitIdent(ctx.ident(1));
+		} else { // first rule
 			return ctx.ident().stream()
 				.map(ParseTree::getText)
 				.map(Object.class::cast)
 				.toList();
+		}
 	}
 
 	@Override
@@ -319,24 +318,25 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	@Override
 	public Object visitCompareExpr(CompareExprContext ctx) {
 		Object lhs = visitSetExpr(ctx.setExpr(0));
-		if (ctx.setExpr().size() == 1)
+		if (ctx.setExpr().size() == 1) {
 			return lhs;
+		}
 
 		Object rhs = visitSetExpr(ctx.setExpr(1));
 		String op = ctx.getChild(1).getText();
 
 		return switch (op) {
-		case "<" -> (lhs instanceof Integer)
-			? (Integer) lhs < (Integer) rhs
+		case "<" -> (lhs instanceof Integer i)
+			? i < (Integer) rhs
 			: (Double) lhs < (Double) rhs;
-		case ">" -> (lhs instanceof Integer)
-			? (Integer) lhs > (Integer) rhs
+		case ">" -> (lhs instanceof Integer i)
+			? i > (Integer) rhs
 			: (Double) lhs > (Double) rhs;
-		case "<=" -> (lhs instanceof Integer)
-			? (Integer) lhs <= (Integer) rhs
+		case "<=" -> (lhs instanceof Integer i)
+			? i <= (Integer) rhs
 			: (Double) lhs <= (Double) rhs;
-		case ">=" -> (lhs instanceof Integer)
-			? (Integer) lhs >= (Integer) rhs
+		case ">=" -> (lhs instanceof Integer i)
+			? i >= (Integer) rhs
 			: (Double) lhs >= (Double) rhs;
 		case "=", "==" -> lhs.equals(rhs);
 		case "!=" -> !lhs.equals(rhs);
@@ -388,8 +388,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	@Override
 	public Object visitRangeExpr(RangeExprContext ctx) {
 		Object lhs = visitAddExpr(ctx.addExpr(0));
-		if (ctx.addExpr().size() == 1)
+		if (ctx.addExpr().size() == 1) {
 			return lhs;
+		}
 
 		Object rhs = visitAddExpr(ctx.addExpr(1));
 		return IntStream.rangeClosed((Integer) lhs, (Integer) rhs).boxed().toList();
@@ -405,26 +406,29 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 			lhs = switch (op) {
 			case "+" -> {
-				if (lhs instanceof Integer li && rhs instanceof Integer ri)
+				if (lhs instanceof Integer li && rhs instanceof Integer ri) {
 					yield li + ri;
-				else
+				} else {
 					yield ((Double) lhs) + ((Double) rhs);
+				}
 			}
 			case "-" -> {
-				if (lhs instanceof Integer li && rhs instanceof Integer ri)
+				if (lhs instanceof Integer li && rhs instanceof Integer ri) {
 					yield li - ri;
-				else
+				} else {
 					yield ((Double) lhs) - ((Double) rhs);
+				}
 			}
 			case "++" -> {
-				if (lhs instanceof String ls && rhs instanceof String rs)
+				if (lhs instanceof String ls && rhs instanceof String rs) {
 					yield ls + rs;
-				else if (lhs instanceof Collection<?> lc && rhs instanceof Collection<?> rc) {
+				} else if (lhs instanceof Collection<?> lc && rhs instanceof Collection<?> rc) {
 					List<Object> l = new ArrayList<>(lc);
 					l.addAll(rc);
 					yield l;
-				} else
+				} else {
 					throw new IllegalStateException("Unrecognized types");
+				}
 			}
 			default -> throw new UnimplementedException("Unkown operator: " + op);
 			};
@@ -442,10 +446,11 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 			lhs = switch (op) {
 			case "*" -> {
-				if (lhs instanceof Integer li && rhs instanceof Integer ri)
+				if (lhs instanceof Integer li && rhs instanceof Integer ri) {
 					yield li * ri;
-				else
+				} else {
 					yield ((Double) lhs) * ((Double) rhs);
+				}
 			}
 			case "/" -> (Double) lhs / (Double) rhs;
 			case "div" -> (Integer) lhs / (Integer) rhs;
@@ -461,8 +466,8 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 		Object result = visitUnaryExpr(ctx.unaryExpr(0));
 		for (int i = 1; i < ctx.unaryExpr().size(); i++) {
 			Object rhs = visitUnaryExpr(ctx.unaryExpr(i));
-			result = (result instanceof Integer)
-				? Math.pow((Integer) result, (Integer) rhs)
+			result = (result instanceof Integer i2)
+				? Math.pow(i2, (Integer) rhs)
 				: Math.pow((Double) result, (Double) rhs);
 		}
 		return result;
@@ -477,10 +482,11 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			case "not" -> !((Boolean) val);
 			case "+" -> val;
 			case "-" -> {
-				if (val instanceof Integer vali)
+				if (val instanceof Integer vali) {
 					yield -vali;
-				else
+				} else {
 					yield -((Double) val);
+				}
 			}
 			default -> throw new UnimplementedException(op);
 			};
@@ -490,113 +496,119 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public Object visitPrimary(PrimaryContext ctx) {
-		if (ctx.letExpr() != null)
+		if (ctx.letExpr() != null) {
 			throw new UnimplementedException("Let expressions are not implemented");
+		}
 
-		if (ctx.ident() != null) {
-			// Try to see if this is a function call first
-			if (!ctx.postfix().isEmpty() && ctx.postfix(0).callSuffix() != null) {
-				CallSuffixContext cfctx = ctx.postfix(0).callSuffix();
+		// Try to see if this is a function call first
+		if ((ctx.ident() != null) && (!ctx.postfix().isEmpty() && ctx.postfix(0).callSuffix() != null)) {
+			CallSuffixContext cfctx = ctx.postfix(0).callSuffix();
 
-				String functionName = ctx.ident().getText();
+			String functionName = ctx.ident().getText();
 
-				switch (functionName) {
-				case "sum" -> {
-					if (cfctx.expr().size() > 1)
-						throw new IllegalStateException("Unkown function call sum with multiple arguments");
-
-					List<Object> array = flatten(visitExpr(cfctx.expr(0)));
-
-					if (array.get(0) instanceof Integer)
-						return array.stream().mapToInt(Integer.class::cast).sum();
-					else
-						return array.stream().mapToDouble(Double.class::cast).sum();
-				}
-				case "length" -> {
-					if (cfctx.expr().size() > 1)
-						throw new IllegalStateException("Unkown function call length with multiple arguments");
-
-					Object argument = visitExpr(cfctx.expr(0));
-					if (argument instanceof String argStr)
-						return argStr.length();
-					else if (argument instanceof Collection<?> ac)
-						return ac.size();
-					else
-						throw new UnimplementedException("Length function not implemented for this type");
-				}
-				case "int2float" -> {
-					if (cfctx.expr().size() > 1)
-						throw new IllegalStateException("Unkown function call int2float with multiple arguments");
-
-					Object argument = visitExpr(cfctx.expr(0));
-					if (argument instanceof Integer ai)
-						return ai.doubleValue();
-					else
-						throw new UnimplementedException("Argument was not an Integer for int2float");
-				}
-				case "log" -> {
-					if (cfctx.expr().size() != 2)
-						throw new IllegalStateException("Unkown function call log with this amount of arguments");
-
-					Object base = visitExpr(cfctx.expr(0));
-					Object argument = visitExpr(cfctx.expr(1));
-					if (base instanceof Double bd && argument instanceof Double ad)
-						return Math.log(ad) / Math.log(bd);
-					else
-						throw new UnimplementedException("Argument was not an Integer for int2float");
-				}
-				case "ceil" -> {
-					if (cfctx.expr().size() > 1)
-						throw new IllegalStateException("Unkown function call ceil with multiple arguments");
-
-					Object argument = visitExpr(cfctx.expr(0));
-					if (argument instanceof Double ad)
-						return Math.ceil(ad);
-					else
-						throw new UnimplementedException("Argument was not an Double for ceil");
+			switch (functionName) {
+			case "sum" -> {
+				if (cfctx.expr().size() > 1) {
+					throw new IllegalStateException("Unkown function call sum with multiple arguments");
 				}
 
-				default -> {
-					// case of the arrayXd function call
-					if (functionName.startsWith("array")) {
+				List<Object> array = flatten(visitExpr(cfctx.expr(0)));
 
-						// In the arrayXd function, all the arguments are
-						// List<Object>, so these casts are safe
-						@SuppressWarnings("unchecked")
-						List<Integer> dimensions = cfctx.expr()
-							.subList(0, cfctx.expr().size() - 1)
-							.stream()
-							.map(extx -> (List<Object>) (visitExpr(extx)))
-							.map(List::size)
-							.toList();
-
-						@SuppressWarnings("unchecked")
-						List<Object> flattened = (List<Object>) (visitExpr(cfctx.expr().getLast()));
-
-						return reformatArray(dimensions, flattened);
-					} else
-						throw new UnimplementedException("Unkown function");
+				if (array.get(0) instanceof Integer) {
+					return array.stream().mapToInt(Integer.class::cast).sum();
+				} else {
+					return array.stream().mapToDouble(Double.class::cast).sum();
 				}
+			}
+			case "length" -> {
+				if (cfctx.expr().size() > 1) {
+					throw new IllegalStateException("Unkown function call length with multiple arguments");
+				}
+
+				Object argument = visitExpr(cfctx.expr(0));
+				if (argument instanceof String argStr) {
+					return argStr.length();
+				} else if (argument instanceof Collection<?> ac) {
+					return ac.size();
+				} else {
+					throw new UnimplementedException("Length function not implemented for this type");
+				}
+			}
+			case "int2float" -> {
+				if (cfctx.expr().size() > 1) {
+					throw new IllegalStateException("Unkown function call int2float with multiple arguments");
+				}
+
+				Object argument = visitExpr(cfctx.expr(0));
+				if (argument instanceof Integer ai) {
+					return ai.doubleValue();
+				} else {
+					throw new UnimplementedException("Argument was not an Integer for int2float");
+				}
+			}
+			case "log" -> {
+				if (cfctx.expr().size() != 2) {
+					throw new IllegalStateException("Unkown function call log with this amount of arguments");
+				}
+
+				Object base = visitExpr(cfctx.expr(0));
+				Object argument = visitExpr(cfctx.expr(1));
+				if (base instanceof Double bd && argument instanceof Double ad) {
+					return Math.log(ad) / Math.log(bd);
+				} else {
+					throw new UnimplementedException("Argument was not an Integer for int2float");
+				}
+			}
+			case "ceil" -> {
+				if (cfctx.expr().size() > 1) {
+					throw new IllegalStateException("Unkown function call ceil with multiple arguments");
+				}
+
+				Object argument = visitExpr(cfctx.expr(0));
+				if (argument instanceof Double ad) {
+					return Math.ceil(ad);
+				} else {
+					throw new UnimplementedException("Argument was not an Double for ceil");
 				}
 			}
 
+			default -> {
+				// case of the arrayXd function call
+				if (functionName.startsWith("array")) {
+
+					// In the arrayXd function, all the arguments are
+					// List<Object>, so these casts are safe
+					@SuppressWarnings("unchecked")
+					List<Integer> dimensions = cfctx.expr()
+						.subList(0, cfctx.expr().size() - 1)
+						.stream()
+						.map(extx -> (List<Object>) (visitExpr(extx)))
+						.map(List::size)
+						.toList();
+
+					@SuppressWarnings("unchecked")
+					List<Object> flattened = (List<Object>) (visitExpr(cfctx.expr().getLast()));
+
+					return reformatArray(dimensions, flattened);
+				} else {
+					throw new UnimplementedException("Unkown function");
+				}
+			}
+			}
 		}
 
 		Object result;
-		if (ctx.ident() != null)
+		if (ctx.ident() != null) {
 			result = visitIdent(ctx.ident());
-
-		else if (ctx.literal() != null)
+		} else if (ctx.literal() != null) {
 			result = visitLiteral(ctx.literal());
-
-		else if (ctx.expr() != null)
+		} else if (ctx.expr() != null) {
 			result = visitExpr(ctx.expr());
-
-		else if (ctx.ifThenElseExpr() != null)
+		} else if (ctx.ifThenElseExpr() != null) {
 			result = visitIfThenElseExpr(ctx.ifThenElseExpr());
-
-		else
+		} else {
 			result = visitQuantifierExpr(ctx.quantifierExpr());
+		}
 
 		for (PostfixContext p : ctx.postfix()) {
 			List<Integer> locations = visitPostfix(p);
@@ -612,12 +624,14 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	@Override
 	public List<Integer> visitPostfix(PostfixContext ctx) {
-		if (ctx.callSuffix() != null)
+		if (ctx.callSuffix() != null) {
 			throw new IllegalStateException(
 				"Shouldn't be able to reach this callSuffix since it was intercepted in the previous rule");
+		}
 
-		if (ctx.fieldAccessTail() != null)
+		if (ctx.fieldAccessTail() != null) {
 			throw new UnimplementedException("Field access is not implemented");
+		}
 
 		return visitArrayAccessTail(ctx.arrayAccessTail());
 	}
@@ -630,12 +644,13 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				.map(generatorValues -> new EvaluatorVisitor(
 					augmentEnv(generatorValues)).visitExpr(ctx.expr()))
 				.reduce((a, b) -> {
-					if (a instanceof Integer ai && b instanceof Integer bi)
+					if (a instanceof Integer ai && b instanceof Integer bi) {
 						return ai + bi;
-					else if (a instanceof Double ad && b instanceof Double bd)
+					} else if (a instanceof Double ad && b instanceof Double bd) {
 						return ad + bd;
-					else
+					} else {
 						throw new IllegalStateException("Non-homogenous type in the sum");
+					}
 				})
 				// Since the model compiles, there should always be a value here
 				.get();
@@ -649,24 +664,27 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 		return ctx.expr().stream()
 			.map(this::visitExpr)
 			.map(e -> {
-				if (e instanceof Integer ei)
+				if (e instanceof Integer ei) {
 					// MiniZinc array start at one
 					return ei - 1;
-				else if (e instanceof String es)
-					return (Integer) env.get(es);
-				else
+				} else if (e instanceof String es) {
+					return (Integer) env.get(es) - 1;
+				} else {
 					throw new IllegalStateException("Trying to access an array without using an integer: " + e);
+				}
 			})
 			.toList();
 	}
 
 	@Override
 	public Object visitLiteral(LiteralContext ctx) {
-		if (ctx.INT_LITERAL() != null)
+		if (ctx.INT_LITERAL() != null) {
 			return Integer.parseInt(ctx.INT_LITERAL().getText());
+		}
 
-		if (ctx.FLOAT_LITERAL() != null)
+		if (ctx.FLOAT_LITERAL() != null) {
 			return Double.parseDouble(ctx.FLOAT_LITERAL().getText());
+		}
 
 		if (ctx.STRING_LITERAL() != null) {
 			// Remove the " at the begin and end of the string
@@ -674,24 +692,31 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			return result.substring(1, result.length() - 1);
 		}
 
-		if (ctx.getText().equals("true"))
+		if ("true".equals(ctx.getText())) {
 			return true;
-		if (ctx.getText().equals("false"))
+		}
+		if ("false".equals(ctx.getText())) {
 			return false;
+		}
 
-		if (ctx.setLiteral() != null)
+		if (ctx.setLiteral() != null) {
 			return visitSetLiteral(ctx.setLiteral());
+		}
 
-		if (ctx.arrayLiteral() != null)
+		if (ctx.arrayLiteral() != null) {
 			return visitArrayLiteral(ctx.arrayLiteral());
+		}
 
-		if (ctx.arrayLiteral2d() != null)
+		if (ctx.arrayLiteral2d() != null) {
 			return visitArrayLiteral2d(ctx.arrayLiteral2d());
+		}
 
-		if (ctx.tupleLiteral() != null)
+		if (ctx.tupleLiteral() != null) {
 			throw new UnimplementedException("Tuples are not implemented");
-		if (ctx.recordLiteral() != null)
+		}
+		if (ctx.recordLiteral() != null) {
 			throw new UnimplementedException("Records are not implemented");
+		}
 		throw new UnimplementedException("Unkown type of literal");
 	}
 
@@ -714,11 +739,11 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				List<String> identifiers = ctx.expr().stream()
 					.map(ParseTree::getText)
 					.toList();
-				Map<String, Integer> valueAssigned = identifiers.stream()
-					.collect(Collectors.groupingBy(
-						Function.identity(),
-						Collectors.summingInt(_ -> 1)));
-				env.putAll(valueAssigned);
+				for (int i = 0; i < identifiers.size(); i++) {
+					env.put(
+						identifiers.get(i),
+						i + 1); // MiniZinc Array start at 1
+				}
 
 				return identifiers.stream().map(Object.class::cast).toList();
 			}
@@ -732,11 +757,12 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			return values.stream()
 				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
 				.toList();
-		} else
+		} else {
 			return ctx.expr().stream()
 				.map(this::visitExpr)
 				// List needs to be modifiable for future lifting
 				.collect(Collectors.toCollection(ArrayList::new));
+		}
 	}
 
 	@Override
@@ -790,13 +816,14 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 		List<Map<String, Collection<?>>> result = new ArrayList<>();
 		List<String> identifiers = ctx.children.stream()
 			.map(ParseTree::getText)
-			.takeWhile(c -> !c.equals("in"))
-			.filter(e -> !e.equals(","))
-			.map(i -> i.equals("_") ? i + (underscoreCounter++) : i)
+			.takeWhile(c -> !"in".equals(c))
+			.filter(e -> !",".equals(e))
+			.map(i -> "_".equals(i) ? i + (underscoreCounter++) : i)
 			.toList();
 		Map<String, Collection<?>> acc = new HashMap<>();
-		for (String id : identifiers)
+		for (String id : identifiers) {
 			acc.put(id, (Collection<?>) visitExpr(ctx.expr()));
+		}
 
 		result.add(acc);
 		return result;
@@ -805,23 +832,27 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	@Override
 	public List<List<Object>> visitArrayLiteral2d(ArrayLiteral2dContext ctx) {
 		List<List<Object>> result = new ArrayList<>();
-		for (ArrayRowContext row : ctx.arrayRow())
+		for (ArrayRowContext row : ctx.arrayRow()) {
 			result.add(row.expr().stream()
 				.map(this::visitExpr)
 				// List may need to be modifiable at the end
 				.collect(Collectors.toCollection(ArrayList::new)));
+		}
 
 		return result;
 	}
 
 	@Override
 	public Object visitIfThenElseExpr(IfThenElseExprContext ctx) {
-		for (int i = 0; i < ctx.expr().size() - 1; i += 2)
-			if ((Boolean) visitExpr(ctx.expr(i)))
+		for (int i = 0; i < ctx.expr().size() - 1; i += 2) {
+			if ((Boolean) visitExpr(ctx.expr(i))) {
 				return visitExpr(ctx.expr(i + 1));
+			}
+		}
 
-		if (ctx.expr().size() % 2 == 1)
+		if (ctx.expr().size() % 2 == 1) {
 			return visitExpr(ctx.expr(ctx.expr().size() - 1));
+		}
 
 		throw new IllegalStateException("Didn't match an else case in " + ctx.getText());
 	}
@@ -829,8 +860,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	@Override
 	public Object visitIdent(IdentContext ctx) {
 		String name = ctx.getText();
-		if (!env.containsKey(name))
+		if (!env.containsKey(name)) {
 			throw new IllegalStateException("Undefined identifier: " + name);
+		}
 
 		return env.get(name);
 	}
