@@ -8,7 +8,9 @@ import java.util.stream.Collectors;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
+import me.simonegazza.lift.utils.exception.UnimplementedException;
 import me.simonegazza.lift.visitors.EvaluatorVisitor;
 
 /**
@@ -97,14 +99,37 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 
 	@Override
 	public String getSolvePiece() {
+		// TODO: to do this properly, this function should be made recursive (on
+		// the subtypes) but it would mean restructuring these classes, so I'll
+		// leave it as is for now.
+		MiniZincArrayType type = (MiniZincArrayType) parameter.getType();
+		MiniZincType inner = type.getSubtype();
 		return changes.stream()
 			.map(c -> c.getOriginalLocations().toString())
-			.map(location -> "abs("
-				+ getLiftedName() + location
-				+ " - "
-				+ getOriginalName() + location
-				+ ")")
-			.collect(Collectors.joining(" + "));
+			.map(location -> {
+				StringBuilder result = new StringBuilder("abs(");
+				if (inner instanceof MiniZincSetType) {
+					// Sort of Jaccard Distance
+					result.append("(card(")
+						.append(getLiftedName())
+						.append(" symdiff ")
+						.append(getOriginalName())
+						.append(")")
+						.append(")");
+
+				} else if (inner instanceof MiniZincArrayType) { // MiniZincArrayType
+					throw new UnimplementedException(
+						"Recursive arrays of arrays are not implemented in the solve piece");
+				} else {
+					result.append(getLiftedName())
+						.append(location)
+						.append(" - ")
+						.append(getOriginalName())
+						.append(location)
+						.append(")");
+				}
+				return result.toString();
+			}).collect(Collectors.joining(" + "));
 	}
 
 	@Override
