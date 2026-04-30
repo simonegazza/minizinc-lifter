@@ -14,6 +14,7 @@ import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincBasicType;
+import me.simonegazza.lift.types.MiniZincCompositeType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import org.antlr.v4.runtime.CharStream;
@@ -79,7 +80,20 @@ public abstract class LiftedParameter {
 		// If there is no actual request, then this means that this lift is a
 		// dependency one, so we create an artificial SimpleLiftRequest
 		if (allChanges.size() == 0) {
-			allChanges.add(new SimpleLiftRequest(parameter.getName(), Optional.of("int")));
+			MiniZincType resultType;
+			MiniZincType type = parameter.getType();
+			if (type instanceof MiniZincBasicType bt) {
+				resultType = bt;
+
+			} else { // MiniZincCompositeType
+				resultType = type;
+				while (resultType instanceof MiniZincCompositeType ct) {
+					resultType = ct.getSubtype();
+				}
+			}
+			allChanges.add(new SimpleLiftRequest(
+				parameter.getName(),
+				Optional.of(resultType.toString())));
 		}
 
 		if (allChanges.get(0) instanceof SimpleLiftRequest slr) {
