@@ -388,6 +388,8 @@ public class Lifter {
 
 				rewriter.replace(ctx.getStart(), ctx.getStop(), toReplace);
 
+			} else {
+				super.visitExpr(ctx);
 			}
 
 			return null;
