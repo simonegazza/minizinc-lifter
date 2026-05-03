@@ -11,7 +11,6 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
-import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SolveItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import me.simonegazza.lift.parameters.LiftedParameter;
@@ -75,11 +74,6 @@ public class Lifter {
 	private boolean isSolvePresent;
 
 	/**
-	 * Flag indicating whether an output block is present in the model.
-	 */
-	private boolean isOutputPresent;
-
-	/**
 	 * Builds a default solve statement based on lifted parameters.
 	 * <p>
 	 * The objective is constructed as the sum of all lifted parameter
@@ -101,7 +95,7 @@ public class Lifter {
 	 * @return the output component of the combined lifts
 	 */
 	private String getOutput() {
-		return "output ["
+		return "output [\"\\n\\n\"] ++ ["
 			+ lifted.stream()
 				.map(LiftedParameter::getOutputPiece)
 				.collect(Collectors.joining(", \"\\n\", "))
@@ -176,7 +170,6 @@ public class Lifter {
 		ParameterGraph graph) {
 
 		isSolvePresent = false;
-		isOutputPresent = false;
 		visitor = new LiftingVisitor();
 		rewriter = new TokenStreamRewriter(tokens);
 
@@ -246,9 +239,7 @@ public class Lifter {
 			model.append(getSolve());
 		}
 
-		if (!isOutputPresent) {
-			model.append(getOutput());
-		}
+		model.append(getOutput());
 
 		return model.toString();
 	}
@@ -336,18 +327,6 @@ public class Lifter {
 		public Void visitSolveItem(SolveItemContext ctx) {
 			isSolvePresent = true;
 			rewriter.replace(ctx.start, ctx.stop, getSolve());
-			return null;
-		}
-
-		/**
-		 * Replaces the output statement with a generated one.
-		 *
-		 * @return null
-		 */
-		@Override
-		public Void visitOutputItem(OutputItemContext ctx) {
-			isOutputPresent = true;
-			rewriter.replace(ctx.start, ctx.stop, getOutput());
 			return null;
 		}
 
