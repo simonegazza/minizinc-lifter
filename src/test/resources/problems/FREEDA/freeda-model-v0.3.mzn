@@ -157,7 +157,7 @@ var int: totCarb = sum(cs in Comps, is in Flav[cs], js in Nodes)(
       id in Flav[cd] where mayUse[cd, Idx(cs, is)] = 1 /\ energy_dependency[cs, is, cd] > 0,
       jd in Nodes
     )(
-      D[Idx(cd, id), jd] * energy_dependency[cs, is, cd] * round((carb[js] + carb[jd]) / 2)
+      D[Idx(cd, id), jd] * energy_dependency[cs, is, cd] * (carb[js] + carb[jd]) div 2
     )
   )
 );
