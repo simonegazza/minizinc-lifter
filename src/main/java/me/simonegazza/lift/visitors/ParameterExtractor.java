@@ -175,12 +175,11 @@ public class ParameterExtractor {
 		@Override
 		public Void visitEnumItem(EnumItemContext ctx) {
 			String enumName = ctx.ident().getText();
-			MiniZincIdentifier type = new MiniZincIdentifier(enumName);
-			OriginalParameter ep = new OriginalParameter(type, enumName);
-			graph.addNode(ep);
+			boolean assignedAtDeclaration = false;
 			dependencies.putIfAbsent(enumName, new ArrayList<String>());
 
 			if (ctx.enumCasesList() != null) {
+				assignedAtDeclaration = true;
 				currentIdentifier = enumName;
 
 				addAssignment(ctx.ident(), ctx.enumCasesList());
@@ -201,6 +200,9 @@ public class ParameterExtractor {
 					}
 				}
 			}
+			MiniZincIdentifier type = new MiniZincIdentifier(enumName);
+			OriginalParameter ep = new OriginalParameter(type, enumName, assignedAtDeclaration);
+			graph.addNode(ep);
 
 			return null;
 		}
@@ -242,13 +244,15 @@ public class ParameterExtractor {
 				}
 			}
 
-			OriginalParameter parameter = new OriginalParameter(type, ident.getText());
+			boolean assignedAtDeclaration = false;
 			if (ctx.expr() != null) {
 				ExprContext value = ctx.expr();
 				addAssignment(ident, value);
+				assignedAtDeclaration = true;
 				currentIdentifier = ident.getText();
 				visitExpr(value);
 			}
+			OriginalParameter parameter = new OriginalParameter(type, ident.getText(), assignedAtDeclaration);
 
 			dependencies.putIfAbsent(ident.getText(), new ArrayList<String>());
 

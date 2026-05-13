@@ -40,6 +40,11 @@ public class OriginalParameter {
 	private final MiniZincType type;
 
 	/**
+	 * Wheter the parameter was assigned during declaration.
+	 */
+	private final boolean assignedAtDeclaration;
+
+	/**
 	 * The parse tree representing the assigned value of the parameter, if any.
 	 */
 	private ParserRuleContext expression;
@@ -57,12 +62,15 @@ public class OriginalParameter {
 	/**
 	 * Creates a parameter with a given type and name.
 	 *
-	 * @param type the MiniZinc type of the parameter
-	 * @param name the parameter name
+	 * @param type                  the MiniZinc type of the parameter
+	 * @param name                  the parameter name
+	 * @param assignedAtDeclaration whether the parameter was assigned at
+	 *                                  declaration
 	 */
-	public OriginalParameter(MiniZincType type, String name) {
+	public OriginalParameter(MiniZincType type, String name, boolean assignedAtDeclaration) {
 		this.type = type;
 		this.name = name;
+		this.assignedAtDeclaration = assignedAtDeclaration;
 	}
 
 	/**
@@ -111,6 +119,13 @@ public class OriginalParameter {
 	}
 
 	/**
+	 * @return true if it was assigned at declaration
+	 */
+	public boolean isAssignedAtDeclaration() {
+		return assignedAtDeclaration;
+	}
+
+	/**
 	 * Reconstructs the original MiniZinc declaration.
 	 * <p>
 	 * Example:
@@ -141,8 +156,9 @@ public class OriginalParameter {
 	 * @return the computed value of the expression
 	 */
 	public Object evaluate(Map<String, Object> environment) {
-		if (value == null)
+		if (value == null) {
 			value = new EvaluatorVisitor(environment).visit(expression);
+		}
 		return value;
 	}
 
@@ -159,17 +175,19 @@ public class OriginalParameter {
 	 * @throws IllegalStateException if the value has not been computed yet
 	 */
 	public Object getValue() {
-		if (value == null)
+		if (value == null) {
 			throw new IllegalStateException("Asked value of " + name + " before computing it");
+		}
 		return value;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof OriginalParameter objop)
+		if (obj instanceof OriginalParameter objop) {
 			return name.equals(objop.name);
-		else
+		} else {
 			return false;
+		}
 	}
 
 	@Override

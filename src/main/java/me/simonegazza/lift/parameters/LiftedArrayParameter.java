@@ -6,11 +6,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import me.simonegazza.antlr.minizinc.MiniZincLexer;
+import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
 
 public class LiftedArrayParameter extends LiftedParameter {
 
@@ -28,9 +33,23 @@ public class LiftedArrayParameter extends LiftedParameter {
 			? changes.get(0).getBounds()
 			: Optional.empty();
 
+		String declaration = "";
+		if (parameter.isAssignedAtDeclaration()) {
+			CharStream input = CharStreams.fromString(parameter.getExpressionText());
+			MiniZincLexer lexer = new MiniZincLexer(input);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			MiniZincParser parser = new MiniZincParser(tokens);
+
+			Rewriter rewriter = new Rewriter(tokens);
+			rewriter.visit(parser.expr());
+
+			declaration = " = " + rewriter.getText();
+		}
+
 		return parameter.getType().lift(bound)
 			+ ": "
 			+ getLiftedName()
+			+ declaration
 			+ ";";
 	}
 
@@ -60,9 +79,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 				.append(getOriginalName())
 				.append("[")
 				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("]")
-				.append(")")
-				.append(")");
+				.append("]))");
 
 		} else if (inner instanceof MiniZincArrayType) { // MiniZincArrayType
 			throw new UnimplementedException(
@@ -71,17 +88,15 @@ public class LiftedArrayParameter extends LiftedParameter {
 			firstPart.append(getLiftedName())
 				.append("[")
 				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("]")
-				.append(" - ")
+				.append("] - ")
 				.append(getOriginalName())
 				.append("[")
 				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("]")
-				.append(")");
+				.append("])");
 		}
 
 		String secondPart = IntStream.range(0, dimensionsExpression.size())
-			.mapToObj(i -> indices.get(i) + " in " + dimensionsExpression.get(i))
+			.mapToObj(i -> indices.get(i))
 			.collect(Collectors.joining(", "));
 
 		return "sum([" + firstPart + " | " + secondPart + "])";

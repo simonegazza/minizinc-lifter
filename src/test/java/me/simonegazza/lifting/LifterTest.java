@@ -140,4 +140,12 @@ public class LifterTest {
 		testEnding(testName, r);
 	}
 
+	@Test
+	public void derivedTest() throws IOException, URISyntaxException {
+		List<LiftRequest> r = List.of(new SimpleLiftRequest("max", Optional.of("1..5")));
+		String testName = "derived";
+
+		testEnding(testName, r);
+	}
+
 }
