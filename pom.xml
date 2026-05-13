@@ -113,22 +113,37 @@
 				<artifactId>antlr4-maven-plugin</artifactId>
 				<version>4.13.2</version>
 				<executions>
-					<execution>
-						<goals>
-							<goal>antlr4</goal>
-						</goals>
-						<configuration>
-							<sourceDirectory>${project.basedir}/grammars</sourceDirectory>
-							<outputDirectory>
-								${project.basedir}/src/main/java/me/simonegazza/antlr/minizinc</outputDirectory>
-							<visitor>true</visitor>
-							<arguments>
-								<argument>-package</argument>
-								<argument>me.simonegazza.antlr.minizinc</argument>
-							</arguments>
-						</configuration>
-					</execution>
-				</executions>
+		        <!-- Execution for MiniZinc -->
+		        <execution>
+		            <id>antlr-minizinc</id>
+		            <goals><goal>antlr4</goal></goals>
+		            <configuration>
+		                <sourceDirectory>${project.basedir}/grammars</sourceDirectory>
+		                <includes><include>MiniZinc.g4</include></includes>
+		                <outputDirectory>${project.basedir}/src/main/java/me/simonegazza/antlr/minizinc</outputDirectory>
+		                <visitor>true</visitor>
+		                <arguments>
+		                    <argument>-package</argument>
+		                    <argument>me.simonegazza.antlr.minizinc</argument>
+		                </arguments>
+		            </configuration>
+		        </execution>
+		        <!-- Execution for FlatZinc -->
+		        <execution>
+		            <id>antlr-flatzinc</id>
+		            <goals><goal>antlr4</goal></goals>
+		            <configuration>
+		                <sourceDirectory>${project.basedir}/grammars</sourceDirectory>
+		                <includes><include>FlatZinc.g4</include></includes>
+		                <outputDirectory>${project.basedir}/src/main/java/me/simonegazza/antlr/flatzinc</outputDirectory>
+		                <visitor>true</visitor>
+		                <arguments>
+		                    <argument>-package</argument>
+		                    <argument>me.simonegazza.antlr.flatzinc</argument>
+		                </arguments>
+		            </configuration>
+		        </execution>
+		    </executions>
 			</plugin>
 			<plugin>
             <groupId>org.apache.maven.plugins</groupId>
