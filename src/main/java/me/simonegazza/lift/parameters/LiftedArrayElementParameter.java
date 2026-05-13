@@ -148,6 +148,8 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		StringBuilder result = new StringBuilder(type.lift(Optional.empty(), true));
 		result.append(": ");
 		result.append(getLiftedName());
+		result.append(";\n");
+		result.append(getLiftedName());
 		result.append(" = array" + size + "d(");
 
 		if (size == 1 && dimensions.get(0) instanceof MiniZincBasicType) {
