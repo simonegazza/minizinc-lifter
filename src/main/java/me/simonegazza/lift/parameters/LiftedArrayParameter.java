@@ -96,7 +96,14 @@ public class LiftedArrayParameter extends LiftedParameter {
 		}
 
 		String secondPart = IntStream.range(0, dimensionsExpression.size())
-			.mapToObj(i -> indices.get(i))
+			.mapToObj(i -> indices.get(i)
+				+ " in index_set_"
+				+ i
+				+ "of"
+				+ dimensionsExpression.size()
+				+ "("
+				+ getLiftedName()
+				+ ")")
 			.collect(Collectors.joining(", "));
 
 		return "sum([" + firstPart + " | " + secondPart + "])";
