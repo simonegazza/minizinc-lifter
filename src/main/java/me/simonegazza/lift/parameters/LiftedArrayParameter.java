@@ -50,7 +50,9 @@ public class LiftedArrayParameter extends LiftedParameter {
 			+ ": "
 			+ getLiftedName()
 			+ declaration
-			+ ";";
+			+ " :: doc_comment(\""
+			+ getLiftedName()
+			+ "\");";
 	}
 
 	@Override

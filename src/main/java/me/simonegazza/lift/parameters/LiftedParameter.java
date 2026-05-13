@@ -302,7 +302,9 @@ public abstract class LiftedParameter {
 			+ getLiftedName()
 			+ " = "
 			+ rewriter.getText()
-			+ ";";
+			+ " :: doc_comment(\""
+			+ getLiftedName()
+			+ "\");";
 	}
 
 	/**

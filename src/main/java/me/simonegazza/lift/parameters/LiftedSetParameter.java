@@ -37,7 +37,9 @@ public class LiftedSetParameter extends LiftedParameter {
 		return parameter.getType().lift(bound)
 			+ ": "
 			+ getLiftedName()
-			+ ";";
+			+ " :: doc_comment(\""
+			+ getLiftedName()
+			+ "\");";
 	}
 
 	@Override

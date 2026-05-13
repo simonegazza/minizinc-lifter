@@ -231,7 +231,6 @@ public class Lifter {
 		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
 
 		for (LiftedParameter lp : lifted) {
-			model.append(lp.liftDeclaration(env) + "\n");
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
 		}
 
@@ -290,10 +289,7 @@ public class Lifter {
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.tiExprAndId().ident().getText());
 			if (p.isPresent()) {
-				rewriter.replace(
-					ctx.getStart(),
-					ctx.getStop(),
-					p.get().getOriginalDeclaration());
+				rewriter.insertAfter(ctx.getStop(), "\n" + p.get().liftDeclaration(env));
 			} else {
 				return super.visitVarDeclItem(ctx);
 			}
