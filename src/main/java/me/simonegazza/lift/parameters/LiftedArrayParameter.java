@@ -96,15 +96,31 @@ public class LiftedArrayParameter extends LiftedParameter {
 		}
 
 		String secondPart = IntStream.range(0, dimensionsExpression.size())
-			.mapToObj(i -> indices.get(i)
-				+ " in index_set_"
-				+ i
-				+ "of"
-				+ dimensionsExpression.size()
-				+ "("
-				+ getLiftedName()
-				+ ")")
-			.collect(Collectors.joining(", "));
+			.mapToObj(i -> {
+				StringBuilder result = new StringBuilder(indices.get(i));
+				result.append(" in ");
+				// TODO: check that this is enough; we do not parse dimensions
+				// and the only case that is considered now for "any range" is
+				// "int" even we are not sure it is the only one
+				if ("int".equals(dimensionsExpression.get(i))) {
+					result.append("index_set");
+
+					if (dimensionsExpression.size() != 1) {
+						result.append("_");
+						result.append(i + 1);
+						result.append("of");
+						result.append(dimensionsExpression.size());
+					}
+
+					result.append("(");
+					result.append(getLiftedName());
+					result.append(")");
+				} else {
+					result.append(dimensionsExpression.get(i));
+				}
+
+				return result.toString();
+			}).collect(Collectors.joining(", "));
 
 		return "sum([" + firstPart + " | " + secondPart + "])";
 	}
