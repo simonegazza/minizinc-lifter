@@ -1,6 +1,5 @@
 package me.simonegazza.lift.requests;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -40,27 +39,9 @@ public interface LiftRequest {
 	public final static String BOUNDS_DELIMITER = ":";
 
 	/**
-	 * Delimiter used to detect array access.
-	 */
-	public final static String LOCATION_DELIMITER = "\\[";
-
-	/**
-	 * Separator used to separate locations in {@link ArrayElementLiftRequest}.
-	 */
-	public final static String LOCATION_SEPARATOR = ",";
-
-	/**
 	 * Parses a CLI string into a {@link LiftRequest}.
 	 * <p>
-	 * This method supports:
-	 * <ul>
-	 * <li>Simple parameters</li>
-	 * <li>Array element selection</li>
-	 * <li>Optional bounds</li>
-	 * </ul>
-	 * <p>
-	 * The parsing logic is intentionally lightweight and assumes well-formed
-	 * input.
+	 * This method supports also extra bounding.
 	 *
 	 * @param p the CLI string representation
 	 *
@@ -70,22 +51,8 @@ public interface LiftRequest {
 		String[] nameAndBound = p.split(BOUNDS_DELIMITER);
 		String name = nameAndBound[0];
 		Optional<String> bounds = Optional.empty();
-		if (nameAndBound.length > 1)
+		if (nameAndBound.length > 1) {
 			bounds = Optional.of(nameAndBound[1]);
-
-		if (name.endsWith("[*]"))
-			name = name.substring(0, name.length() - 3);
-
-		String[] nameAndLocations = name.split(LOCATION_DELIMITER);
-		name = nameAndLocations[0];
-		if (nameAndLocations.length > 1) {
-			String[] locations = nameAndLocations[1]
-				.substring(0, nameAndLocations[1].length() - 1)
-				.split(LOCATION_SEPARATOR);
-			return new ArrayElementLiftRequest(
-				name,
-				bounds,
-				List.of(locations));
 		}
 
 		return new SimpleLiftRequest(name, bounds);
