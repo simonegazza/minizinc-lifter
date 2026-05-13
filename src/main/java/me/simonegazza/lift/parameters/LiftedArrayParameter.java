@@ -124,7 +124,19 @@ public class LiftedArrayParameter extends LiftedParameter {
 				return result.toString();
 			}).collect(Collectors.joining(", "));
 
-		return "sum([" + firstPart + " | " + secondPart + "])";
+		return (parameter.isAssignedAtDeclaration() ? "0 %" : "")
+			+ "sum(["
+			+ firstPart
+			+ " | "
+			+ secondPart
+			+ "])";
+	}
+
+	@Override
+	public String paramArrayPiece(boolean lifted) {
+		return "[if false then true else e endif | e in array1d("
+			+ (lifted ? getLiftedName() : getOriginalName())
+			+ ")]";
 	}
 
 }

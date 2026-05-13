@@ -69,12 +69,7 @@ public class Lifter {
 	private final Map<String, Object> env;
 
 	/**
-	 * Flag indicating whether a solve block is present in the model.
-	 */
-	private boolean isSolvePresent;
-
-	/**
-	 * Builds a default solve statement based on lifted parameters.
+	 * Builds the solve statement based on lifted parameters.
 	 * <p>
 	 * The objective is constructed as the sum of all lifted parameter
 	 * contributions.
@@ -82,24 +77,35 @@ public class Lifter {
 	 * @return the solve component of the combined lifts
 	 */
 	private String getSolve() {
-		return "solve minimize "
+		return "solve\n\t :: assume(assumed)\nminimize "
 			+ lifted.stream()
 				.map(LiftedParameter::getSolvePiece)
-				.collect(Collectors.joining(" + "))
+				.collect(Collectors.joining("\n\t+ "))
 			+ ";\n";
 	}
 
 	/**
-	 * Builds a default output statement listing lifted parameters.
+	 * Builds the parameter array (both versions).
 	 *
-	 * @return the output component of the combined lifts
+	 * @param ofLifted whether it should be of lifted parameters or not
+	 *
+	 * @return the solve component of the combined lifts
 	 */
-	private String getOutput() {
-		return "output [\"\\n\\n\"] ++ ["
-			+ lifted.stream()
-				.map(LiftedParameter::getOutputPiece)
-				.collect(Collectors.joining(", \"\\n\", "))
-			+ ", \"\\n\"];\n";
+	private String getParamsArray(boolean ofLifted) {
+		StringBuilder result;
+		if (ofLifted) {
+			result = new StringBuilder("array[int] of var int: params_lifted = ");
+		} else {
+			result = new StringBuilder("array[int] of int: params = ");
+		}
+
+		String ending = lifted.stream()
+			.map(p -> p.paramArrayPiece(ofLifted))
+			.collect(Collectors.joining("\n\t++ "));
+		result.append(ending);
+		result.append(";\n");
+
+		return result.toString();
 	}
 
 	/**
@@ -169,7 +175,6 @@ public class Lifter {
 		List<LiftRequest> toLift,
 		ParameterGraph graph) {
 
-		isSolvePresent = false;
 		visitor = new LiftingVisitor();
 		rewriter = new TokenStreamRewriter(tokens);
 
@@ -234,11 +239,18 @@ public class Lifter {
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
 		}
 
-		if (!isSolvePresent) {
-			model.append(getSolve());
-		}
+		model.append("include \"chuffed.mzn\";\n\n");
 
-		model.append(getOutput());
+		model.append(getParamsArray(false));
+		model.append("\n");
+		model.append(getParamsArray(true));
+		model.append("\n");
+
+		model.append("array[int] of var bool: assumed = [params_lifted[i] = params[i] | i in index_set(params)];\n");
+		model.append(
+			"constraint assert(length(params) = length(params_lifted), \"ERROR: length of parameters and lifted does not match\");\n");
+
+		model.append(getSolve());
 
 		return model.toString();
 	}
@@ -315,14 +327,13 @@ public class Lifter {
 		}
 
 		/**
-		 * Replaces the solve statement with a generated one.
+		 * Remove the solve statement with a generated one.
 		 *
 		 * @return null
 		 */
 		@Override
 		public Void visitSolveItem(SolveItemContext ctx) {
-			isSolvePresent = true;
-			rewriter.replace(ctx.start, ctx.stop, getSolve());
+			rewriter.delete(ctx.start, ctx.stop);
 			return null;
 		}
 

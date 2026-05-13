@@ -43,6 +43,11 @@ public class LiftedSetParameter extends LiftedParameter {
 	}
 
 	@Override
+	public String paramArrayPiece(boolean lifted) {
+		return "[if false then true else e endif | e in " + (lifted ? getLiftedName() : getOriginalName()) + "]";
+	}
+
+	@Override
 	public String getSolvePiece() {
 		// Jaccard distance
 		return "("

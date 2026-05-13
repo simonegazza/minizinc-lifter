@@ -308,6 +308,15 @@ public abstract class LiftedParameter {
 	}
 
 	/**
+	 * Generates the contribution to the params arrays.
+	 *
+	 * @param lifted whether we should consider lifted quantities or not
+	 *
+	 * @return a sum of absolute differences over selected indices
+	 */
+	public abstract String paramArrayPiece(boolean lifted);
+
+	/**
 	 * Generates the contribution to the objective function.
 	 * <p>
 	 * Only lifted elements contribute to the objective, each minimizing the

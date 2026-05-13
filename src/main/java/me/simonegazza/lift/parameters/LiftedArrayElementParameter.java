@@ -177,6 +177,11 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		return result.toString();
 	}
 
+	@Override
+	public String paramArrayPiece(boolean lifted) {
+		throw new UnimplementedException("Unimplemented piece for parameter");
+	}
+
 	/**
 	 * Generates the lifted array declaration.
 	 * <p>

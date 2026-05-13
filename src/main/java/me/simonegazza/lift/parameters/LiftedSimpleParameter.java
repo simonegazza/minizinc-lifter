@@ -40,6 +40,11 @@ public class LiftedSimpleParameter extends LiftedParameter {
 	}
 
 	@Override
+	public String paramArrayPiece(boolean lifted) {
+		return "[" + (lifted ? getLiftedName() : getOriginalName()) + "]";
+	}
+
+	@Override
 	public String getSolvePiece() {
 		return "abs(" + getLiftedName() + " - " + getOriginalName() + ")";
 	}
