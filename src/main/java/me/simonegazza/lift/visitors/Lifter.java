@@ -81,7 +81,7 @@ public class Lifter {
 			+ lifted.stream()
 				.map(LiftedParameter::getSolvePiece)
 				.collect(Collectors.joining("\n\t+ "))
-			+ ";\n";
+			+ "\n;\n";
 	}
 
 	/**
@@ -103,7 +103,7 @@ public class Lifter {
 			.map(p -> p.paramArrayPiece(ofLifted))
 			.collect(Collectors.joining("\n\t++ "));
 		result.append(ending);
-		result.append(";\n");
+		result.append("\n;\n");
 
 		return result.toString();
 	}
@@ -214,7 +214,8 @@ public class Lifter {
 					toLift.stream()
 						.filter(l -> l.getName().equals(original.getName()))
 						.toList());
-			}).toList();
+			}).sorted((p1, p2) -> p1.getOriginalName().compareTo(p2.getOriginalName()))
+			.toList();
 	}
 
 	/**

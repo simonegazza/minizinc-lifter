@@ -50,9 +50,10 @@ public class LiftedArrayParameter extends LiftedParameter {
 			+ ": "
 			+ getLiftedName()
 			+ declaration
-			+ " :: doc_comment(\""
-			+ getLiftedName()
-			+ "\");";
+			+ (parameter.isAssignedAtDeclaration()
+				? ""
+				: " :: doc_comment(\"" + getLiftedName() + "\")")
+			+ ";";
 	}
 
 	@Override
@@ -134,9 +135,70 @@ public class LiftedArrayParameter extends LiftedParameter {
 
 	@Override
 	public String paramArrayPiece(boolean lifted) {
-		return "[if false then true else e endif | e in array1d("
-			+ (lifted ? getLiftedName() : getOriginalName())
-			+ ")]";
+		// TODO: to do this properly, this function should be made recursive (on
+		// the subtypes) but it would mean restructuring these classes, so I'll
+		// leave it as is for now.
+
+		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
+		MiniZincType inner = ct.getSubtype();
+		List<String> dimensionsExpression = ct.getDimensionsString(false);
+		List<String> indices = IntStream
+			.range(0, dimensionsExpression.size())
+			.mapToObj(e -> "i" + e)
+			.toList();
+
+		StringBuilder firstPart = new StringBuilder("[if false then true else ")
+			.append(lifted ? getLiftedName() : getOriginalName())
+			.append("[")
+			.append(indices.stream().collect(Collectors.joining(", ")))
+			.append("] endif");
+
+		StringBuilder secondPart = new StringBuilder().append(
+			IntStream.range(0, dimensionsExpression.size()).mapToObj(i -> {
+				StringBuilder result = new StringBuilder(indices.get(i));
+				result.append(" in ");
+				// TODO: check that this is enough; we do not parse
+				// dimensions and the only case that is considered now for "any
+				// range" is "int" even we are not sure it is the only one
+				if ("int".equals(dimensionsExpression.get(i))) {
+					result.append("index_set");
+
+					if (dimensionsExpression.size() != 1) {
+						result.append("_");
+						result.append(i + 1);
+						result.append("of");
+						result.append(dimensionsExpression.size());
+					}
+
+					result.append("(");
+					result.append(getOriginalName());
+					result.append(")");
+				} else {
+					result.append(dimensionsExpression.get(i));
+				}
+
+				return result.toString();
+			}).collect(Collectors.joining(", ")));
+
+		StringBuilder preamble = new StringBuilder(parameter.isAssignedAtDeclaration() ? "[] %" : "");
+		if (inner instanceof MiniZincSetType) {
+			return preamble
+				.append("[if false then true else e endif | ")
+				.append(secondPart)
+				.append(", e in ")
+				.append(lifted ? getLiftedName() : getOriginalName())
+				.append("[")
+				.append(indices.stream().collect(Collectors.joining(", ")))
+				.append("]]")
+				.toString();
+		}
+
+		return preamble
+			.append(firstPart)
+			.append(" | ")
+			.append(secondPart)
+			.append("]")
+			.toString();
 	}
 
 }
