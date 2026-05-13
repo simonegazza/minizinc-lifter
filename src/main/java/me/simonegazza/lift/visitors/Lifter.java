@@ -278,17 +278,12 @@ public class Lifter {
 		}
 
 		/**
-		 * Remove the assignment completely.
+		 * Jump the assignment completely.
 		 *
 		 * @return null
 		 */
 		@Override
 		public Void visitAssignItem(AssignItemContext ctx) {
-			Optional<LiftedParameter> p = getByName(ctx.ident().getText());
-			if (p.isPresent()) {
-				rewriter.delete(ctx.getStart(), ctx.getStop());
-			}
-
 			return null;
 		}
 
