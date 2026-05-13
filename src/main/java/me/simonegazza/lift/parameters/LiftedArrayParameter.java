@@ -113,7 +113,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 					}
 
 					result.append("(");
-					result.append(getLiftedName());
+					result.append(getOriginalName());
 					result.append(")");
 				} else {
 					result.append(dimensionsExpression.get(i));

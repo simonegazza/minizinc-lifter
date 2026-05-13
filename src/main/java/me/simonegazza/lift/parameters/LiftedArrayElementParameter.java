@@ -5,9 +5,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincBasicType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
@@ -142,16 +144,35 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		MiniZincArrayType type = (MiniZincArrayType) parameter.getType();
 		List<MiniZincType> dimensions = type.getDimensions();
 		int size = dimensions.size();
-		return type.lift(Optional.empty(), true)
-			+ ": "
-			+ getLiftedName()
-			+ " = array" + size + "d("
-			+ dimensions.stream()
-				.map(MiniZincType::toString)
-				.collect(Collectors.joining(", "))
-			+ ", "
-			+ liftValue(environment)
-			+ ");";
+
+		StringBuilder result = new StringBuilder(type.lift(Optional.empty(), true));
+		result.append(": ");
+		result.append(getLiftedName());
+		result.append(" = array" + size + "d(");
+
+		if (size == 1 && dimensions.get(0) instanceof MiniZincBasicType) {
+			result.append("index_set(" + getOriginalName() + ")");
+		} else {
+			result.append(IntStream.range(0, size).mapToObj(i -> {
+				MiniZincType d = dimensions.get(i);
+				if (d instanceof MiniZincBasicType) {
+					return "index_set_"
+						+ (i + 1)
+						+ "of"
+						+ size
+						+ "("
+						+ getOriginalName()
+						+ ")";
+				} else {
+					return d.toString();
+				}
+			}).collect(Collectors.joining(", ")));
+		}
+
+		result.append(", ");
+		result.append(liftValue(environment));
+		result.append(");");
+		return result.toString();
 	}
 
 	/**
