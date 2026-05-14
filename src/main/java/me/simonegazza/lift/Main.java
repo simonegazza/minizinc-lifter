@@ -1,7 +1,9 @@
 package me.simonegazza.lift;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -104,6 +106,42 @@ public class Main implements Callable<Integer> {
 	private Path outputPath;
 
 	/**
+	 * Pass the control to MiniZinc either to run the compilation or to actually
+	 * run the model.
+	 *
+	 * @param modelPath the path to the model to run or compile
+	 * @param compile   whether we turn on compilation or run
+	 *
+	 * @throws IOException          can occur when inheriting IO
+	 * @throws InterruptedException in case command get stopped by the OS
+	 */
+	private void runCommand(Path modelPath, boolean compile) throws IOException, InterruptedException {
+		List<String> command = List.of(
+			"minizinc",
+			"--no-output-ozn",
+			"--solver", "chuffed",
+			// 5 minutes timeout expressed in milliseconds
+			"--time-limit", String.valueOf(1000 * 60 * 5),
+			"--verbose",
+			modelPath.toString());
+
+		if (compile) {
+			command = new ArrayList<>(command);
+			command.add("--compile");
+		}
+
+		ProcessBuilder compilationPB = new ProcessBuilder(command);
+		compilationPB.inheritIO();
+		compilationPB.directory(modelPath.getParent().toFile());
+
+		Process compilationProcess = compilationPB.start();
+		int exitCode = compilationProcess.waitFor();
+		if (exitCode != 0) {
+			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
+		}
+	}
+
+	/**
 	 * Application entry point.
 	 * <p>
 	 * Delegates execution to Picocli which handles argument parsing and command
@@ -133,7 +171,7 @@ public class Main implements Callable<Integer> {
 		for (Path fp : filePaths) {
 			sb.append(Files.readString(fp) + "\n");
 		}
-		System.out.println(filePaths.stream().map(fp -> fp.toFile().getName()).toList());
+
 		String originalModel = sb.toString();
 		String modelsNamePrefix = filePaths.stream()
 			.filter(fp -> fp.toFile().getName().endsWith(".mzn"))
@@ -151,6 +189,7 @@ public class Main implements Callable<Integer> {
 		Files.createDirectories(outputPath);
 		Files.writeString(originalModelPath, originalModel);
 
+		// Parse the original model
 		CharStream input = CharStreams.fromString(originalModel);
 		Lexer lexer = new MiniZincLexer(input);
 		TokenStream tokens = new CommonTokenStream(lexer);
@@ -173,11 +212,26 @@ public class Main implements Callable<Integer> {
 		String baseModel = lifter.execute(parser.model());
 
 		Assumer assumer = new Assumer(baseModel, lifter.getLifted(), Set.of());
-
 		String liftedModel = assumer.execute();
 
-		Path liftedModelPath = Path.of(outputPath.toString(), "1-" + modelsNamePrefix + ".mzn");
+		Path liftedModelPath = Path.of(outputPath.toString(), "1-" + modelsNamePrefix + ".mzn")
+			.toAbsolutePath();
 		Files.writeString(liftedModelPath, liftedModel);
+
+		// compile the model and get the fzn
+		runCommand(liftedModelPath, true);
+		Path fznLiftedPath = Path.of(outputPath.toString(), "1-" + modelsNamePrefix + ".fzn")
+			.toAbsolutePath();
+
+		// run the model via the fzn
+		runCommand(fznLiftedPath, false);
+
+//		CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
+//		Lexer fznLexer = new MiniZincLexer(fznInput);
+//		TokenStream fznTokens = new CommonTokenStream(fznLexer);
+//		FlatZincParser fznParser = new FlatZincParser(fznTokens);
+//		FlatZincVisitor fznVisitor = new FlatZincVisitor();
+//		Set<RevokedAssumption> assumptions = fznVisitor.execute(fznParser.model());
 
 		return 0;
 	}
