@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import me.simonegazza.lift.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 
 /**
@@ -40,8 +41,15 @@ public class LiftedSimpleParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted) {
-		return "[" + (lifted ? getLiftedName() : getOriginalName()) + "]";
+	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> assumptions) {
+		StringBuilder result = new StringBuilder();
+		boolean condition = assumptions.stream()
+			.anyMatch(a -> a.name().equals(getLiftedName()));
+		if (condition) {
+			result.append("[] %");
+		}
+		result.append("[").append(lifted ? getLiftedName() : getOriginalName()).append("]");
+		return result.toString();
 	}
 
 	@Override

@@ -85,30 +85,6 @@ public class Lifter {
 	}
 
 	/**
-	 * Builds the parameter array (both versions).
-	 *
-	 * @param ofLifted whether it should be of lifted parameters or not
-	 *
-	 * @return the solve component of the combined lifts
-	 */
-	private String getParamsArray(boolean ofLifted) {
-		StringBuilder result;
-		if (ofLifted) {
-			result = new StringBuilder("array[int] of var int: params_lifted = ");
-		} else {
-			result = new StringBuilder("array[int] of int: params = ");
-		}
-
-		String ending = lifted.stream()
-			.map(p -> p.paramArrayPiece(ofLifted))
-			.collect(Collectors.joining("\n\t++ "));
-		result.append(ending);
-		result.append("\n;\n");
-
-		return result.toString();
-	}
-
-	/**
 	 * Computes the value of the given parameter by recursively evaluating all
 	 * of its dependencies.
 	 * <p>
@@ -219,6 +195,13 @@ public class Lifter {
 	}
 
 	/**
+	 * @return the lifted parameters
+	 */
+	public List<LiftedParameter> getLifted() {
+		return lifted;
+	}
+
+	/**
 	 * Executes the rewriting process and returns the transformed model.
 	 * <p>
 	 * This method:
@@ -241,11 +224,6 @@ public class Lifter {
 		}
 
 		model.append("include \"chuffed.mzn\";\n\n");
-
-		model.append(getParamsArray(false));
-		model.append("\n");
-		model.append(getParamsArray(true));
-		model.append("\n");
 
 		model.append("array[int] of var bool: assumed = [params_lifted[i] = params[i] | i in index_set(params)];\n");
 		model.append(

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import me.simonegazza.lift.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 
 /**
@@ -43,8 +45,23 @@ public class LiftedSetParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted) {
-		return "[if false then true else e endif | e in " + (lifted ? getLiftedName() : getOriginalName()) + "]";
+	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> assumptions) {
+		StringBuilder result = new StringBuilder("[if ");
+
+		String coordinates;
+		if (assumptions.size() > 0) {
+			coordinates = "(" + assumptions.stream()
+				.map(a -> "e = " + a)
+				.collect(Collectors.joining(" \\/ ")) + ")";
+		} else {
+			coordinates = "false";
+		}
+
+		return result.append(coordinates)
+			.append(" then true else e endif | e in ")
+			.append(lifted ? getLiftedName() : getOriginalName())
+			.append("]")
+			.toString();
 	}
 
 	@Override

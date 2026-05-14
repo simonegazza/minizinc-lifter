@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
+import me.simonegazza.lift.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincSetType;
@@ -134,7 +135,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted) {
+	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> assumptions) {
 		// TODO: to do this properly, this function should be made recursive (on
 		// the subtypes) but it would mean restructuring these classes, so I'll
 		// leave it as is for now.
@@ -147,7 +148,22 @@ public class LiftedArrayParameter extends LiftedParameter {
 			.mapToObj(e -> "i" + e)
 			.toList();
 
-		StringBuilder firstPart = new StringBuilder("[if false then true else ")
+		StringBuilder firstPart = new StringBuilder("[if ");
+
+		String coordinates;
+		if (assumptions.size() > 0) {
+			coordinates = assumptions.stream()
+				.map(a -> "(" + IntStream.range(0, a.indices().size())
+					.mapToObj(i -> "i" + i + " = " + a.indices().get(i))
+					.collect(Collectors.joining(" /\\ ")) + ")")
+				.collect(Collectors.joining(" \\/ "));
+		} else {
+			coordinates = "false";
+		}
+
+		firstPart
+			.append(coordinates)
+			.append(" then\n\ttrue\nelse\n\t")
 			.append(lifted ? getLiftedName() : getOriginalName())
 			.append("[")
 			.append(indices.stream().collect(Collectors.joining(", ")))

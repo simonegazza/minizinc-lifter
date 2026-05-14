@@ -9,6 +9,7 @@ import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
+import me.simonegazza.lift.RevokedAssumption;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
@@ -310,11 +311,13 @@ public abstract class LiftedParameter {
 	/**
 	 * Generates the contribution to the params arrays.
 	 *
-	 * @param lifted whether we should consider lifted quantities or not
+	 * @param lifted             whether we should consider lifted quantities or
+	 *                               not
+	 * @param revokedAssumptions the assumptions to be revoked
 	 *
 	 * @return a sum of absolute differences over selected indices
 	 */
-	public abstract String paramArrayPiece(boolean lifted);
+	public abstract String paramArrayPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions);
 
 	/**
 	 * Generates the contribution to the objective function.
