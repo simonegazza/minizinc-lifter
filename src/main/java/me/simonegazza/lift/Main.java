@@ -1,7 +1,5 @@
 package me.simonegazza.lift;
 
-import java.io.File;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -83,8 +81,8 @@ public class Main implements Callable<Integer> {
 	 * Multiple files can be provided. Their contents are concatenated and
 	 * parsed as a single MiniZinc model.
 	 */
-	@Option(names = { "-m", "--models" }, arity = "1..*", description = "MZN and MDN file paths")
-	private List<String> filePaths;
+	@Option(names = { "-m", "--models" }, arity = "1..*", description = "MZN and MDN file paths", required = true)
+	private List<Path> filePaths;
 
 	/**
 	 * Parameters that should be lifted.
@@ -93,16 +91,17 @@ public class Main implements Callable<Integer> {
 	 * request describes which parameter should become a decision variable and
 	 * may also contain additional information such as bounds.
 	 */
-	@Option(names = { "-p", "--parameters" }, arity = "1..*", description = "Parameter to lift the model with")
+	@Option(names = { "-p",
+			"--parameters" }, arity = "1..*", description = "Parameter to lift the model with", required = true)
 	private Set<String> parameters;
 
 	/**
-	 * Optional output file.
+	 * Folder path where models will be saved.
 	 * <p>
-	 * If not provided, the transformed model is printed to stdout.
+	 * If not provided, a folder will be created with that name.
 	 */
-	@Option(names = { "-o", "--output" }, description = "Output file path (default prints to console)")
-	private Optional<File> outputFile = Optional.empty();
+	@Option(names = { "-o", "--output" }, description = "Output folder path", required = true)
+	private Path outputPath;
 
 	/**
 	 * Application entry point.
@@ -127,21 +126,32 @@ public class Main implements Callable<Integer> {
 	 */
 	@Override
 	public Integer call() throws Exception {
-		if (filePaths == null) {
-			throw new IllegalArgumentException("No file to parse, exiting");
-		} else if (parameters == null) {
-			throw new IllegalArgumentException("No lifting asked, nothing to do");
-		}
-
 		List<LiftRequest> cliParameters = parameters.stream()
 			.map(LiftRequest::parse).toList();
 
 		StringBuilder sb = new StringBuilder();
-		for (String fp : filePaths) {
-			sb.append(Files.readString(Path.of(fp)) + "\n");
+		for (Path fp : filePaths) {
+			sb.append(Files.readString(fp) + "\n");
 		}
+		System.out.println(filePaths.stream().map(fp -> fp.toFile().getName()).toList());
+		String originalModel = sb.toString();
+		String modelsNamePrefix = filePaths.stream()
+			.filter(fp -> fp.toFile().getName().endsWith(".mzn"))
+			.map(fp -> {
+				String filename = fp.toFile().getName();
+				int idx = filename.lastIndexOf(".");
+				return filename.substring(0, idx);
+			})
+			.findFirst()
+			.orElse("original");
+		Path originalModelPath = Path.of(outputPath.toString(), modelsNamePrefix + ".mzn");
 
-		CharStream input = CharStreams.fromString(sb.toString());
+		// creates output folder if it does not exists
+		outputPath = outputPath.resolve(outputPath);
+		Files.createDirectories(outputPath);
+		Files.writeString(originalModelPath, originalModel);
+
+		CharStream input = CharStreams.fromString(originalModel);
 		Lexer lexer = new MiniZincLexer(input);
 		TokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
@@ -160,15 +170,14 @@ public class Main implements Callable<Integer> {
 		}
 
 		Lifter lifter = new Lifter(tokens, cliParameters, graph);
-		String liftedModel = lifter.execute(parser.model());
+		String baseModel = lifter.execute(parser.model());
 
-		if (outputFile.isEmpty()) {
-			System.out.println(liftedModel);
-		} else {
-			PrintWriter pw = new PrintWriter(outputFile.get());
-			pw.println(liftedModel);
-			pw.close();
-		}
+		Assumer assumer = new Assumer(baseModel, lifter.getLifted(), Set.of());
+
+		String liftedModel = assumer.execute();
+
+		Path liftedModelPath = Path.of(outputPath.toString(), "1-" + modelsNamePrefix + ".mzn");
+		Files.writeString(liftedModelPath, liftedModel);
 
 		return 0;
 	}
