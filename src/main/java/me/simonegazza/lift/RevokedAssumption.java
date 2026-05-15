@@ -10,6 +10,6 @@ import java.util.List;
  * @param indices a list of indices representing the position of this specific
  *                    parameter (note that the list can be empty but not null)
  */
-public record RevokedAssumption(String name, List<Object> indices) {
+public record RevokedAssumption(String name, List<Integer> indices) {
 
 }

@@ -1,6 +1,8 @@
 package me.simonegazza.lift;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -8,11 +10,15 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
+import me.simonegazza.antlr.flatzinc.FlatZincLexer;
+import me.simonegazza.antlr.flatzinc.FlatZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.utils.ParameterGraph;
+import me.simonegazza.lift.visitors.FlatZincVisitor;
 import me.simonegazza.lift.visitors.Lifter;
 import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
@@ -112,10 +118,12 @@ public class Main implements Callable<Integer> {
 	 * @param modelPath the path to the model to run or compile
 	 * @param compile   whether we turn on compilation or run
 	 *
+	 * @return the last row of the output
+	 *
 	 * @throws IOException          can occur when inheriting IO
 	 * @throws InterruptedException in case command get stopped by the OS
 	 */
-	private void runCommand(Path modelPath, boolean compile) throws IOException, InterruptedException {
+	private String runCommand(Path modelPath, boolean compile) throws IOException, InterruptedException {
 		List<String> command = List.of(
 			"minizinc",
 			"--no-output-ozn",
@@ -131,14 +139,23 @@ public class Main implements Callable<Integer> {
 		}
 
 		ProcessBuilder compilationPB = new ProcessBuilder(command);
-		compilationPB.inheritIO();
+		compilationPB.redirectErrorStream(true);
 		compilationPB.directory(modelPath.getParent().toFile());
 
 		Process compilationProcess = compilationPB.start();
+
+		InputStreamReader isr = new InputStreamReader(compilationProcess.getInputStream());
+		BufferedReader reader = new BufferedReader(isr);
+
 		int exitCode = compilationProcess.waitFor();
 		if (exitCode != 0) {
 			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
 		}
+
+		List<String> result = reader.lines().toList();
+		System.out.println(result.stream().collect(Collectors.joining("\n")));
+
+		return result.get(result.size() - 2);
 	}
 
 	/**
@@ -224,14 +241,21 @@ public class Main implements Callable<Integer> {
 			.toAbsolutePath();
 
 		// run the model via the fzn
-		runCommand(fznLiftedPath, false);
+		// String lastLineCommandOutput = runCommand(fznLiftedPath, false);
+		String lastLineCommandOutput = runCommand(liftedModelPath, false);
+		List<String> nogoods = List.of(lastLineCommandOutput
+			.substring(2, lastLineCommandOutput.length() - 1)
+			.split(","))
+			.stream()
+			.map(s -> s.substring(3))
+			.toList();
 
-//		CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
-//		Lexer fznLexer = new MiniZincLexer(fznInput);
-//		TokenStream fznTokens = new CommonTokenStream(fznLexer);
-//		FlatZincParser fznParser = new FlatZincParser(fznTokens);
-//		FlatZincVisitor fznVisitor = new FlatZincVisitor();
-//		Set<RevokedAssumption> assumptions = fznVisitor.execute(fznParser.model());
+		CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
+		Lexer fznLexer = new FlatZincLexer(fznInput);
+		TokenStream fznTokens = new CommonTokenStream(fznLexer);
+		FlatZincParser fznParser = new FlatZincParser(fznTokens);
+		FlatZincVisitor fznVisitor = new FlatZincVisitor(fznLiftedPath, lifter.getLifted(), nogoods);
+		fznVisitor.execute(fznParser.model());
 
 		return 0;
 	}

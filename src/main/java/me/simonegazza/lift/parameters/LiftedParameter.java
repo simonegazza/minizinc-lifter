@@ -309,6 +309,15 @@ public abstract class LiftedParameter {
 	}
 
 	/**
+	 * Get the dimensions of the lifted parameter.
+	 *
+	 * @return the dimensions for this lifted parameter
+	 */
+	public List<Integer> getDimensions() {
+		return parameter.getDimensions();
+	}
+
+	/**
 	 * Generates the contribution to the params arrays.
 	 *
 	 * @param lifted             whether we should consider lifted quantities or
