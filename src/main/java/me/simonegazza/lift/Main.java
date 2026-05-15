@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import me.simonegazza.antlr.flatzinc.FlatZincLexer;
 import me.simonegazza.antlr.flatzinc.FlatZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
@@ -61,6 +63,11 @@ import picocli.CommandLine.Option;
  */
 @CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
 public class Main implements Callable<Integer> {
+
+	/**
+	 * Application logger.
+	 */
+	private static final Logger logger = Logger.getLogger(Main.class.getName());
 
 	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
@@ -130,6 +137,7 @@ public class Main implements Callable<Integer> {
 		List<String> command = List.of(
 			"minizinc",
 			"--solver", "chuffed",
+			"-w", // suppress warnings
 			// 5 minutes timeout expressed in milliseconds
 			"--time-limit", String.valueOf(1000 * 60 * 5),
 			"--verbose",
@@ -183,11 +191,16 @@ public class Main implements Callable<Integer> {
 	 */
 	@Override
 	public Integer call() throws Exception {
+		logger.info("Application starts");
+
+		// Parse cli arguments
 		List<LiftRequest> cliParameters = parameters.stream()
 			.map(LiftRequest::parse).toList();
 
+		// Reading and appending files
 		StringBuilder sb = new StringBuilder();
 		for (Path fp : filePaths) {
+			logger.info("Reading file " + fp.toString() + "...");
 			sb.append(Files.readString(fp) + "\n");
 		}
 
@@ -209,12 +222,13 @@ public class Main implements Callable<Integer> {
 		Files.writeString(originalModelPath, originalModel);
 
 		// Parse the original model
+		logger.info("Parsing the original model...");
 		CharStream input = CharStreams.fromString(originalModel);
 		Lexer lexer = new MiniZincLexer(input);
 		TokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
 
-		// Get the dependency graph of the parameters and verify the existance
+		// Get the dependency graph of the parameters and verify the existence
 		// of the parameters to be lifted
 		ParameterExtractor pe = new ParameterExtractor();
 		ParameterGraph graph = pe.execute(parser.model());
@@ -231,27 +245,31 @@ public class Main implements Callable<Integer> {
 		tokens.seek(0);
 
 		// Resolve the dependencies of the parameters and create base model
+		logger.info("Lifting parameter representation...");
 		Lifter lifter = new Lifter(tokens, cliParameters, graph);
 		String baseModel = lifter.execute(parser.model());
 
 		Set<RevokedAssumption> assumptions = new HashSet<>();
-
 		for (int i = 1;; i++) {
 			// Customize the model
+			logger.info("Adding assumptions...");
 			Assumer assumer = new Assumer(baseModel, lifter.getLifted(), assumptions);
 			String liftedModel = assumer.execute();
 
 			// Write .mzn to file
+			logger.info("Writing lifted .mzn with assumptions");
 			Path liftedModelPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".mzn")
 				.toAbsolutePath();
 			Files.writeString(liftedModelPath, liftedModel);
 
 			// Compile the .mzn and get the .fzn
+			logger.info("Compiling the .mzn...");
 			runCommand(liftedModelPath, true);
 			Path fznLiftedPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".fzn")
 				.toAbsolutePath();
 
 			// Run the .fzn
+			logger.info("Running the lifted model...");
 			// var lastLinesCommandOutput = runCommand(fznLiftedPath, false);
 			// Currently running the .mzn (which means we compile the file two
 			// times) due to a bug in MiniZinc
@@ -259,11 +277,12 @@ public class Main implements Callable<Integer> {
 
 			// Check if we found a solution
 			if ("----------".equals(lastLinesCommandOutput.get(3))) {
-				System.out.println("Solution has been found, exiting");
+				logger.info("A solution has been found, exiting");
 				return 0;
 			}
 
 			// Get the nogoods
+			logger.info("Extracting nogoods...");
 			String nogoodLine = lastLinesCommandOutput.get(1);
 			List<String> nogoods = Pattern.compile(",")
 				.splitAsStream(
@@ -279,7 +298,11 @@ public class Main implements Callable<Integer> {
 
 			// Visit the .fzn for original names and indexes of parameters
 			FlatZincVisitor fznVisitor = new FlatZincVisitor(fznLiftedPath, lifter.getLifted(), nogoods);
-			assumptions.addAll(fznVisitor.execute(fznParser.model()));
+			Set<RevokedAssumption> newNogoodAssumptions = fznVisitor.execute(fznParser.model());
+			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
+				.map(RevokedAssumption::toString)
+				.collect(Collectors.joining(", ")));
+			assumptions.addAll(newNogoodAssumptions);
 		}
 	}
 }

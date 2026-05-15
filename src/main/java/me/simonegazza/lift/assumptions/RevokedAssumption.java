@@ -1,6 +1,7 @@
 package me.simonegazza.lift.assumptions;
 
 import java.util.List;
+import me.simonegazza.lift.parameters.LiftedArrayParameter;
 
 /**
  * Immutable container used to transfer information between the Lifter and the
@@ -40,6 +41,11 @@ public record RevokedAssumption(String name, List<Integer> indices) implements C
 		}
 
 		return 0;
+	}
+
+	@Override
+	public final String toString() {
+		return LiftedArrayParameter.arrayAccess(name, indices);
 	}
 
 }

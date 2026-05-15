@@ -53,8 +53,8 @@ public class LiftedArrayParameter extends LiftedParameter {
 	 *
 	 * @return an array access string of the form `name[i0, i1, ..]`
 	 */
-	private static final String arrayAccess(String name, List<String> indices) {
-		return name + "[" + indices.stream().collect(Collectors.joining(", ")) + "]";
+	public static final String arrayAccess(String name, List<?> indices) {
+		return name + "[" + indices.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
 	}
 
 	/**
