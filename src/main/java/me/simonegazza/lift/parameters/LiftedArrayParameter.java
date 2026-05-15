@@ -18,6 +18,23 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+/**
+ * Represents a lifted version of an array parameter where the entire array is
+ * transformed into decision variables.
+ * <p>
+ * The lifting process replaces the original array with a new array variable and
+ * introduces an objective that minimizes the distance between the lifted and
+ * original arrays across all indices. The notion of distance can depend on the
+ * subtype of the array elements (e.g. scalars, sets, or nested arrays).
+ * <p>
+ * This class supports multi-dimensional arrays.
+ * <p>
+ * Special handling is required for the set inner types: the solve piece
+ * distance is computed via symmetric difference cardinality</li>
+ * <p>
+ * Nested arrays are not currently supported
+ * </ul>
+ */
 public class LiftedArrayParameter extends LiftedParameter {
 
 	protected LiftedArrayParameter(
@@ -26,6 +43,29 @@ public class LiftedArrayParameter extends LiftedParameter {
 		Set<OriginalParameter> dependencies) {
 
 		super(parameter, List.of(change), dependencies);
+	}
+
+	/**
+	 * Utility function that returns a string representing an array access.
+	 *
+	 * @param name    the array name
+	 * @param indices the list of indices
+	 *
+	 * @return an array access string of the form `name[i0, i1, ..]`
+	 */
+	private static final String arrayAccess(String name, List<String> indices) {
+		return name + "[" + indices.stream().collect(Collectors.joining(", ")) + "]";
+	}
+
+	/**
+	 * Utility function that returns a string a parenthesized expression.
+	 *
+	 * @param expr the expression to parenthesize
+	 *
+	 * @return a string of the form `(expr)`
+	 */
+	private static final String parenthesize(String expr) {
+		return "(" + expr + ")";
 	}
 
 	@Override
@@ -75,28 +115,20 @@ public class LiftedArrayParameter extends LiftedParameter {
 		if (inner instanceof MiniZincSetType) {
 			// Sort of Jaccard Distance
 			firstPart.append("card(")
-				.append(getLiftedName())
-				.append("[")
-				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("]")
+				.append(arrayAccess(getLiftedName(), indices))
 				.append(" symdiff ")
-				.append(getOriginalName())
-				.append("[")
-				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("]))");
+				.append(arrayAccess(getOriginalName(), indices))
+				.append("))");
 
 		} else if (inner instanceof MiniZincArrayType) { // MiniZincArrayType
 			throw new UnimplementedException(
 				"Recursive arrays of arrays are not implemented in the solve piece");
 		} else {
-			firstPart.append(getLiftedName())
-				.append("[")
-				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("] - ")
-				.append(getOriginalName())
-				.append("[")
-				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("])");
+			firstPart
+				.append(arrayAccess(getLiftedName(), indices))
+				.append(" - ")
+				.append(arrayAccess(getOriginalName(), indices))
+				.append(")");
 		}
 
 		String secondPart = IntStream.range(0, dimensionsExpression.size())
@@ -116,9 +148,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 						result.append(dimensionsExpression.size());
 					}
 
-					result.append("(");
-					result.append(getOriginalName());
-					result.append(")");
+					result.append(parenthesize(getOriginalName()));
 				} else {
 					result.append(dimensionsExpression.get(i));
 				}
@@ -163,11 +193,9 @@ public class LiftedArrayParameter extends LiftedParameter {
 
 		firstPart
 			.append(coordinates)
-			.append(" then\n\ttrue\nelse\n\t")
-			.append(lifted ? getLiftedName() : getOriginalName())
-			.append("[")
-			.append(indices.stream().collect(Collectors.joining(", ")))
-			.append("] endif");
+			.append(" then\n\t\ttrue\n\telse\n\t\t")
+			.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
+			.append("\n\tendif");
 
 		StringBuilder secondPart = new StringBuilder().append(
 			IntStream.range(0, dimensionsExpression.size()).mapToObj(i -> {
@@ -186,9 +214,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 						result.append(dimensionsExpression.size());
 					}
 
-					result.append("(");
-					result.append(getOriginalName());
-					result.append(")");
+					result.append(parenthesize(getOriginalName()));
 				} else {
 					result.append(dimensionsExpression.get(i));
 				}
@@ -202,10 +228,8 @@ public class LiftedArrayParameter extends LiftedParameter {
 				.append("[if false then true else e endif | ")
 				.append(secondPart)
 				.append(", e in ")
-				.append(lifted ? getLiftedName() : getOriginalName())
-				.append("[")
-				.append(indices.stream().collect(Collectors.joining(", ")))
-				.append("]]")
+				.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
+				.append("]")
 				.toString();
 		}
 

@@ -6,16 +6,18 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 import me.simonegazza.antlr.flatzinc.FlatZincLexer;
 import me.simonegazza.antlr.flatzinc.FlatZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.assumptions.Assumer;
+import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.utils.ParameterGraph;
@@ -119,15 +121,14 @@ public class Main implements Callable<Integer> {
 	 * @param modelPath the path to the model to run or compile
 	 * @param compile   whether we turn on compilation or run
 	 *
-	 * @return the last row of the output
+	 * @return the last 10 rows of the output
 	 *
 	 * @throws IOException          can occur when inheriting IO
 	 * @throws InterruptedException in case command get stopped by the OS
 	 */
-	private String runCommand(Path modelPath, boolean compile) throws IOException, InterruptedException {
+	private List<String> runCommand(Path modelPath, boolean compile) throws IOException, InterruptedException {
 		List<String> command = List.of(
 			"minizinc",
-			"--no-output-ozn",
 			"--solver", "chuffed",
 			// 5 minutes timeout expressed in milliseconds
 			"--time-limit", String.valueOf(1000 * 60 * 5),
@@ -147,16 +148,16 @@ public class Main implements Callable<Integer> {
 
 		InputStreamReader isr = new InputStreamReader(compilationProcess.getInputStream());
 		BufferedReader reader = new BufferedReader(isr);
+		List<String> result = reader.lines()
+			.peek(System.out::println)
+			.toList();
 
 		int exitCode = compilationProcess.waitFor();
 		if (exitCode != 0) {
 			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
 		}
 
-		List<String> result = reader.lines().toList();
-		System.out.println(result.stream().collect(Collectors.joining("\n")));
-
-		return result.get(result.size() - 2);
+		return result.subList(result.size() - 5, result.size()).reversed();
 	}
 
 	/**
@@ -213,10 +214,10 @@ public class Main implements Callable<Integer> {
 		TokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
 
+		// Get the dependency graph of the parameters and verify the existance
+		// of the parameters to be lifted
 		ParameterExtractor pe = new ParameterExtractor();
 		ParameterGraph graph = pe.execute(parser.model());
-		tokens.seek(0);
-
 		for (LiftRequest request : cliParameters) {
 			Optional<OriginalParameter> toLift = graph.getByName(request.getName());
 			if (toLift.isEmpty()) {
@@ -226,38 +227,56 @@ public class Main implements Callable<Integer> {
 
 		}
 
+		// Reset the token for the next pass
+		tokens.seek(0);
+
+		// Resolve the dependencies of the parameters and create base model
 		Lifter lifter = new Lifter(tokens, cliParameters, graph);
 		String baseModel = lifter.execute(parser.model());
 
-		Assumer assumer = new Assumer(baseModel, lifter.getLifted(), Set.of());
-		String liftedModel = assumer.execute();
+		Set<RevokedAssumption> assumptions = new HashSet<>();
 
-		Path liftedModelPath = Path.of(outputPath.toString(), "1-" + modelsNamePrefix + ".mzn")
-			.toAbsolutePath();
-		Files.writeString(liftedModelPath, liftedModel);
+		for (int i = 1;; i++) {
+			// Customize the model
+			Assumer assumer = new Assumer(baseModel, lifter.getLifted(), assumptions);
+			String liftedModel = assumer.execute();
 
-		// compile the model and get the fzn
-		runCommand(liftedModelPath, true);
-		Path fznLiftedPath = Path.of(outputPath.toString(), "1-" + modelsNamePrefix + ".fzn")
-			.toAbsolutePath();
+			// Write .mzn to file
+			Path liftedModelPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".mzn")
+				.toAbsolutePath();
+			Files.writeString(liftedModelPath, liftedModel);
 
-		// run the model via the fzn
-		// String lastLineCommandOutput = runCommand(fznLiftedPath, false);
-		String lastLineCommandOutput = runCommand(liftedModelPath, false);
-		List<String> nogoods = List.of(lastLineCommandOutput
-			.substring(2, lastLineCommandOutput.length() - 1)
-			.split(","))
-			.stream()
-			.map(s -> s.substring(3))
-			.toList();
+			// Compile the .mzn and get the .fzn
+			runCommand(liftedModelPath, true);
+			Path fznLiftedPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".fzn")
+				.toAbsolutePath();
 
-		CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
-		Lexer fznLexer = new FlatZincLexer(fznInput);
-		TokenStream fznTokens = new CommonTokenStream(fznLexer);
-		FlatZincParser fznParser = new FlatZincParser(fznTokens);
-		FlatZincVisitor fznVisitor = new FlatZincVisitor(fznLiftedPath, lifter.getLifted(), nogoods);
-		fznVisitor.execute(fznParser.model());
+			// Run the .fzn
+			List<String> lastLinesCommandOutput = runCommand(fznLiftedPath, false);
 
-		return 0;
+			// Check if we found a solution
+			if ("----------".equals(lastLinesCommandOutput.get(3))) {
+				System.out.println("Solution has been found, exiting");
+				return 0;
+			}
+
+			// Get the nogoods
+			List<String> nogoods = Pattern.compile(",").splitAsStream(
+				lastLinesCommandOutput
+					.get(1)
+					.substring(2, lastLinesCommandOutput.size() - 1))
+				.map(s -> s.substring(3))
+				.toList();
+
+			// Parse the .fzn
+			CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
+			Lexer fznLexer = new FlatZincLexer(fznInput);
+			TokenStream fznTokens = new CommonTokenStream(fznLexer);
+			FlatZincParser fznParser = new FlatZincParser(fznTokens);
+
+			// Visit the .fzn for original names and indexes of parameters
+			FlatZincVisitor fznVisitor = new FlatZincVisitor(fznLiftedPath, lifter.getLifted(), nogoods);
+			assumptions.addAll(fznVisitor.execute(fznParser.model()));
+		}
 	}
 }

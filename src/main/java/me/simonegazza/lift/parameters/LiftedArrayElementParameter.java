@@ -117,8 +117,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 						.append(getLiftedName())
 						.append(" symdiff ")
 						.append(getOriginalName())
-						.append(")")
-						.append(")");
+						.append("))");
 
 				} else if (inner instanceof MiniZincArrayType) { // MiniZincArrayType
 					throw new UnimplementedException(
