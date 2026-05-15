@@ -1,235 +1,113 @@
 grammar FlatZinc;
 
-model
-    : predicateItem* parDeclItem* varDeclItem* constraintItem* solveItem EOF
-    ;
+model: predicateItem* parDeclItem* varDeclItem* constraintItem* solveItem EOF;
 
-// Predicate items
-predicateItem
-    : PREDICATE identifier LPAREN predParamDeclList? RPAREN SEMI
-    ;
-
-predParamDeclList
-    : predParamDecl (COMMA predParamDecl)*
-    ;
-
-predParamDecl
-    : predParamType COLON identifier
-    ;
+// Predicates
+predicateItem: 'predicate' IDENTIFIER '(' predParamDeclList? ')' ';';
+predParamDeclList: predParamDecl (',' predParamDecl)*;
+predParamDecl: predParamType ':' IDENTIFIER;
 
 // Types
 basicParType
-    : BOOL
-    | INT
-    | FLOAT
-    | SET OF INT
+    : 'bool'
+    | 'int'
+    | 'float'
+    | 'set' 'of' 'int'
     ;
 
 basicVarType
-    : VAR basicParType
-    | VAR intLiteral RANGE intLiteral
-    | VAR LBRACE intLiteralList RBRACE
-    | VAR floatLiteral RANGE floatLiteral
-    | VAR SET OF intLiteral RANGE intLiteral
-    | VAR SET OF LBRACE intLiteralList? RBRACE
+    : 'var' basicParType
+    | 'var' INT_LITERAL '..' INT_LITERAL
+    | 'var' '{' intLiteralList '}'
+    | 'var' FLOAT_LITERAL '..' FLOAT_LITERAL
+    | 'var' 'set' 'of' INT_LITERAL '..' INT_LITERAL
+    | 'var' 'set' 'of' '{' intLiteralList? '}'
     ;
 
-arrayVarType
-    : ARRAY LBRACK indexSet RBRACK OF basicVarType
-    ;
+arrayVarType: 'array' '[' indexSet ']' 'of' basicVarType;
 
-indexSet
-    : INT_LITERAL RANGE intLiteral
-    ;
+predIndexSet: indexSet | 'int';
+indexSet: INT_LITERAL '..' INT_LITERAL;
 
 basicPredParamType
     : basicParType
     | basicVarType
-    | intLiteral RANGE intLiteral
-    | floatLiteral RANGE floatLiteral
-    | LBRACE intLiteralList RBRACE
-    | SET OF intLiteral RANGE intLiteral
-    | SET OF LBRACE intLiteralList? RBRACE
+    | INT_LITERAL '..' INT_LITERAL
+    | FLOAT_LITERAL '..' FLOAT_LITERAL
+    | '{' intLiteralList '}'
+    | 'set' 'of' INT_LITERAL '..' INT_LITERAL
+    | 'set' 'of' '{' intLiteralList? '}'
     ;
 
 predParamType
     : basicPredParamType
-    | ARRAY LBRACK predIndexSet RBRACK OF basicPredParamType
-    ;
-
-predIndexSet
-    : indexSet
-    | INT
+    | 'array' '[' predIndexSet ']' 'of' basicPredParamType
     ;
 
 // Expressions
-basicLiteralExpr
-    : boolLiteral
-    | intLiteral
-    | floatLiteral
-    | setLiteral
-    ;
-
-basicExpr
-    : basicLiteralExpr
-    | varParIdentifier
-    ;
-
 expr
     : basicExpr
     | arrayLiteral
     ;
 
-varParIdentifier
-    : IDENTIFIER
-    ;
-
-// Literals
-boolLiteral
-    : FALSE
-    | TRUE
-    ;
-
-intLiteral
-    : INT_LITERAL
-    ;
-
-floatLiteral
-    : FLOAT_LITERAL
+basicExpr
+    : 'true'
+    | 'false'
+    | INT_LITERAL
+    | FLOAT_LITERAL
+    | setLiteral
+    | IDENTIFIER
     ;
 
 setLiteral
-    : LBRACE intLiteralList? RBRACE
-    | intLiteral RANGE intLiteral
-    | LBRACE floatLiteralList? RBRACE
-    | floatLiteral RANGE floatLiteral
+    : '{' intLiteralList? '}'
+    | INT_LITERAL '..' INT_LITERAL
+    | '{' floatLiteralList? '}'
+    | FLOAT_LITERAL '..' FLOAT_LITERAL
     ;
 
-arrayLiteral
-    : LBRACK basicExprList? RBRACK
-    ;
+basicExprList: basicExpr (',' basicExpr)*;
 
-parArrayLiteral
-    : LBRACK basicLiteralExprList? RBRACK
-    ;
+basicLiteralExprList: basicExpr (',' basicExpr)*;
+
+arrayLiteral: '[' basicExprList? ']';
 
 // Lists
-intLiteralList
-    : intLiteral (COMMA intLiteral)*
-    ;
+intLiteralList: INT_LITERAL (',' INT_LITERAL)*;
+floatLiteralList: FLOAT_LITERAL (',' FLOAT_LITERAL)*;
 
-floatLiteralList
-    : floatLiteral (COMMA floatLiteral)*
-    ;
+// Declarations
+parDeclItem: 'array' '[' indexSet ']' 'of' basicParType ':' IDENTIFIER '=' '[' basicLiteralExprList? ']' ';';
 
-basicExprList
-    : basicExpr (COMMA basicExpr)*
-    ;
-
-basicLiteralExprList
-    : basicLiteralExpr (COMMA basicLiteralExpr)*
-    ;
-
-exprList
-    : expr (COMMA expr)*
-    ;
-
-annExprList
-    : annExpr (COMMA annExpr)*
-    ;
-
-// Parameter declarations
-parDeclItem
-    : ARRAY LBRACK indexSet RBRACK OF basicParType
-      COLON varParIdentifier
-      ASSIGN parArrayLiteral
-      SEMI
-    ;
-
-// Variable declarations
 varDeclItem
-    : basicVarType COLON varParIdentifier annotations (ASSIGN basicExpr)? SEMI
-    | arrayVarType COLON varParIdentifier annotations ASSIGN arrayLiteral SEMI
+    : basicVarType ':' IDENTIFIER ('::' annotation)* ('=' basicExpr)? ';'
+    | arrayVarType ':' IDENTIFIER ('::' annotation)* '=' arrayLiteral ';'
     ;
 
-// Constraint items
-constraintItem
-    : CONSTRAINT identifier LPAREN exprList? RPAREN annotations SEMI
-    ;
+// Constraints
+constraintItem: 'constraint' IDENTIFIER '(' (expr (',' expr)*)? ')' ('::' annotation)* ';';
 
-// Solve item
+// Solve
 solveItem
-    : SOLVE annotations SATISFY SEMI
-    | SOLVE annotations MINIMIZE basicExpr SEMI
-    | SOLVE annotations MAXIMIZE basicExpr SEMI
+    : 'solve' ('::' annotation)* 'satisfy' ';'
+    | 'solve' ('::' annotation)* 'minimize' basicExpr ';'
+    | 'solve' ('::' annotation)* 'maximize' basicExpr ';'
     ;
 
 // Annotations
-annotations
-    : (DCOLON annotation)*
-    ;
-
-annotation
-    : identifier
-    | identifier LPAREN annExprList RPAREN
-    ;
+annotation: IDENTIFIER ('(' annExpr (',' annExpr)* ')')?;
 
 annExpr
     : basicAnnExpr
-    | LBRACK basicAnnExprList? RBRACK
+    | '[' (basicAnnExpr (',' basicAnnExpr)*)? ']'
     ;
 
 basicAnnExpr
-    : basicLiteralExpr
-    | varParIdentifier
-    | stringLiteral
+    : basicExpr
+    | IDENTIFIER
+    | STRING_LITERAL
     | annotation
     ;
-
-basicAnnExprList
-    : basicAnnExpr (COMMA basicAnnExpr)*
-    ;
-
-// Identifiers
-
-identifier
-    : IDENTIFIER
-    ;
-
-// Strings
-stringLiteral
-    : STRING_LITERAL
-    ;
-
-// Lexer Rules
-PREDICATE  : 'predicate';
-ARRAY      : 'array';
-OF         : 'of';
-VAR        : 'var';
-BOOL       : 'bool';
-INT        : 'int';
-FLOAT      : 'float';
-SET        : 'set';
-CONSTRAINT : 'constraint';
-SOLVE      : 'solve';
-SATISFY    : 'satisfy';
-MINIMIZE   : 'minimize';
-MAXIMIZE   : 'maximize';
-TRUE       : 'true';
-FALSE      : 'false';
-
-LPAREN     : '(';
-RPAREN     : ')';
-LBRACK     : '[';
-RBRACK     : ']';
-LBRACE     : '{';
-RBRACE     : '}';
-COLON      : ':';
-SEMI       : ';';
-COMMA      : ',';
-ASSIGN     : '=';
-RANGE      : '..';
-DCOLON     : '::';
 
 // Literals
 INT_LITERAL
@@ -242,29 +120,13 @@ FLOAT_LITERAL
     : '-'? [0-9]+ '.' [0-9]+ ([Ee] [+-]? [0-9]+)?
     | '-'? [0-9]+ [Ee] [+-]? [0-9]+
     ;
-
-STRING_LITERAL
-    : '"' ( ~["\\\r\n] | '\\' . )* '"'
-    ;
+STRING_LITERAL: '"' ( ~["\\\r\n] | '\\' . )* '"';
 
 // Identifiers
-IDENTIFIER
-    : [A-Za-z] [A-Za-z0-9_]*
-    ;
-
-VAR_PAR_IDENTIFIER
-    : [A-Za-z_] [A-Za-z0-9_]*
-    ;
+IDENTIFIER:         [A-Za-z] [A-Za-z0-9_]*;
+VAR_PAR_IDENTIFIER: [A-Za-z_] [A-Za-z0-9_]*;
 
 // Whitespace and comments
-WS
-    : [ \t\r\n]+ -> skip
-    ;
-
-LINE_COMMENT
-    : '%' ~[\r\n]* -> skip
-    ;
-
-BLOCK_COMMENT
-    : '/*' .*? '*/' -> skip
-    ;
+WS: [ \t\r\n]+ -> skip;
+LINE_COMMENT: '%' ~[\r\n]* -> skip;
+BLOCK_COMMENT: '/*' .*? '*/' -> skip;

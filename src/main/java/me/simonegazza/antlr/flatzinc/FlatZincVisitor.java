@@ -75,6 +75,15 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitArrayVarType(FlatZincParser.ArrayVarTypeContext ctx);
 
 	/**
+	 * Visit a parse tree produced by {@link FlatZincParser#predIndexSet}.
+	 *
+	 * @param ctx the parse tree
+	 *
+	 * @return the visitor result
+	 */
+	T visitPredIndexSet(FlatZincParser.PredIndexSetContext ctx);
+
+	/**
 	 * Visit a parse tree produced by {@link FlatZincParser#indexSet}.
 	 *
 	 * @param ctx the parse tree
@@ -102,22 +111,13 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitPredParamType(FlatZincParser.PredParamTypeContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#predIndexSet}.
+	 * Visit a parse tree produced by {@link FlatZincParser#expr}.
 	 *
 	 * @param ctx the parse tree
 	 *
 	 * @return the visitor result
 	 */
-	T visitPredIndexSet(FlatZincParser.PredIndexSetContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#basicLiteralExpr}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitBasicLiteralExpr(FlatZincParser.BasicLiteralExprContext ctx);
+	T visitExpr(FlatZincParser.ExprContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link FlatZincParser#basicExpr}.
@@ -129,51 +129,6 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitBasicExpr(FlatZincParser.BasicExprContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#expr}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitExpr(FlatZincParser.ExprContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#varParIdentifier}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitVarParIdentifier(FlatZincParser.VarParIdentifierContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#boolLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitBoolLiteral(FlatZincParser.BoolLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#intLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitIntLiteral(FlatZincParser.IntLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#floatLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitFloatLiteral(FlatZincParser.FloatLiteralContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link FlatZincParser#setLiteral}.
 	 *
 	 * @param ctx the parse tree
@@ -181,42 +136,6 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSetLiteral(FlatZincParser.SetLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#arrayLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#parArrayLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitParArrayLiteral(FlatZincParser.ParArrayLiteralContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#intLiteralList}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitIntLiteralList(FlatZincParser.IntLiteralListContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#floatLiteralList}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link FlatZincParser#basicExprList}.
@@ -238,22 +157,31 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitBasicLiteralExprList(FlatZincParser.BasicLiteralExprListContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#exprList}.
+	 * Visit a parse tree produced by {@link FlatZincParser#arrayLiteral}.
 	 *
 	 * @param ctx the parse tree
 	 *
 	 * @return the visitor result
 	 */
-	T visitExprList(FlatZincParser.ExprListContext ctx);
+	T visitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#annExprList}.
+	 * Visit a parse tree produced by {@link FlatZincParser#intLiteralList}.
 	 *
 	 * @param ctx the parse tree
 	 *
 	 * @return the visitor result
 	 */
-	T visitAnnExprList(FlatZincParser.AnnExprListContext ctx);
+	T visitIntLiteralList(FlatZincParser.IntLiteralListContext ctx);
+
+	/**
+	 * Visit a parse tree produced by {@link FlatZincParser#floatLiteralList}.
+	 *
+	 * @param ctx the parse tree
+	 *
+	 * @return the visitor result
+	 */
+	T visitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx);
 
 	/**
 	 * Visit a parse tree produced by {@link FlatZincParser#parDeclItem}.
@@ -292,15 +220,6 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	T visitSolveItem(FlatZincParser.SolveItemContext ctx);
 
 	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#annotations}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitAnnotations(FlatZincParser.AnnotationsContext ctx);
-
-	/**
 	 * Visit a parse tree produced by {@link FlatZincParser#annotation}.
 	 *
 	 * @param ctx the parse tree
@@ -326,31 +245,4 @@ public interface FlatZincVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitBasicAnnExpr(FlatZincParser.BasicAnnExprContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#basicAnnExprList}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitBasicAnnExprList(FlatZincParser.BasicAnnExprListContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#identifier}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitIdentifier(FlatZincParser.IdentifierContext ctx);
-
-	/**
-	 * Visit a parse tree produced by {@link FlatZincParser#stringLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 *
-	 * @return the visitor result
-	 */
-	T visitStringLiteral(FlatZincParser.StringLiteralContext ctx);
 }

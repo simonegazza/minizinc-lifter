@@ -9,7 +9,7 @@ import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
-import me.simonegazza.lift.RevokedAssumption;
+import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;

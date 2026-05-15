@@ -105,6 +105,18 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
+	public T visitPredIndexSet(FlatZincParser.PredIndexSetContext ctx) {
+		return visitChildren(ctx);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.
+	 * </p>
+	 */
+	@Override
 	public T visitIndexSet(FlatZincParser.IndexSetContext ctx) {
 		return visitChildren(ctx);
 	}
@@ -141,19 +153,7 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
-	public T visitPredIndexSet(FlatZincParser.PredIndexSetContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitBasicLiteralExpr(FlatZincParser.BasicLiteralExprContext ctx) {
+	public T visitExpr(FlatZincParser.ExprContext ctx) {
 		return visitChildren(ctx);
 	}
 
@@ -177,115 +177,7 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
-	public T visitExpr(FlatZincParser.ExprContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitVarParIdentifier(FlatZincParser.VarParIdentifierContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitBoolLiteral(FlatZincParser.BoolLiteralContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitIntLiteral(FlatZincParser.IntLiteralContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitFloatLiteral(FlatZincParser.FloatLiteralContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
 	public T visitSetLiteral(FlatZincParser.SetLiteralContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitParArrayLiteral(FlatZincParser.ParArrayLiteralContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitIntLiteralList(FlatZincParser.IntLiteralListContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx) {
 		return visitChildren(ctx);
 	}
 
@@ -321,7 +213,7 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
-	public T visitExprList(FlatZincParser.ExprListContext ctx) {
+	public T visitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx) {
 		return visitChildren(ctx);
 	}
 
@@ -333,7 +225,19 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
-	public T visitAnnExprList(FlatZincParser.AnnExprListContext ctx) {
+	public T visitIntLiteralList(FlatZincParser.IntLiteralListContext ctx) {
+		return visitChildren(ctx);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.
+	 * </p>
+	 */
+	@Override
+	public T visitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx) {
 		return visitChildren(ctx);
 	}
 
@@ -393,18 +297,6 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 * </p>
 	 */
 	@Override
-	public T visitAnnotations(FlatZincParser.AnnotationsContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
 	public T visitAnnotation(FlatZincParser.AnnotationContext ctx) {
 		return visitChildren(ctx);
 	}
@@ -430,42 +322,6 @@ public class FlatZincBaseVisitor<T> extends AbstractParseTreeVisitor<T> implemen
 	 */
 	@Override
 	public T visitBasicAnnExpr(FlatZincParser.BasicAnnExprContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitBasicAnnExprList(FlatZincParser.BasicAnnExprListContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitIdentifier(FlatZincParser.IdentifierContext ctx) {
-		return visitChildren(ctx);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation returns the result of calling
-	 * {@link #visitChildren} on {@code ctx}.
-	 * </p>
-	 */
-	@Override
-	public T visitStringLiteral(FlatZincParser.StringLiteralContext ctx) {
 		return visitChildren(ctx);
 	}
 }

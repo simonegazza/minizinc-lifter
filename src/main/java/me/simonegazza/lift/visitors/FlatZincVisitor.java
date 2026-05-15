@@ -10,26 +10,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.antlr.flatzinc.FlatZincBaseVisitor;
-import me.simonegazza.antlr.flatzinc.FlatZincParser.AnnotationContext;
-import me.simonegazza.antlr.flatzinc.FlatZincParser.AnnotationsContext;
-import me.simonegazza.antlr.flatzinc.FlatZincParser.BoolLiteralContext;
+import me.simonegazza.antlr.flatzinc.FlatZincParser.BasicExprContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.ConstraintItemContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.ModelContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.SolveItemContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.VarDeclItemContext;
-import me.simonegazza.antlr.flatzinc.FlatZincParser.VarParIdentifierContext;
-import me.simonegazza.lift.RevokedAssumption;
+import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.parameters.LiftedParameter;
 
 /**
- * Visit the FlatZinc and it main objective is to return a set of
- * {@link RevokedAssumption} to be implemented in the following run of the
- * MiniZinc file.
+ * Visits a FlatZinc model and extracts the set of {@link RevokedAssumption}s
+ * that must be disabled in the next MiniZinc execution.
  */
 public class FlatZincVisitor {
 
 	/**
-	 * List of nogood names given by the solver.
+	 * List of nogood variable names given by the solver.
 	 */
 	private final List<String> nogoods;
 
@@ -44,58 +40,46 @@ public class FlatZincVisitor {
 	}
 
 	/**
-	 * Find and returns the name of the variable containing the assumptions.
+	 * Visits the solve item to locate the variable referenced by the `assume`
+	 * annotation.
 	 */
 	private static class SolveAssumeFinder extends FlatZincBaseVisitor<String> {
 		@Override
 		public String visitSolveItem(SolveItemContext ctx) {
-			if (ctx.annotations() == null) {
+			if (ctx.annotation().size() == 0) {
 				throw new IllegalStateException("No annotation for the compiled FlatZinc file");
 			}
-			return visitAnnotations(ctx.annotations());
-		}
-
-		@Override
-		public String visitAnnotations(AnnotationsContext ctx) {
 			return ctx.annotation().stream()
-				.map(this::visitAnnotation)
-				.filter(Objects::nonNull)
+				.filter(a -> "assume".equals(a.IDENTIFIER().getText()))
+				.map(a -> a.annExpr().getFirst().getText())
 				.findFirst()
 				.get();
-		}
-
-		@Override
-		public String visitAnnotation(AnnotationContext ctx) {
-			if ("assume".equals(ctx.identifier().getText())) {
-				// This should be enough to get the variable name
-				return ctx.annExprList().getText();
-			}
-			return null;
 		}
 	}
 
 	/**
-	 * Find and returns the array of assumptions.
+	 * Extracts the variable names contained inside the assumption array
+	 * declaration.
 	 */
 	private class VarNamesFinder extends FlatZincBaseVisitor<Void> {
 		/**
-		 * The name of the variable in the assume annotation.
+		 * Name of the variable in the assume annotation.
 		 */
-		private final String assumptionVarName;
+		private final String assumeName;
 
 		/**
-		 * The names of the variables inside the assume array.
+		 * Variable names collected from the assumption array.
 		 */
-		private final List<String> varNames;
+		private final List<String> names;
 
 		public VarNamesFinder(String assumptionVarName) {
-			this.assumptionVarName = assumptionVarName;
-			varNames = new ArrayList<>();
+			assumeName = assumptionVarName;
+			names = new ArrayList<>();
 		}
 
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
-			if (ctx.varParIdentifier().getText().equals(assumptionVarName)) {
+			if (ctx.IDENTIFIER().getText().equals(assumeName)) {
 				return visitArrayLiteral(ctx.arrayLiteral());
 			}
 
@@ -103,65 +87,79 @@ public class FlatZincVisitor {
 		}
 
 		@Override
-		public Void visitVarParIdentifier(VarParIdentifierContext ctx) {
-			varNames.add(ctx.getText());
+		public Void visitBasicExpr(BasicExprContext ctx) {
+			if (ctx.setLiteral() != null) {
+				throw new IllegalStateException("Found a set literal inside the array literal");
+			}
+			names.add(ctx.getText());
 			return null;
 		}
 
-		@Override
-		public Void visitBoolLiteral(BoolLiteralContext ctx) {
-			varNames.add(ctx.getText());
-			return null;
+		/**
+		 * Scans the FlatZinc model and retrieves all variable names contained
+		 * in the assumption array.
+		 *
+		 * @param ctx the root FlatZinc model context
+		 *
+		 * @return the list of assumption variable names
+		 */
+		public List<String> getVarNames(ModelContext ctx) {
+			ctx.varDeclItem().stream().forEach(this::visitVarDeclItem);
+			return names;
 		}
 
 	}
 
 	/**
-	 * Recursively look at variables to get all parameters involved in the
-	 * failure.
+	 * Recursively traverses introduced variables in order to identify the
+	 * original parameters involved in a failure.
 	 */
 	private class BackwardFinder extends FlatZincBaseVisitor<Optional<Set<String>>> {
 		/**
-		 * Name of the current variable we are looking for.
+		 * Current variable name being analyzed.
 		 */
-		private final String varName;
+		private final String name;
 
 		/**
-		 * The FlatZinc model context.
+		 * FlatZinc model context.
 		 */
 		private final ModelContext ctx;
 
-		public BackwardFinder(String varName, ModelContext ctx) {
-			this.varName = varName;
+		public BackwardFinder(String name, ModelContext ctx) {
+			this.name = name;
 			this.ctx = ctx;
 		}
 
 		@Override
 		public Optional<Set<String>> visitVarDeclItem(VarDeclItemContext ctx) {
-			boolean isElsewhereDefined = ctx.annotations().annotation().stream()
-				.anyMatch(a -> "is_defined_var".equals(a.identifier().getText()));
-			if (ctx.varParIdentifier().getText().equals(varName) && !isElsewhereDefined) {
-				return Optional.of(Set.of(varName));
+			// Check if variable is introduced by the compilation
+			boolean isElsewhereDefined = ctx.annotation().stream()
+				.anyMatch(a -> "is_defined_var".equals(a.IDENTIFIER().getText()));
+
+			if (ctx.IDENTIFIER().getText().equals(name) && !isElsewhereDefined) {
+				return Optional.of(Set.of(name));
 			}
 			return Optional.empty();
 		}
 
 		@Override
 		public Optional<Set<String>> visitConstraintItem(ConstraintItemContext ctx) {
-			if (ctx.annotations().annotation().size() > 0 && ctx.exprList() != null) {
-				boolean correctAnnotation = ctx.annotations().annotation().stream()
-					.anyMatch(a -> a.annExprList() != null
-						&& "defines_var".equals(a.identifier().getText())
-						&& a.annExprList().getText().equals(varName));
+			if (ctx.annotation().size() > 0 && ctx.expr().size() > 0) {
 
+				// Verify we are looking at the right annotation
+				boolean correctAnnotation = ctx.annotation().stream()
+					.anyMatch(a -> a.annExpr().size() > 0
+						&& "defines_var".equals(a.IDENTIFIER().getText())
+						&& a.annExpr().getFirst().getText().equals(name));
 				if (!correctAnnotation) {
 					return Optional.empty();
 				}
 
-				Set<String> variables = ctx.exprList().expr().stream()
+				// Recursively look up at the variables in the constraint
+				Set<String> variables = ctx.expr().stream()
 					.map(e -> e.getText())
 					.filter(e -> e.startsWith("X_INTRODUCED_"))
-					.filter(e -> !e.equals(varName))
+					.filter(e -> !e.equals(name))
 					.flatMap(vn -> new BackwardFinder(vn, this.ctx).execute().stream())
 					.collect(Collectors.toSet());
 
@@ -173,9 +171,10 @@ public class FlatZincVisitor {
 		}
 
 		/**
-		 * Recursively look at the fzn file and search for the variables names.
+		 * Executes the backward dependency retrieval starting from the current
+		 * variable.
 		 *
-		 * @return the set of founded variables.
+		 * @return the set of discovered variable names
 		 */
 		public Set<String> execute() {
 			return Stream.concat(ctx.constraintItem().stream(), ctx.varDeclItem().stream())
@@ -189,8 +188,8 @@ public class FlatZincVisitor {
 	}
 
 	/**
-	 * Constructs the actual {@link RevokedAssumption} from the flattened
-	 * variable name and the FlatZinc file.
+	 * Constructs the {@link RevokedAssumption} from the FlatZinc variable name
+	 * and the FlatZinc file.
 	 */
 	private class Namer extends FlatZincBaseVisitor<String> {
 		/**
@@ -203,25 +202,27 @@ public class FlatZincVisitor {
 		}
 
 		/**
-		 * Utility function that returns the original name (stripped from the
+		 * Utility function that extracts the original name (stripped from the
 		 * apexes) from the "doc_comment" of a variable.
 		 *
-		 * @param ctx the variable declaration item that these will be applied
-		 *                to
+		 * @param ctx the variable declaration item context
 		 *
-		 * @return a {@link Stream} of one element containing the variable name
+		 * @return a stream maybe containing the variable name
 		 */
 		private Stream<String> getOriginalVarName(VarDeclItemContext ctx) {
-			return ctx.annotations().annotation().stream()
-				.filter(a -> "doc_comment".equals(a.identifier().getText()))
-				.map(a -> a.annExprList().annExpr().get(0).basicAnnExpr().stringLiteral()
+			return ctx.annotation().stream()
+				.filter(a -> "doc_comment".equals(a.IDENTIFIER().getText()))
+				.map(a -> a.annExpr()
+					.get(0)
+					.basicAnnExpr()
+					.getFirst()
 					.getText()
 					.replaceAll("\"", ""));
 		}
 
 		@Override
 		public String visitVarDeclItem(VarDeclItemContext ctx) {
-			if (ctx.varParIdentifier().getText().equals(varName)) {
+			if (ctx.IDENTIFIER().getText().equals(varName)) {
 				return getOriginalVarName(ctx).findFirst().get();
 			}
 
@@ -229,12 +230,12 @@ public class FlatZincVisitor {
 		}
 
 		/**
-		 * Retrieves and construct all the necessary informations to build a
-		 * {@link RevokedAssumption}.
+		 * Retrieves all the necessary informations to build a
+		 * {@link RevokedAssumption} and construct it.
 		 *
-		 * @param ctx the context of the model
+		 * @param ctx the root FlatZinc model context
 		 *
-		 * @return the {@link RevokedAssumption}
+		 * @return the reconstructed revoked assumption
 		 */
 		public RevokedAssumption retrieve(ModelContext ctx) {
 			String originalVarName = ctx.varDeclItem().stream()
@@ -247,7 +248,7 @@ public class FlatZincVisitor {
 			for (VarDeclItemContext vdictx : ctx.varDeclItem()) {
 				boolean sameDocComment = getOriginalVarName(vdictx).anyMatch(originalVarName::equals);
 
-				if (vdictx.varParIdentifier().getText().equals(varName)) {
+				if (vdictx.IDENTIFIER().getText().equals(varName)) {
 					break;
 				} else if (sameDocComment) {
 					index += 1;
@@ -277,18 +278,16 @@ public class FlatZincVisitor {
 	}
 
 	/**
-	 * Executes the analysis, trying to understand which assumption needs to
-	 * revoked.
+	 * Performs the full analysis of the FlatZinc model and determines which
+	 * assumptions must be revoked.
 	 *
-	 * @param ctx the {@link ModelContext} for starting the analysis
+	 * @param ctx the root FlatZinc model context
 	 *
-	 * @return the assumptions to be revoked
+	 * @return the set of revoked assumptions
 	 */
 	public Set<RevokedAssumption> execute(ModelContext ctx) {
 		String assumedName = new SolveAssumeFinder().visitSolveItem(ctx.solveItem());
-		VarNamesFinder vnf = new VarNamesFinder(assumedName);
-		vnf.visit(ctx);
-		List<String> flatAssumedNames = vnf.varNames;
+		List<String> flatAssumedNames = new VarNamesFinder(assumedName).getVarNames(ctx);
 
 		Set<RevokedAssumption> assumptions = new HashSet<>();
 		for (String nogoodName : nogoods) {

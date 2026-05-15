@@ -107,6 +107,20 @@ public interface FlatZincListener extends ParseTreeListener {
 	void exitArrayVarType(FlatZincParser.ArrayVarTypeContext ctx);
 
 	/**
+	 * Enter a parse tree produced by {@link FlatZincParser#predIndexSet}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void enterPredIndexSet(FlatZincParser.PredIndexSetContext ctx);
+
+	/**
+	 * Exit a parse tree produced by {@link FlatZincParser#predIndexSet}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void exitPredIndexSet(FlatZincParser.PredIndexSetContext ctx);
+
+	/**
 	 * Enter a parse tree produced by {@link FlatZincParser#indexSet}.
 	 *
 	 * @param ctx the parse tree
@@ -149,32 +163,18 @@ public interface FlatZincListener extends ParseTreeListener {
 	void exitPredParamType(FlatZincParser.PredParamTypeContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#predIndexSet}.
+	 * Enter a parse tree produced by {@link FlatZincParser#expr}.
 	 *
 	 * @param ctx the parse tree
 	 */
-	void enterPredIndexSet(FlatZincParser.PredIndexSetContext ctx);
+	void enterExpr(FlatZincParser.ExprContext ctx);
 
 	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#predIndexSet}.
+	 * Exit a parse tree produced by {@link FlatZincParser#expr}.
 	 *
 	 * @param ctx the parse tree
 	 */
-	void exitPredIndexSet(FlatZincParser.PredIndexSetContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#basicLiteralExpr}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterBasicLiteralExpr(FlatZincParser.BasicLiteralExprContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#basicLiteralExpr}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitBasicLiteralExpr(FlatZincParser.BasicLiteralExprContext ctx);
+	void exitExpr(FlatZincParser.ExprContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link FlatZincParser#basicExpr}.
@@ -191,76 +191,6 @@ public interface FlatZincListener extends ParseTreeListener {
 	void exitBasicExpr(FlatZincParser.BasicExprContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#expr}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterExpr(FlatZincParser.ExprContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#expr}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitExpr(FlatZincParser.ExprContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#varParIdentifier}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterVarParIdentifier(FlatZincParser.VarParIdentifierContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#varParIdentifier}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitVarParIdentifier(FlatZincParser.VarParIdentifierContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#boolLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterBoolLiteral(FlatZincParser.BoolLiteralContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#boolLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitBoolLiteral(FlatZincParser.BoolLiteralContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#intLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterIntLiteral(FlatZincParser.IntLiteralContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#intLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitIntLiteral(FlatZincParser.IntLiteralContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#floatLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterFloatLiteral(FlatZincParser.FloatLiteralContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#floatLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitFloatLiteral(FlatZincParser.FloatLiteralContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link FlatZincParser#setLiteral}.
 	 *
 	 * @param ctx the parse tree
@@ -273,62 +203,6 @@ public interface FlatZincListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitSetLiteral(FlatZincParser.SetLiteralContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#arrayLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterArrayLiteral(FlatZincParser.ArrayLiteralContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#arrayLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#parArrayLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterParArrayLiteral(FlatZincParser.ParArrayLiteralContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#parArrayLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitParArrayLiteral(FlatZincParser.ParArrayLiteralContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#intLiteralList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterIntLiteralList(FlatZincParser.IntLiteralListContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#intLiteralList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitIntLiteralList(FlatZincParser.IntLiteralListContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#floatLiteralList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#floatLiteralList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link FlatZincParser#basicExprList}.
@@ -361,32 +235,46 @@ public interface FlatZincListener extends ParseTreeListener {
 	void exitBasicLiteralExprList(FlatZincParser.BasicLiteralExprListContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#exprList}.
+	 * Enter a parse tree produced by {@link FlatZincParser#arrayLiteral}.
 	 *
 	 * @param ctx the parse tree
 	 */
-	void enterExprList(FlatZincParser.ExprListContext ctx);
+	void enterArrayLiteral(FlatZincParser.ArrayLiteralContext ctx);
 
 	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#exprList}.
+	 * Exit a parse tree produced by {@link FlatZincParser#arrayLiteral}.
 	 *
 	 * @param ctx the parse tree
 	 */
-	void exitExprList(FlatZincParser.ExprListContext ctx);
+	void exitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#annExprList}.
+	 * Enter a parse tree produced by {@link FlatZincParser#intLiteralList}.
 	 *
 	 * @param ctx the parse tree
 	 */
-	void enterAnnExprList(FlatZincParser.AnnExprListContext ctx);
+	void enterIntLiteralList(FlatZincParser.IntLiteralListContext ctx);
 
 	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#annExprList}.
+	 * Exit a parse tree produced by {@link FlatZincParser#intLiteralList}.
 	 *
 	 * @param ctx the parse tree
 	 */
-	void exitAnnExprList(FlatZincParser.AnnExprListContext ctx);
+	void exitIntLiteralList(FlatZincParser.IntLiteralListContext ctx);
+
+	/**
+	 * Enter a parse tree produced by {@link FlatZincParser#floatLiteralList}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void enterFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx);
+
+	/**
+	 * Exit a parse tree produced by {@link FlatZincParser#floatLiteralList}.
+	 *
+	 * @param ctx the parse tree
+	 */
+	void exitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx);
 
 	/**
 	 * Enter a parse tree produced by {@link FlatZincParser#parDeclItem}.
@@ -445,20 +333,6 @@ public interface FlatZincListener extends ParseTreeListener {
 	void exitSolveItem(FlatZincParser.SolveItemContext ctx);
 
 	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#annotations}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterAnnotations(FlatZincParser.AnnotationsContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#annotations}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitAnnotations(FlatZincParser.AnnotationsContext ctx);
-
-	/**
 	 * Enter a parse tree produced by {@link FlatZincParser#annotation}.
 	 *
 	 * @param ctx the parse tree
@@ -499,46 +373,4 @@ public interface FlatZincListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitBasicAnnExpr(FlatZincParser.BasicAnnExprContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#basicAnnExprList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterBasicAnnExprList(FlatZincParser.BasicAnnExprListContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#basicAnnExprList}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitBasicAnnExprList(FlatZincParser.BasicAnnExprListContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#identifier}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterIdentifier(FlatZincParser.IdentifierContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#identifier}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitIdentifier(FlatZincParser.IdentifierContext ctx);
-
-	/**
-	 * Enter a parse tree produced by {@link FlatZincParser#stringLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void enterStringLiteral(FlatZincParser.StringLiteralContext ctx);
-
-	/**
-	 * Exit a parse tree produced by {@link FlatZincParser#stringLiteral}.
-	 *
-	 * @param ctx the parse tree
-	 */
-	void exitStringLiteral(FlatZincParser.StringLiteralContext ctx);
 }

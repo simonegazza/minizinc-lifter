@@ -159,6 +159,26 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
+	public void enterPredIndexSet(FlatZincParser.PredIndexSetContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void exitPredIndexSet(FlatZincParser.PredIndexSetContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
 	public void enterIndexSet(FlatZincParser.IndexSetContext ctx) {
 	}
 
@@ -219,7 +239,7 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterPredIndexSet(FlatZincParser.PredIndexSetContext ctx) {
+	public void enterExpr(FlatZincParser.ExprContext ctx) {
 	}
 
 	/**
@@ -229,27 +249,7 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void exitPredIndexSet(FlatZincParser.PredIndexSetContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterBasicLiteralExpr(FlatZincParser.BasicLiteralExprContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitBasicLiteralExpr(FlatZincParser.BasicLiteralExprContext ctx) {
+	public void exitExpr(FlatZincParser.ExprContext ctx) {
 	}
 
 	/**
@@ -279,106 +279,6 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterExpr(FlatZincParser.ExprContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitExpr(FlatZincParser.ExprContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterVarParIdentifier(FlatZincParser.VarParIdentifierContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitVarParIdentifier(FlatZincParser.VarParIdentifierContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterBoolLiteral(FlatZincParser.BoolLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitBoolLiteral(FlatZincParser.BoolLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterIntLiteral(FlatZincParser.IntLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitIntLiteral(FlatZincParser.IntLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterFloatLiteral(FlatZincParser.FloatLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitFloatLiteral(FlatZincParser.FloatLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
 	public void enterSetLiteral(FlatZincParser.SetLiteralContext ctx) {
 	}
 
@@ -390,86 +290,6 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 */
 	@Override
 	public void exitSetLiteral(FlatZincParser.SetLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterArrayLiteral(FlatZincParser.ArrayLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterParArrayLiteral(FlatZincParser.ParArrayLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitParArrayLiteral(FlatZincParser.ParArrayLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterIntLiteralList(FlatZincParser.IntLiteralListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitIntLiteralList(FlatZincParser.IntLiteralListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx) {
 	}
 
 	/**
@@ -519,7 +339,7 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterExprList(FlatZincParser.ExprListContext ctx) {
+	public void enterArrayLiteral(FlatZincParser.ArrayLiteralContext ctx) {
 	}
 
 	/**
@@ -529,7 +349,7 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void exitExprList(FlatZincParser.ExprListContext ctx) {
+	public void exitArrayLiteral(FlatZincParser.ArrayLiteralContext ctx) {
 	}
 
 	/**
@@ -539,7 +359,7 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterAnnExprList(FlatZincParser.AnnExprListContext ctx) {
+	public void enterIntLiteralList(FlatZincParser.IntLiteralListContext ctx) {
 	}
 
 	/**
@@ -549,7 +369,27 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void exitAnnExprList(FlatZincParser.AnnExprListContext ctx) {
+	public void exitIntLiteralList(FlatZincParser.IntLiteralListContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void enterFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx) {
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * The default implementation does nothing.
+	 * </p>
+	 */
+	@Override
+	public void exitFloatLiteralList(FlatZincParser.FloatLiteralListContext ctx) {
 	}
 
 	/**
@@ -639,26 +479,6 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 * </p>
 	 */
 	@Override
-	public void enterAnnotations(FlatZincParser.AnnotationsContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitAnnotations(FlatZincParser.AnnotationsContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
 	public void enterAnnotation(FlatZincParser.AnnotationContext ctx) {
 	}
 
@@ -710,66 +530,6 @@ public class FlatZincBaseListener implements FlatZincListener {
 	 */
 	@Override
 	public void exitBasicAnnExpr(FlatZincParser.BasicAnnExprContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterBasicAnnExprList(FlatZincParser.BasicAnnExprListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitBasicAnnExprList(FlatZincParser.BasicAnnExprListContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterIdentifier(FlatZincParser.IdentifierContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitIdentifier(FlatZincParser.IdentifierContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void enterStringLiteral(FlatZincParser.StringLiteralContext ctx) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * The default implementation does nothing.
-	 * </p>
-	 */
-	@Override
-	public void exitStringLiteral(FlatZincParser.StringLiteralContext ctx) {
 	}
 
 	/**

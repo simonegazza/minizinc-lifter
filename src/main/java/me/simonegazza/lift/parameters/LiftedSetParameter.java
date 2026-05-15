@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import me.simonegazza.lift.RevokedAssumption;
+import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 
 /**

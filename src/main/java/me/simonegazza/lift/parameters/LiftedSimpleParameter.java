@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import me.simonegazza.lift.RevokedAssumption;
+import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 
 /**

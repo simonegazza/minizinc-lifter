@@ -1,4 +1,4 @@
-package me.simonegazza.lift;
+package me.simonegazza.lift.assumptions;
 
 import java.util.List;
 import java.util.Set;
@@ -6,17 +6,18 @@ import java.util.stream.Collectors;
 import me.simonegazza.lift.parameters.LiftedParameter;
 
 /**
- * Customize a base model with assumption and revokes them when needed.
+ * Enriches a base MiniZinc model with assumption handling logic and applies
+ * assumption revocations when required.
  */
 public class Assumer {
 
 	/**
-	 * The base model to increment.
+	 * Original MiniZinc model before assumption injection.
 	 */
 	private final String baseModel;
 
 	/**
-	 * The lifted parameters.
+	 * Collection of lifted parameters used to generate the parameter arrays.
 	 */
 	private final List<LiftedParameter> lifted;
 
@@ -32,12 +33,20 @@ public class Assumer {
 	}
 
 	/**
-	 * Builds the parameter array (both versions).
+	 * Builds one of the parameter arrays used by the generated model.
+	 * <p>
+	 * Depending on the selected mode, the method produces either:
+	 * <ul>
+	 * <li>the concrete parameter array</li>
+	 * <li>the lifted parameter array</li>
+	 * </ul>
+	 * while applying the required revoked assumptions.
 	 *
-	 * @param ofLifted whether it should be of lifted parameters or not
-	 * @param revoked  the assumptions to be revoked
+	 * @param ofLifted whether the generated array should be of lifted
+	 *                     parameters
+	 * @param revoked  the assumptions to revoke while generating the array
 	 *
-	 * @return the solve component of the combined lifts
+	 * @return the generated MiniZinc parameter array declaration
 	 */
 	private String getParamsArray(boolean ofLifted, Set<RevokedAssumption> revoked) {
 		StringBuilder result;
@@ -62,9 +71,9 @@ public class Assumer {
 	}
 
 	/**
-	 * Executes the customizations.
+	 * Applies all model customizations and generates the final MiniZinc model.
 	 *
-	 * @return the customized model
+	 * @return the customized model source code
 	 */
 	public String execute() {
 		StringBuilder result = new StringBuilder(baseModel)

@@ -15,6 +15,7 @@ import me.simonegazza.antlr.flatzinc.FlatZincLexer;
 import me.simonegazza.antlr.flatzinc.FlatZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
+import me.simonegazza.lift.assumptions.Assumer;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.utils.ParameterGraph;
@@ -201,7 +202,7 @@ public class Main implements Callable<Integer> {
 			.orElse("original");
 		Path originalModelPath = Path.of(outputPath.toString(), modelsNamePrefix + ".mzn");
 
-		// creates output folder if it does not exists
+		// Creates output folder if it does not exists
 		outputPath = outputPath.resolve(outputPath);
 		Files.createDirectories(outputPath);
 		Files.writeString(originalModelPath, originalModel);
