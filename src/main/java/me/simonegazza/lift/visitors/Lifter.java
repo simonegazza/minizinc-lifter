@@ -79,6 +79,7 @@ public class Lifter {
 	private String getSolve() {
 		return "solve\n\t :: assume(assumed)\nminimize "
 			+ lifted.stream()
+				.sorted()
 				.map(LiftedParameter::getSolvePiece)
 				.collect(Collectors.joining("\n\t+ "))
 			+ "\n;\n";

@@ -44,7 +44,7 @@ import org.antlr.v4.runtime.TokenStreamRewriter;
  * Subclasses define how different kinds of parameters (e.g. scalar, set, array)
  * contribute to the optimization model.
  */
-public abstract class LiftedParameter {
+public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 
 	/**
 	 * Auxiliary method for returning a lifted name.
@@ -315,6 +315,11 @@ public abstract class LiftedParameter {
 	 */
 	public List<Integer> getDimensions() {
 		return parameter.getDimensions();
+	}
+
+	@Override
+	public int compareTo(LiftedParameter other) {
+		return getLiftedName().compareTo(other.getLiftedName());
 	}
 
 	/**

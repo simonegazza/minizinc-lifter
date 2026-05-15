@@ -16,6 +16,30 @@ import java.util.List;
  *                    parameter within its lifted structure; may be empty but
  *                    must never be null
  */
-public record RevokedAssumption(String name, List<Integer> indices) {
+public record RevokedAssumption(String name, List<Integer> indices) implements Comparable<RevokedAssumption> {
+
+	@Override
+	public int compareTo(RevokedAssumption other) {
+		int namesCompare = name.compareTo(other.name);
+		if (namesCompare != 0) {
+			return namesCompare;
+		}
+
+		if (indices.size() != other.indices.size()) {
+			throw new IllegalStateException(
+				"Two assumptions that have the same name have a different number of indices: " + this + " and "
+					+ other);
+		}
+
+		for (int i = 0; i < indices.size(); i++) {
+			int thisInteger = indices.get(i);
+			int otherInteger = other.indices.get(i);
+			if (thisInteger != otherInteger) {
+				Integer.compare(thisInteger, otherInteger);
+			}
+		}
+
+		return 0;
+	}
 
 }

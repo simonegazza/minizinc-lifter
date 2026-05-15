@@ -59,7 +59,7 @@ public class Assumer {
 		String ending = lifted.stream()
 			.map(p -> {
 				List<RevokedAssumption> parameterAssumption = revoked.stream()
-					.filter(a -> a.name().equals(p.getOriginalName()))
+					.filter(a -> a.name().equals(p.getLiftedName()))
 					.sorted()
 					.toList();
 				return p.paramArrayPiece(ofLifted, parameterAssumption);

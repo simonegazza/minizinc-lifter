@@ -252,7 +252,9 @@ public class Main implements Callable<Integer> {
 				.toAbsolutePath();
 
 			// Run the .fzn
-			List<String> lastLinesCommandOutput = runCommand(fznLiftedPath, false);
+			// List<String> lastLinesCommandOutput = runCommand(fznLiftedPath,
+			// false);
+			List<String> lastLinesCommandOutput = runCommand(liftedModelPath, false);
 
 			// Check if we found a solution
 			if ("----------".equals(lastLinesCommandOutput.get(3))) {
@@ -261,10 +263,10 @@ public class Main implements Callable<Integer> {
 			}
 
 			// Get the nogoods
-			List<String> nogoods = Pattern.compile(",").splitAsStream(
-				lastLinesCommandOutput
-					.get(1)
-					.substring(2, lastLinesCommandOutput.size() - 1))
+			String nogoodLine = lastLinesCommandOutput.get(1);
+			List<String> nogoods = Pattern.compile(",")
+				.splitAsStream(
+					nogoodLine.substring(2, nogoodLine.length() - 1))
 				.map(s -> s.substring(3))
 				.toList();
 
