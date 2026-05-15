@@ -252,8 +252,9 @@ public class Main implements Callable<Integer> {
 				.toAbsolutePath();
 
 			// Run the .fzn
-			// List<String> lastLinesCommandOutput = runCommand(fznLiftedPath,
-			// false);
+			// var lastLinesCommandOutput = runCommand(fznLiftedPath, false);
+			// Currently running the .mzn (which means we compile the file two
+			// times) due to a bug in MiniZinc
 			List<String> lastLinesCommandOutput = runCommand(liftedModelPath, false);
 
 			// Check if we found a solution

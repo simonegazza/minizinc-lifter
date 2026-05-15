@@ -1,8 +1,0 @@
-% Taken from https://github.com/MiniZinc/minizinc-examples/blob/master/nurses/nurses.dzn
-k = 6;
-m = 7;
-
-l = 2;
-u = 3;
-o = 3;
-

@@ -1,5 +1,0 @@
-% Taken from https://github.com/MiniZinc/minizinc-examples/blob/master/knapsack/knapsack2.dzn
-n = 5;
-capacity = 200;
-profit = [1300,1000,520,480,325];
-size = [90,72,43,40,33];
