@@ -6,12 +6,10 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import me.simonegazza.antlr.flatzinc.FlatZincLexer;
@@ -22,6 +20,7 @@ import me.simonegazza.lift.assumptions.Assumer;
 import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
+import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ParameterGraph;
 import me.simonegazza.lift.visitors.FlatZincVisitor;
 import me.simonegazza.lift.visitors.Lifter;
@@ -67,7 +66,7 @@ public class Main implements Callable<Integer> {
 	/**
 	 * Application logger.
 	 */
-	private static final Logger logger = Logger.getLogger(Main.class.getName());
+	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Main.class.getName());
 
 	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
@@ -249,11 +248,17 @@ public class Main implements Callable<Integer> {
 		Lifter lifter = new Lifter(tokens, cliParameters, graph);
 		String baseModel = lifter.execute(parser.model());
 
-		Set<RevokedAssumption> assumptions = new HashSet<>();
+		List<Set<RevokedAssumption>> assumptions = new ArrayList<>();
 		for (int i = 1;; i++) {
 			// Customize the model
 			logger.info("Adding assumptions...");
-			Assumer assumer = new Assumer(baseModel, lifter.getLifted(), assumptions);
+			Assumer assumer = new Assumer(
+				baseModel,
+				lifter.getLifted(),
+				assumptions.stream()
+					.flatMap(Set::stream)
+					.sorted()
+					.collect(Collectors.toSet()));
 			String liftedModel = assumer.execute();
 
 			// Write .mzn to file
@@ -278,6 +283,15 @@ public class Main implements Callable<Integer> {
 			// Check if we found a solution
 			if ("----------".equals(lastLinesCommandOutput.get(3))) {
 				logger.info("A solution has been found, exiting");
+
+				// Print the assumption found
+				logger.info("Unsat cores found.");
+				for (int j = 1; j < i; j++) {
+					logger.info("(iteration " + j + ") " + assumptions.get(j - 1).stream()
+						.sorted()
+						.map(RevokedAssumption::toString)
+						.collect(Collectors.joining(", ")));
+				}
 				return 0;
 			}
 
@@ -302,7 +316,7 @@ public class Main implements Callable<Integer> {
 			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
 				.map(RevokedAssumption::toString)
 				.collect(Collectors.joining(", ")));
-			assumptions.addAll(newNogoodAssumptions);
+			assumptions.add(newNogoodAssumptions);
 		}
 	}
 }
