@@ -30,10 +30,9 @@ import org.antlr.v4.runtime.CommonTokenStream;
  * This class supports multi-dimensional arrays.
  * <p>
  * Special handling is required for the set inner types: the solve piece
- * distance is computed via symmetric difference cardinality</li>
+ * distance is computed via symmetric difference cardinality.
  * <p>
- * Nested arrays are not currently supported
- * </ul>
+ * Nested arrays are not currently supported.
  */
 public class LiftedArrayParameter extends LiftedParameter {
 
