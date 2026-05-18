@@ -23,7 +23,7 @@ varDeclItem
 enumItem: 'enum' ident annotations (EQ enumCasesList)?;
 typeInstSynItem: 'type' ident annotations EQ tiExpr;
 assignItem: ident EQ expr;
-constraintItem: 'constraint' ('::' STRING_LITERAL)? expr;
+constraintItem: 'constraint' expr annotations;
 solveItem
     : 'solve' annotations 'satisfy' 
     | 'solve' annotations 'minimize' expr 
@@ -111,7 +111,7 @@ xorExpr: andExpr ('xor' andExpr)*;
 andExpr: compareExpr ('/\\' compareExpr)*;
 compareExpr: setExpr (('<' | '>' | '<=' | '>=' | EQ | '!=' | 'in' | 'subset' | 'superset') setExpr)?;
 setExpr: rangeExpr (('union' | 'diff' | 'symdiff' | 'intersect') rangeExpr)*;
-rangeExpr: addExpr ('..' addExpr)?;
+rangeExpr: addExpr ('..' (addExpr)?)?;
 addExpr: multExpr (('+' | '-' | '++') multExpr)*;
 multExpr: powExpr (('*' | '/' | 'div' | 'mod') powExpr)*;
 powExpr: unaryExpr ('^' unaryExpr)*;
@@ -169,7 +169,7 @@ ifThenElseExpr
       'endif'
     ;
 
-letExpr: 'let' '{' letItem ((SEMI | ',') letItem)* '}' 'in' expr;
+letExpr: 'let' '{' letItem ((SEMI | ',') letItem?)* '}' 'in' expr;
 letItem: varDeclItem | constraintItem;
 
 //compTail: generator ('where' expr)? (',' generator)* ;

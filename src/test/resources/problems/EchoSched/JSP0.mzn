@@ -1,4 +1,5 @@
 % Taken from https://github.com/MiniZinc/mzn-challenge/blob/develop/2025/EchoSched/JSP0.mzn
+% Minor changes have been made
 
 % Modifications by MiniZinc Challenge Organizers:
 % - Modify search annotation to allow running in FD
@@ -16,8 +17,8 @@ array[JOBS,MACHINES,1..SPEED] of int: energy;
 array[JOBS,MACHINES] of int: precedence;
 
 % variables
-array[JOBS,MACHINES] of var 0..sum(time): start_time :: output;
-array[JOBS,MACHINES] of var 1..SPEED: SpeedScaling :: output;
+array[JOBS,MACHINES] of var 0..sum(time): start_time; % CHANGE: removed annotation ":: output" here
+array[JOBS,MACHINES] of var 1..SPEED: SpeedScaling; % CHANGE: removed annotation ":: output" here
 
 
 constraint forall(j in JOBS, p in MACHINES, s in MACHINES where p != s)(
@@ -35,8 +36,8 @@ constraint forall(j1 in JOBS, j2 in JOBS, m in MACHINES where j1 < j2)(
 ));
 
 
-var int: makespan :: output                    = max([start_time[j,m] + time[j,m,SpeedScaling[j,m]] | m in MACHINES, j in JOBS]);
-var int: consumedEnergy :: output              = sum(m in MACHINES, j in JOBS) (energy[j,m,SpeedScaling[j,m]]);
+var int: makespan = max([start_time[j,m] + time[j,m,SpeedScaling[j,m]] | m in MACHINES, j in JOBS]); % CHANGE: removed annotation ":: output" here
+var int: consumedEnergy = sum(m in MACHINES, j in JOBS) (energy[j,m,SpeedScaling[j,m]]); % CHANGE: removed annotation ":: output" here
 
 var int: objective = makespan + consumedEnergy;
 
