@@ -169,7 +169,7 @@ ifThenElseExpr
       'endif'
     ;
 
-letExpr: 'let' '{' letItem (SEMI letItem)* '}' 'in' expr;
+letExpr: 'let' '{' letItem ((SEMI | ',') letItem)* '}' 'in' expr;
 letItem: varDeclItem | constraintItem;
 
 //compTail: generator ('where' expr)? (',' generator)* ;
