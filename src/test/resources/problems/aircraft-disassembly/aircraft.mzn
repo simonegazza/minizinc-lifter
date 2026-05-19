@@ -78,24 +78,46 @@ constraint forall(p in PREC)(
 );
 
 % Unary resource constraint
+% CHANGED: this constraint was changed because uses let declarations
+% constraint
+%   forall (
+%     u in UNREL
+%   )(
+%   let {int: i = unpred[u],
+%        int: j = unsucc[u]} in
+%         if exists( s in SKILL )( sreq[i,s] + sreq[j,s] > scap[s] ) then
+%              (     overlap[u]  -> start[i] + dur[i] <= start[j] ) /\
+%              ( not(overlap[u]) -> start[j] + dur[j] <= start[i] )
+%         else
+%             (
+%               not(overlap[u]) <-> (start[i] + dur[i] <= start[j] \/
+%                                    start[j] + dur[j] <= start[i])
+%             ) /\ (
+%               forall(
+%                 r in USEFUL_RES[i] intersect USEFUL_RES[j]
+%               )(
+%                 (assign[i,r] /\ assign[j,r]) -> not(overlap[u])
+%               )
+%             )
+%         endif
+%   );
 constraint
   forall (
     u in UNREL
   )(
-  let {int: i = unpred[u],
-       int: j = unsucc[u]} in
-        if exists( s in SKILL )( sreq[i,s] + sreq[j,s] > scap[s] ) then
-             (     overlap[u]  -> start[i] + dur[i] <= start[j] ) /\
-             ( not(overlap[u]) -> start[j] + dur[j] <= start[i] )
+  
+        if exists( s in SKILL )( sreq[unpred[u],s] + sreq[unsucc[u],s] > scap[s] ) then
+             (     overlap[u]  -> start[unpred[u]] + dur[unpred[u]] <= start[unsucc[u]] ) /\
+             ( not(overlap[u]) -> start[unsucc[u]] + dur[unsucc[u]] <= start[unpred[u]] )
         else
             (
-              not(overlap[u]) <-> (start[i] + dur[i] <= start[j] \/
-                                   start[j] + dur[j] <= start[i])
+              not(overlap[u]) <-> (start[unpred[u]] + dur[unpred[u]] <= start[unsucc[u]] \/
+                                   start[unsucc[u]] + dur[unsucc[u]] <= start[unpred[u]])
             ) /\ (
               forall(
-                r in USEFUL_RES[i] intersect USEFUL_RES[j]
+                r in USEFUL_RES[unpred[u]] intersect USEFUL_RES[unsucc[u]]
               )(
-                (assign[i,r] /\ assign[j,r]) -> not(overlap[u])
+                (assign[unpred[u],r] /\ assign[unsucc[u],r]) -> not(overlap[u])
               )
             )
         endif
