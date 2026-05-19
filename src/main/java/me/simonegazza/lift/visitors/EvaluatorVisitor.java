@@ -341,7 +341,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			: (Double) lhs >= (Double) rhs;
 		case "=", "==" -> lhs.equals(rhs);
 		case "!=" -> !lhs.equals(rhs);
-		case "in" -> ((Collection<?>) lhs).contains(rhs);
+		case "in" -> ((Collection<?>) rhs).contains(lhs);
 		case "subset" -> ((Collection<?>) rhs).containsAll((Collection<?>) lhs);
 		case "superset" -> ((Collection<?>) lhs).containsAll((Collection<?>) rhs);
 		default -> throw new UnimplementedException(op);
@@ -545,6 +545,18 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					return ai.doubleValue();
 				} else {
 					throw new UnimplementedException("Argument was not an Integer for int2float");
+				}
+			}
+			case "bool2int" -> {
+				if (cfctx.expr().size() > 1) {
+					throw new IllegalStateException("Unkown function call bool2int with multiple arguments");
+				}
+
+				Object argument = visitExpr(cfctx.expr(0));
+				if (argument instanceof Boolean ai) {
+					return ai ? ((double) 1) : ((double) 0);
+				} else {
+					throw new UnimplementedException("Argument was not an Boolean for bool2int");
 				}
 			}
 			case "log" -> {

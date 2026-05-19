@@ -50,8 +50,10 @@ public class Assumer {
 	 */
 	private String getParamsArray(boolean ofLifted, Set<RevokedAssumption> revoked) {
 		StringBuilder result;
+		// We add "opt" to those declarations in case there are array of sets to
+		// be lifted
 		if (ofLifted) {
-			result = new StringBuilder("array[int] of var int: params_lifted = ");
+			result = new StringBuilder("array[int] of var opt int: params_lifted = ");
 		} else {
 			result = new StringBuilder("array[int] of int: params = ");
 		}

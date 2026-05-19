@@ -227,8 +227,15 @@ public class Lifter {
 		model.append("include \"chuffed.mzn\";\n\n");
 
 		model.append("array[int] of var bool: assumed = [params_lifted[i] = params[i] | i in index_set(params)];\n");
-		model.append(
-			"constraint assert(length(params) = length(params_lifted), \"ERROR: length of parameters and lifted does not match\");\n");
+		model.append("""
+			constraint assert(trace(
+				\"Length of params        = \\(length(params))\\n\",
+				length(params)
+			) = trace(
+				\"Length of params_lifted = \\(length(params_lifted))\\n\",
+				length(params_lifted)
+			), \"ERROR: length of parameters and lifted does not match\");\n
+			""");
 
 		model.append(getSolve());
 

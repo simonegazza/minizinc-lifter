@@ -220,19 +220,23 @@ public class LiftedArrayParameter extends LiftedParameter {
 				return result.toString();
 			}).collect(Collectors.joining(", ")));
 
-		StringBuilder preamble = new StringBuilder(parameter.isAssignedAtDeclaration() ? "[] %" : "");
+		StringBuilder preamble = new StringBuilder("");
+		if (parameter.isAssignedAtDeclaration() && assumptions.isEmpty()) {
+			preamble.append("[] %");
+		}
+
 		if (inner instanceof MiniZincSetType) {
-			return preamble
-				.append("[if false then true else e endif | ")
+			return new StringBuilder("[if false then true else e endif | ")
 				.append(secondPart)
 				.append(", e in ")
 				.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
+				.append(" where e in ")
+				.append(arrayAccess(getOriginalName(), indices))
 				.append("]")
 				.toString();
 		}
 
-		return preamble
-			.append(firstPart)
+		return firstPart
 			.append(" | ")
 			.append(secondPart)
 			.append("]")

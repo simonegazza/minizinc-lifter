@@ -61,14 +61,15 @@ public class MiniZincIdentifier implements MiniZincType {
 	 *
 	 * @param bounding optional bounds
 	 *
-	 * @return either the original identifier or the provided bound
+	 * @return either the original lifted identifier or the provided bound
 	 */
 	@Override
 	public String lift(Optional<String> bounding) {
-		if (bounding.isEmpty())
-			return name;
-		else
-			return bounding.get();
+		if (bounding.isEmpty()) {
+			return "var " + name;
+		} else {
+			return "var " + bounding.get();
+		}
 	}
 
 }
