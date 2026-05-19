@@ -127,8 +127,8 @@ public class Main implements Callable<Integer> {
 	 */
 	private void printAssumptions(List<Set<RevokedAssumption>> assumptions) {
 		logger.info("Unsat cores found:");
-		for (int j = 1; j < assumptions.size(); j++) {
-			logger.info("(iteration " + j + ") " + assumptions.get(j - 1).stream()
+		for (int j = 0; j < assumptions.size(); j++) {
+			logger.info("(iteration " + (j + 1) + ") " + assumptions.get(j).stream()
 				.sorted()
 				.map(RevokedAssumption::toString)
 				.collect(Collectors.joining(", ")));
@@ -252,8 +252,9 @@ public class Main implements Callable<Integer> {
 		for (LiftRequest request : cliParameters) {
 			Optional<OriginalParameter> toLift = graph.getByName(request.getName());
 			if (toLift.isEmpty()) {
-				throw new IllegalArgumentException(
-					"Requested lift for " + request.getName() + " but it does not exists");
+				throw new IllegalArgumentException("Requested lift for "
+					+ request.getName()
+					+ " but it does not exists");
 			}
 
 		}
@@ -298,7 +299,7 @@ public class Main implements Callable<Integer> {
 			// times) due to a bug in MiniZinc
 			List<String> commandOutput = runCommand(liftedModelPath, false, "chuffed");
 
-			// Check if we found a solution
+			// Check results
 			if ("=====UNKNOWN=====".equals(commandOutput.get(0))) {
 				logger.info("""
 					A solution or an unsat core cannot be found, \
