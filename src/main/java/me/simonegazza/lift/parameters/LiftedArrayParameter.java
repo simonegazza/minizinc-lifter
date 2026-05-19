@@ -172,8 +172,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
 		MiniZincType inner = ct.getSubtype();
 		List<String> dimensionsExpression = ct.getDimensionsString(false);
-		List<String> indices = IntStream
-			.range(0, dimensionsExpression.size())
+		List<String> indices = IntStream.range(0, dimensionsExpression.size())
 			.mapToObj(e -> "i" + e)
 			.toList();
 

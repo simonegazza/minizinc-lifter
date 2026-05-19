@@ -66,7 +66,7 @@ public class Main implements Callable<Integer> {
 	/**
 	 * Application logger.
 	 */
-	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Main.class.getName());
+	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Main.class.getSimpleName());
 
 	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
@@ -121,25 +121,43 @@ public class Main implements Callable<Integer> {
 	private Path outputPath;
 
 	/**
-	 * Pass the control to MiniZinc either to run the compilation or to actually
-	 * run the model.
+	 * Helper method to print {@link RevokedAssumption}.
 	 *
-	 * @param modelPath the path to the model to run or compile
-	 * @param compile   whether we turn on compilation or run
+	 * @param assumptions the list of sets of assumptions to print out
+	 */
+	private void printAssumptions(List<Set<RevokedAssumption>> assumptions) {
+		logger.info("Unsat cores found:");
+		for (int j = 1; j < assumptions.size(); j++) {
+			logger.info("(iteration " + j + ") " + assumptions.get(j - 1).stream()
+				.sorted()
+				.map(RevokedAssumption::toString)
+				.collect(Collectors.joining(", ")));
+		}
+	}
+
+	/**
+	 * Helper method that passes the control to MiniZinc either to run the
+	 * compilation or to actually run the model.
+	 *
+	 * @param modelPath  the path to the model to run or compile
+	 * @param compile    whether we turn on compilation or run
+	 * @param solverName the solver name to pass to MiniZinc (like "chuffed" or
+	 *                       "gecode")
 	 *
 	 * @return the last 10 rows of the output
 	 *
 	 * @throws IOException          can occur when inheriting IO
 	 * @throws InterruptedException in case command get stopped by the OS
 	 */
-	private List<String> runCommand(Path modelPath, boolean compile) throws IOException, InterruptedException {
+	private List<String> runCommand(Path modelPath, boolean compile, String solverName)
+		throws IOException, InterruptedException {
 		List<String> command = List.of(
 			"minizinc",
-			"--solver", "chuffed",
+			"--solver", solverName,
 			"-w", // suppress warnings
-			// 5 minutes timeout expressed in milliseconds
-			"--time-limit", String.valueOf(1000 * 60 * 5),
-			"--verbose",
+			// 1 minute timeout expressed in milliseconds
+			"--time-limit", String.valueOf(1000 * 60 * 1),
+			// "--verbose",
 			modelPath.toString());
 
 		if (compile) {
@@ -164,7 +182,7 @@ public class Main implements Callable<Integer> {
 			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
 		}
 
-		return result.subList(result.size() - 5, result.size()).reversed();
+		return result.reversed();
 	}
 
 	/**
@@ -269,7 +287,7 @@ public class Main implements Callable<Integer> {
 
 			// Compile the .mzn and get the .fzn
 			logger.info("Compiling the .mzn...");
-			runCommand(liftedModelPath, true);
+			runCommand(liftedModelPath, true, "chuffed");
 			Path fznLiftedPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".fzn")
 				.toAbsolutePath();
 
@@ -278,26 +296,52 @@ public class Main implements Callable<Integer> {
 			// var lastLinesCommandOutput = runCommand(fznLiftedPath, false);
 			// Currently running the .mzn (which means we compile the file two
 			// times) due to a bug in MiniZinc
-			List<String> lastLinesCommandOutput = runCommand(liftedModelPath, false);
+			List<String> commandOutput = runCommand(liftedModelPath, false, "chuffed");
 
 			// Check if we found a solution
-			if ("----------".equals(lastLinesCommandOutput.get(3))) {
-				logger.info("A solution has been found, exiting");
+			if ("=====UNKNOWN=====".equals(commandOutput.get(0))) {
+				logger.info("""
+					A solution or an unsat core cannot be found, \
+					trying to recover by running the solver with parameter values \
+					fixed (and without assumptions)""");
 
-				// Print the assumption found
-				logger.info("Unsat cores found.");
-				for (int j = 1; j < i; j++) {
-					logger.info("(iteration " + j + ") " + assumptions.get(j - 1).stream()
-						.sorted()
-						.map(RevokedAssumption::toString)
-						.collect(Collectors.joining(", ")));
+				// Remove lines regarding chuffed and add the fixing of
+				// parameters
+				String lastModel = liftedModel.lines()
+					.filter(r -> (!r.contains("include \"chuffed.mzn\";")
+						&& !r.contains("array[int] of var bool: assumed = ")
+						&& !r.contains("assume(assumed)")))
+					.collect(Collectors.joining("\n"));
+				lastModel += "\nconstraint forall(i in index_set(params))(params_lifted[i] = params[i]);\n";
+
+				// Write .mzn to file
+				logger.info("Writing lifted last .mzn without assumptions and parameters fixed!");
+				Path lastModelPath = Path.of(outputPath.toString(), "last-" + modelsNamePrefix + ".mzn")
+					.toAbsolutePath();
+				Files.writeString(lastModelPath, lastModel);
+
+				commandOutput = runCommand(lastModelPath, false, "gecode");
+
+				if ("----------".equals(commandOutput.get(1))) {
+					logger.info("A solution has been found!");
 				}
+
+				if ("==========".equals(commandOutput.get(0))) {
+					logger.info("The optimal solution has been found!");
+				}
+
+				printAssumptions(assumptions);
+				return 0;
+
+			} else if ("----------".equals(commandOutput.get(2))) {
+				logger.info("A solution has been found, exiting...");
+				printAssumptions(assumptions);
 				return 0;
 			}
 
 			// Get the nogoods
 			logger.info("Extracting nogoods...");
-			String nogoodLine = lastLinesCommandOutput.get(1);
+			String nogoodLine = commandOutput.get(0);
 			List<String> nogoods = Pattern.compile(",")
 				.splitAsStream(
 					nogoodLine.substring(2, nogoodLine.length() - 1))
