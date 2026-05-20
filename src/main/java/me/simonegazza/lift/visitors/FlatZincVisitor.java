@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import me.simonegazza.antlr.flatzinc.FlatZincBaseVisitor;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.BasicExprContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.ConstraintItemContext;
+import me.simonegazza.antlr.flatzinc.FlatZincParser.ExprContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.ModelContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.SolveItemContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.VarDeclItemContext;
@@ -157,8 +158,14 @@ public class FlatZincVisitor {
 
 				// Recursively look up at the variables in the constraint
 				Set<String> variables = ctx.expr().stream()
-					.map(e -> e.getText())
-					.filter(e -> e.startsWith("X_INTRODUCED_"))
+					.map(ExprContext::getText)
+					.filter(e -> {
+						boolean hasNameInLifted = liftedParameters.stream()
+							.map(LiftedParameter::getLiftedName)
+							.anyMatch(e::equals);
+
+						return e.startsWith("X_INTRODUCED_") || hasNameInLifted;
+					})
 					.filter(e -> !e.equals(name))
 					.flatMap(vn -> new BackwardFinder(vn, this.ctx).execute().stream())
 					.collect(Collectors.toSet());
