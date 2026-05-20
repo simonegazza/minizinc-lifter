@@ -7,16 +7,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
+import me.simonegazza.antlr.minizinc.MiniZincParser.AddExprContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayTiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprTailContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.RangeExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SolveItemContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.utils.ParameterGraph;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.misc.Interval;
@@ -264,7 +271,46 @@ public class Lifter {
 		}
 
 		/**
-		 * Jump the assignment completely.
+		 * Determines and returns the variable declaration.
+		 * <p>
+		 * If the type contains the keyword {@code var}, the declaration
+		 * represents a decision variable rather than a parameter.
+		 * <p>
+		 * This method recursively inspects type expressions to detect if this
+		 * is a variable declaration
+		 *
+		 * @param ctx the type expression context
+		 *
+		 * @return an optional containing the variable declaration from the
+		 *             "var" to the ":" if present
+		 */
+		private Optional<BaseTiExprTailContext> getVarDecl(ParserRuleContext ctx) {
+			switch (ctx) {
+			case TiExprContext ti -> {
+				if (ti.baseTiExpr() != null) {
+					return getVarDecl(ti.baseTiExpr());
+				} else {
+					return getVarDecl(ti.arrayTiExpr());
+				}
+			}
+			case BaseTiExprContext ctxbtec -> {
+				if ("var".equals(ctx.getChild(0).getText())) {
+					return Optional.of(ctxbtec.baseTiExprTail());
+				}
+			}
+			case ArrayTiExprContext arrayTiExprCtx -> {
+				return getVarDecl(arrayTiExprCtx.tiExpr().getLast());
+			}
+			case null, default -> {
+			}
+			}
+
+			return Optional.empty();
+		}
+
+		/**
+		 * Jump the assignment completely. Prevent changing parameters in what
+		 * was the data file.
 		 *
 		 * @return null
 		 */
@@ -282,10 +328,31 @@ public class Lifter {
 		@Override
 		public Void visitVarDeclItem(VarDeclItemContext ctx) {
 			Optional<LiftedParameter> p = getByName(ctx.tiExprAndId().ident().getText());
+			TiExprContext typeCtx = ctx.tiExprAndId().tiExpr();
+			Optional<BaseTiExprTailContext> varDeclaration = getVarDecl(typeCtx);
+
 			if (p.isPresent()) {
+				// This declaration was a parameter
 				rewriter.insertAfter(ctx.getStop(), "\n" + p.get().liftDeclaration(env));
-			} else {
-				return super.visitVarDeclItem(ctx);
+			} else if (varDeclaration.isPresent()) {
+				// This is a declaration of a variable. We need to check if in
+				// the bounding of the variable there are some parameters that
+				// we lifted. We call visitBaseTiExprTail that can visit the
+				// following stuff:
+				// 1) identifier: in that case we lift the identifier,
+				// 2) a baseType: in that case there's no need to do anything,
+				// 3) a DOLLAR_IDENT: we do not know what would happen (probably
+				// nothing: the identifier will stay put), and we do not care,
+				// 4) an expr: we try to parse the expression (hopefully it's a
+				// simple RangeExpression that just needs some rewriting).
+				BaseTiExprTailContext declaration = varDeclaration.get();
+				boolean boundingHasLiftedParameter = lifted.stream()
+					.anyMatch(l -> declaration.getText().contains(l.getOriginalName()));
+
+				// Visit it only if necessary
+				if (boundingHasLiftedParameter) {
+					visit(declaration);
+				}
 			}
 
 			return null;
@@ -320,7 +387,8 @@ public class Lifter {
 		}
 
 		/**
-		 * Replaces asserts with inner expression.
+		 * Replaces asserts with inner expression if it was called by an
+		 * assertion. Pass through it otherwise.
 		 *
 		 * @return null
 		 */
@@ -363,6 +431,40 @@ public class Lifter {
 			return null;
 		}
 
-	}
+		/**
+		 * Ranges needs to have correct bounding, otherwise the MiniZinc model
+		 * won't compile.
+		 */
+		@Override
+		public Void visitRangeExpr(RangeExprContext ctx) {
+			if (ctx.getChildCount() > 1) {
+				// It is a range and needs to be wrapper with at least the lower
+				// bounds
+				boolean lhsHasLiftedParameter = lifted.stream()
+					.anyMatch(l -> ctx.addExpr(0).getText().contains(l.getOriginalName()));
+				if (lhsHasLiftedParameter) {
+					rewriter.insertBefore(ctx.addExpr(0).getStart(), "lb(");
+					rewriter.insertAfter(ctx.addExpr(0).getStop(), ")");
+				}
 
+				if (ctx.getChildCount() > 2) {
+					// Now we are sure that we have also the rhs of the range
+					boolean rhsHasLiftedParameter = lifted.stream()
+						.anyMatch(l -> ctx.addExpr(1).getText().contains(l.getOriginalName()));
+
+					if (rhsHasLiftedParameter) {
+						AddExprContext rhs = ctx.addExpr(1);
+						visitAddExpr(rhs);
+						rewriter.insertBefore(rhs.getStart(), "ub(");
+						rewriter.insertBefore(rhs.getStop(), ")");
+					}
+				}
+				return null;
+
+			} else {
+				// It is an identifier that needed to be lifted: pass through
+				return visitAddExpr(ctx.addExpr(0));
+			}
+		}
+	}
 }
