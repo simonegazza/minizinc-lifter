@@ -902,7 +902,8 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 		return MiniZincArray.fromFlattened(
 			ranges.stream().map(e -> new MiniZincArray.IndexRange(1, e)).toList(),
-			ctx.arrayRow().stream()
+			// Explicit cast needed in some platform to compile
+			(List<Object>) ctx.arrayRow().stream()
 				.flatMap(a -> a.expr().stream().map(this::visitExpr))
 				// List may need to be modifiable at the end
 				.collect(Collectors.toCollection(ArrayList::new)));

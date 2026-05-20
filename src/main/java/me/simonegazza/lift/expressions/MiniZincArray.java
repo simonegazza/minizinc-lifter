@@ -6,7 +6,18 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Represents a MiniZinc (multi-dimensional) array.
+ * Representation of a MiniZinc array.
+ * <p>
+ * A {@code MiniZincArray} models the semantics of MiniZinc arrays, including:
+ * <ul>
+ * <li>arbitrary index ranges (e.g. {@code 1..10}, {@code -2..2})</li>
+ * <li>multi-dimensional arrays</li>
+ * <li>flattened or nested representations</li>
+ * </ul>
+ * <p>
+ * Internally, the array data is stored as nested {@link List} instances while
+ * the corresponding dimensions are stored separately as {@link IndexRange}
+ * objects.
  */
 public class MiniZincArray {
 
@@ -67,12 +78,21 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Construct the array based on a flattened representation.
+	 * Constructs a {@link MiniZincArray} from a flattened representation.
+	 * <p>
+	 * The provided list is interpreted according to the supplied dimensions and
+	 * transformed into a nested list structure.
+	 * <p>
+	 * The number of elements in {@code flattened} must exactly match the
+	 * product of all dimension sizes.
 	 *
-	 * @param dimensions the dimensions of this representation
+	 * @param dimensions the array dimensions
 	 * @param flattened  the flattened representation
 	 *
-	 * @return the structured output array
+	 * @throws IllegalArgumentException if the flattened size does not match the
+	 *                                      expected number of elements
+	 *
+	 * @return the reconstructed array
 	 */
 	public static MiniZincArray fromFlattened(List<IndexRange> dimensions, List<Object> flattened) {
 		int expectedSize = dimensions.stream()
@@ -93,13 +113,16 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Convenience method for {@link #fromFlattened(List<IndexRange>,
-	 * List<Object>)}.
+	 * Convenience overload accepting a one-dimensional {@link MiniZincArray} as
+	 * flattened input.
 	 *
-	 * @param dimensions the dimensions of this representation
-	 * @param flattened  the flattened representation
+	 * @param dimensions the target dimensions
+	 * @param flattened  the flattened array
 	 *
-	 * @return the structured output array
+	 * @throws IllegalStateException if {@code flattened} is not actually
+	 *                                   one-dimensional
+	 *
+	 * @return the reconstructed array
 	 */
 	public static MiniZincArray fromFlattened(List<IndexRange> dimensions, MiniZincArray flattened) {
 		if (flattened.getDimensions().size() > 1) {
@@ -140,16 +163,17 @@ public class MiniZincArray {
 	/**
 	 * Represents a MiniZinc index range.
 	 * <p>
-	 * Index can be also negative, but they must be an integer
+	 * MiniZinc arrays are not restricted to zero-based indexing. Any integer
+	 * interval is allowed, including negative indices.
 	 */
 	public static final class IndexRange {
 
 		/**
-		 * Lower bound of this range.
+		 * Inclusive lower bound of this range.
 		 */
 		private final int lowerBound;
 		/**
-		 * Upper bound of this range.
+		 * Inclusive upper bound of this range.
 		 */
 		private final int upperBound;
 
@@ -168,11 +192,14 @@ public class MiniZincArray {
 		}
 
 		/**
-		 * Converts a MiniZinc index into the corresponding Java index.
+		 * Converts a MiniZinc index into a zero-based Java list index.
 		 *
 		 * @param miniZincIndex the MiniZinc index
 		 *
-		 * @return the zero-based Java index
+		 * @throws IndexOutOfBoundsException if the index lies outside this
+		 *                                       range
+		 *
+		 * @return the equivalent Java index
 		 */
 		public int toJavaIndex(int miniZincIndex) {
 			if (miniZincIndex < lowerBound || miniZincIndex > upperBound) {
@@ -186,18 +213,18 @@ public class MiniZincArray {
 		}
 
 		/**
-		 * Computes and returns the size of this index.
+		 * Returns the number of indices in this range.
 		 *
-		 * @return the size of this index
+		 * @return the range size
 		 */
 		public int size() {
 			return upperBound - lowerBound + 1;
 		}
 
 		/**
-		 * Provides an array over this IndexRange.
+		 * Expands this range into an array of all contained indices.
 		 *
-		 * @return the iterator
+		 * @return an array containing all indices in ascending order
 		 */
 		public int[] toArray() {
 			return IntStream.range(lowerBound, upperBound + 1).toArray();
@@ -208,13 +235,14 @@ public class MiniZincArray {
 	 * The dimensions for this array.
 	 */
 	private final List<IndexRange> dimensions;
+
 	/**
-	 * The actual (multidimensional) data.
+	 * Nested list representation of the array contents.
 	 */
 	private final List<Object> data;
 
 	/**
-	 * Construct the array based on a flattened representation
+	 * Construct the array based on a flattened representation.
 	 *
 	 * @param dimensions the dimensions of this representation
 	 * @param data       the flattened representation
@@ -225,11 +253,19 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Equality between arrays or {@link MiniZincSet}.
+	 * Compares this array with another object.
 	 * <p>
-	 * Note that we evaluate equality also with {@link MiniZincSet} since
-	 * MiniZinc allows it. Please note that final equality between an array or a
-	 * set is delegated to the implementation of {@link MiniZincSet}.
+	 * MiniZinc permits equality comparisons between arrays and sets. For this
+	 * reason, equality with {@link MiniZincSet} is also supported.
+	 * <p>
+	 * Equality with sets is only meaningful for one-dimensional arrays.
+	 * <p>
+	 * Please note that final equality assessment between an arrays and sets is
+	 * delegated to the implementation of {@link MiniZincSet}.
+	 *
+	 * @param other the object to compare against
+	 *
+	 * @return {@code true} if the two objects are considered equal
 	 */
 	@Override
 	@SuppressWarnings("unlikely-arg-type")
@@ -249,9 +285,12 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Returns an element using MiniZinc indices.
+	 * Retrieves an element using MiniZinc indexing semantics.
+	 * <p>
+	 * Unlike Java arrays and lists, MiniZinc indices are determined by the
+	 * corresponding {@link IndexRange} and are not necessarily zero-based.
 	 *
-	 * @param indices the MiniZinc indices
+	 * @param indices the MiniZinc indices, one for each dimension
 	 *
 	 * @throws IllegalArgumentException  if the number of provided indices does
 	 *                                       not match the number of dimensions
@@ -271,7 +310,7 @@ public class MiniZincArray {
 
 		Object current = data;
 
-		// Dimensions already checked before.
+		// Dimensions already checked before
 		for (int i = 0; i < indices.length; i++) {
 			int miniZincIndex = indices[i];
 			IndexRange idxRange = dimensions.get(i);
@@ -282,7 +321,7 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Convenience method for {@link #getMiniZinc(int...)}.
+	 * Convenience overload method for {@link #getMiniZinc(int...)}.
 	 *
 	 * @param locations a list of locations
 	 *
@@ -309,7 +348,7 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Get the dimensions.
+	 * Returns the dimensions of this array.
 	 *
 	 * @return the dimensions
 	 */
@@ -318,11 +357,16 @@ public class MiniZincArray {
 	}
 
 	/**
-	 * Concats two MiniZinc array of dimensions 1.
+	 * Concatenates two one-dimensional arrays using MiniZinc {@code ++}
+	 * semantics.
+	 * <p>
+	 * Both arrays must be one-dimensional.
 	 *
-	 * @param other the other array to be concatted
+	 * @param other the array to append
 	 *
-	 * @return a new concatted array
+	 * @throws IllegalStateException if either array has more than one dimension
+	 *
+	 * @return the concatenated array
 	 */
 	public MiniZincArray concat(MiniZincArray other) {
 		if (getDimensions().size() > 1 || other.getDimensions().size() > 1) {

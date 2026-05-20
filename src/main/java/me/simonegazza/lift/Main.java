@@ -316,7 +316,7 @@ public class Main implements Callable<Integer> {
 				lastModel += "\nconstraint forall(i in index_set(params))(params_lifted[i] = params[i]);\n";
 
 				// Write .mzn to file
-				logger.info("Writing lifted last .mzn without assumptions and parameters fixed!");
+				logger.info("Writing lifted last .mzn without assumptions and with parameters fixed!");
 				Path lastModelPath = Path.of(outputPath.toString(), "last-" + modelsNamePrefix + ".mzn")
 					.toAbsolutePath();
 				Files.writeString(lastModelPath, lastModel);
