@@ -3,10 +3,8 @@ package me.simonegazza.lift.visitors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
@@ -15,7 +13,6 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.AndExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayAccessTailContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayLiteral2dContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayLiteralContext;
-import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayRowContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.CallSuffixContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.CompareExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.EnumCasesContext;
@@ -39,6 +36,8 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.SetExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SetLiteralContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.UnaryExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.XorExprContext;
+import me.simonegazza.lift.expressions.MiniZincArray;
+import me.simonegazza.lift.expressions.MiniZincSet;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -80,117 +79,117 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	 */
 	private int underscoreCounter;
 
-	/**
-	 * Recursively flattens a potentially multi-dimensional list structure into
-	 * a single list.
-	 * <p>
-	 * If the input object is a {@link List}, all of its elements are
-	 * recursively traversed and collected into a flat list. Otherwise, the
-	 * object itself is treated as a leaf element and added to the result.
-	 *
-	 * @param obj the object to flatten; may be a nested {@link List} or a
-	 *                single value
-	 *
-	 * @return a flat {@link List} containing all leaf elements in traversal
-	 *             order
-	 */
-	public static List<Object> flatten(Object obj) {
-		List<Object> result = new ArrayList<>();
-
-		if (obj instanceof List<?> objList) {
-			for (Object item : objList) {
-				result.addAll(flatten(item));
-			}
-		} else {
-			result.add(obj);
-		}
-
-		return result;
-	}
-
-	/**
-	 * Reconstructs a multi-dimensional array (nested {@link List}) from a
-	 * flattened list according to the specified dimensions.
-	 * <p>
-	 * The {@code dimensions} parameter defines the shape of the resulting
-	 * structure, where each element represents the size of a dimension. The
-	 * {@code flattened} list is consumed in order to populate the resulting
-	 * nested lists.
-	 * <p>
-	 * Through {@code reformatArrayRecursive}, it builds the nested list
-	 * structure level by level, consuming elements from the flattened list as
-	 * it reaches the innermost dimension.
-	 *
-	 * @param dimensions the sizes of each dimension
-	 * @param flattened  the flat list of elements to distribute into the
-	 *                       structure
-	 *
-	 * @return a nested {@link List} representing the multi-dimensional array
-	 */
-	private static List<Object> reformatArray(
-		List<Integer> dimensions,
-		List<Object> flattened) {
-		return reformatArrayRecursive(dimensions, 0, flattened, new int[] { 0 });
-	}
-
-	/**
-	 * Recursive helper method for {@link #reformatArray(List, List)}.
-	 *
-	 * @param dimensions the full list of dimensions
-	 * @param dimIndex   the current dimension being processed
-	 * @param flattened  the source list of elements
-	 * @param index      a single-element array used as a mutable pointer into
-	 *                       {@code flattened}
-	 *
-	 * @return a nested list representing the current dimension
-	 */
-	private static List<Object> reformatArrayRecursive(
-		List<Integer> dimensions,
-		int dimIndex,
-		List<Object> flattened,
-		int[] index) {
-
-		int size = dimensions.get(dimIndex);
-
-		if (dimIndex == dimensions.size() - 1) {
-			// Last dimension
-			return IntStream.range(0, size)
-				.mapToObj(_ -> flattened.get(index[0]++))
-				.collect(Collectors.toList());
-		}
-
-		return IntStream.range(0, size)
-			.mapToObj(_ -> reformatArrayRecursive(dimensions, dimIndex + 1, flattened, index))
-			.collect(Collectors.toList());
-	}
-
-	/**
-	 * Retrieves an element from a multi-dimensional array represented as nested
-	 * {@link List}s, of objects following the specified index path.
-	 * <p>
-	 * Each element in {@code locations} represents the index to access at the
-	 * corresponding level of nesting.
-	 *
-	 * @param array     the root nested list structure
-	 * @param locations the list of indices describing the path to the desired
-	 *                      element
-	 *
-	 * @return the element located at the specified position
-	 *
-	 * @throws ClassCastException        if the structure does not match the
-	 *                                       expected nested list shape
-	 * @throws IndexOutOfBoundsException if any index is invalid
-	 */
-	@SuppressWarnings("unchecked")
-	public static Object get(Object array, List<Integer> locations) {
-		Object current = array;
-
-		for (int i = 0; i < locations.size(); i++) {
-			current = ((List<Object>) current).get(locations.get(i));
-		}
-
-		return current;
-	}
+//	/**
+//	 * Recursively flattens a potentially multi-dimensional list structure into
+//	 * a single list.
+//	 * <p>
+//	 * If the input object is a {@link List}, all of its elements are
+//	 * recursively traversed and collected into a flat list. Otherwise, the
+//	 * object itself is treated as a leaf element and added to the result.
+//	 *
+//	 * @param obj the object to flatten; may be a nested {@link List} or a
+//	 *                single value
+//	 *
+//	 * @return a flat {@link List} containing all leaf elements in traversal
+//	 *             order
+//	 */
+//	public static List<Object> flatten(Object obj) {
+//		List<Object> result = new ArrayList<>();
+//
+//		if (obj instanceof List<?> objList) {
+//			for (Object item : objList) {
+//				result.addAll(flatten(item));
+//			}
+//		} else {
+//			result.add(obj);
+//		}
+//
+//		return result;
+//	}
+//
+//	/**
+//	 * Reconstructs a multi-dimensional array (nested {@link List}) from a
+//	 * flattened list according to the specified dimensions.
+//	 * <p>
+//	 * The {@code dimensions} parameter defines the shape of the resulting
+//	 * structure, where each element represents the size of a dimension. The
+//	 * {@code flattened} list is consumed in order to populate the resulting
+//	 * nested lists.
+//	 * <p>
+//	 * Through {@code reformatArrayRecursive}, it builds the nested list
+//	 * structure level by level, consuming elements from the flattened list as
+//	 * it reaches the innermost dimension.
+//	 *
+//	 * @param dimensions the sizes of each dimension
+//	 * @param flattened  the flat list of elements to distribute into the
+//	 *                       structure
+//	 *
+//	 * @return a nested {@link List} representing the multi-dimensional array
+//	 */
+//	private static List<Object> reformatArray(
+//		List<Integer> dimensions,
+//		List<Object> flattened) {
+//		return reformatArrayRecursive(dimensions, 0, flattened, new int[] { 0 });
+//	}
+//
+//	/**
+//	 * Recursive helper method for {@link #reformatArray(List, List)}.
+//	 *
+//	 * @param dimensions the full list of dimensions
+//	 * @param dimIndex   the current dimension being processed
+//	 * @param flattened  the source list of elements
+//	 * @param index      a single-element array used as a mutable pointer into
+//	 *                       {@code flattened}
+//	 *
+//	 * @return a nested list representing the current dimension
+//	 */
+//	private static List<Object> reformatArrayRecursive(
+//		List<Integer> dimensions,
+//		int dimIndex,
+//		List<Object> flattened,
+//		int[] index) {
+//
+//		int size = dimensions.get(dimIndex);
+//
+//		if (dimIndex == dimensions.size() - 1) {
+//			// Last dimension
+//			return IntStream.range(0, size)
+//				.mapToObj(_ -> flattened.get(index[0]++))
+//				.collect(Collectors.toList());
+//		}
+//
+//		return IntStream.range(0, size)
+//			.mapToObj(_ -> reformatArrayRecursive(dimensions, dimIndex + 1, flattened, index))
+//			.collect(Collectors.toList());
+//	}
+//
+//	/**
+//	 * Retrieves an element from a multi-dimensional array represented as nested
+//	 * {@link List}s, of objects following the specified index path.
+//	 * <p>
+//	 * Each element in {@code locations} represents the index to access at the
+//	 * corresponding level of nesting.
+//	 *
+//	 * @param array     the root nested list structure
+//	 * @param locations the list of indices describing the path to the desired
+//	 *                      element
+//	 *
+//	 * @return the element located at the specified position
+//	 *
+//	 * @throws ClassCastException        if the structure does not match the
+//	 *                                       expected nested list shape
+//	 * @throws IndexOutOfBoundsException if any index is invalid
+//	 */
+//	@SuppressWarnings("unchecked")
+//	public static Object get(Object array, List<Integer> locations) {
+//		Object current = array;
+//
+//		for (int i = 0; i < locations.size(); i++) {
+//			current = ((List<Object>) current).get(locations.get(i));
+//		}
+//
+//		return current;
+//	}
 
 	/**
 	 * Creates a new environment map by extending the current one with
@@ -222,8 +221,8 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 		List<Integer> result = new ArrayList<>();
 		int index = 0;
 		for (EnumCasesContext ecctx : ctx.enumCases()) {
-			List<Object> l = visitEnumCases(ecctx);
-			for (Object e : l) {
+			MiniZincSet s = visitEnumCases(ecctx);
+			for (Object e : s.toArray()) {
 				Integer toPush;
 				if (e instanceof String es) {
 					toPush = ((Integer) env.get(es)) + index;
@@ -235,29 +234,37 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 				result.add(toPush);
 			}
-			index = l.size();
+			index = s.size();
 		}
 
 		return result;
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public List<Object> visitEnumCases(EnumCasesContext ctx) {
-		if (ctx.ident().isEmpty()) { // second and last rules, anon enum
+	public MiniZincSet visitEnumCases(EnumCasesContext ctx) {
+		if (ctx.ident().isEmpty()) {
+			// second and last rules, anon enum
 			// This should always evaluate to an Integer
 			Integer upper = (Integer) visitExpr(ctx.expr());
-			return IntStream.rangeClosed(1, upper)
+			return new MiniZincSet(IntStream.rangeClosed(1, upper)
 				.boxed()
 				.map(Object.class::cast)
-				.toList();
-		} else if (!ctx.getText().startsWith("{")) { // last-but-one rule
-			return (List<Object>) visitIdent(ctx.ident(1));
-		} else { // first rule
-			return ctx.ident().stream()
+				.toList());
+		} else if (!ctx.getText().startsWith("{")) {
+			// last-but-one rule in the grammar
+			return (MiniZincSet) visitIdent(ctx.ident(1));
+		} else {
+			// first rule
+			List<String> identifiers = ctx.ident().stream()
 				.map(ParseTree::getText)
-				.map(Object.class::cast)
 				.toList();
+			for (int i = 0; i < identifiers.size(); i++) {
+				// MiniZinc indexes start at 1
+				env.put(identifiers.get(i), i + 1);
+			}
+
+			return new MiniZincSet(
+				identifiers.stream().map(env::get).toList());
 		}
 	}
 
@@ -341,9 +348,17 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			: (Double) lhs >= (Double) rhs;
 		case "=", "==" -> lhs.equals(rhs);
 		case "!=" -> !lhs.equals(rhs);
-		case "in" -> ((Collection<?>) rhs).contains(lhs);
-		case "subset" -> ((Collection<?>) rhs).containsAll((Collection<?>) lhs);
-		case "superset" -> ((Collection<?>) lhs).containsAll((Collection<?>) rhs);
+		case "in" -> {
+			if (rhs instanceof MiniZincSet arhs) {
+				yield arhs.contains(lhs);
+			} else if (rhs instanceof MiniZincArray arhs) {
+				yield arhs.flatten().contains(lhs);
+			} else {
+				throw new IllegalStateException("Cannot use 'in' operator");
+			}
+		}
+		case "subset" -> ((MiniZincSet) rhs).subset((MiniZincSet) lhs);
+		case "superset" -> ((MiniZincSet) lhs).subset((MiniZincSet) rhs);
 		default -> throw new UnimplementedException(op);
 		};
 	}
@@ -357,28 +372,16 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 			result = switch (op) {
 			case "union" -> {
-				Set<Object> s = new HashSet<>((Collection<?>) result);
-				s.addAll((Collection<?>) rhs);
-				yield new ArrayList<>(s);
+				yield ((MiniZincSet) result).union((MiniZincSet) rhs);
 			}
 			case "diff" -> {
-				Set<Object> s = new HashSet<>((Collection<?>) result);
-				s.removeAll((Collection<?>) rhs);
-				yield new ArrayList<>(s);
+				yield ((MiniZincSet) result).diff((MiniZincSet) rhs);
 			}
 			case "intersect" -> {
-				Set<Object> s = new HashSet<>((Collection<?>) result);
-				s.retainAll((Collection<?>) rhs);
-				yield new ArrayList<>(s);
+				yield ((MiniZincSet) result).diff((MiniZincSet) rhs);
 			}
 			case "symdiff" -> {
-				Set<Object> a = new HashSet<>((Collection<?>) result);
-				Set<Object> b = new HashSet<>((Collection<?>) rhs);
-				Set<Object> res = new HashSet<>(a);
-				res.removeAll(b);
-				b.removeAll(a);
-				res.addAll(b);
-				yield new ArrayList<>(res);
+				yield ((MiniZincSet) result).symdiff((MiniZincSet) rhs);
 			}
 			default -> throw new UnimplementedException(op);
 			};
@@ -423,10 +426,10 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			case "++" -> {
 				if (lhs instanceof String ls && rhs instanceof String rs) {
 					yield ls + rs;
-				} else if (lhs instanceof Collection<?> lc && rhs instanceof Collection<?> rc) {
-					List<Object> l = new ArrayList<>(lc);
-					l.addAll(rc);
-					yield l;
+				} else if (lhs instanceof MiniZincArray alhs && rhs instanceof MiniZincArray arhs) {
+					yield alhs.concat(arhs);
+				} else if (lhs instanceof MiniZincSet ls && rhs instanceof MiniZincSet rs) {
+					yield ls.union(rs);
 				} else {
 					throw new IllegalStateException("Unrecognized types");
 				}
@@ -513,7 +516,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					throw new IllegalStateException("Unkown function call sum with multiple arguments");
 				}
 
-				List<Object> array = flatten(visitExpr(cfctx.expr(0)));
+				List<Object> array = MiniZincArray.flatten(visitExpr(cfctx.expr(0)));
 
 				if (array.get(0) instanceof Integer) {
 					return array.stream().mapToInt(Integer.class::cast).sum();
@@ -527,12 +530,21 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				}
 
 				Object argument = visitExpr(cfctx.expr(0));
-				if (argument instanceof String argStr) {
+				switch (argument) {
+				case String argStr -> {
 					return argStr.length();
-				} else if (argument instanceof Collection<?> ac) {
-					return ac.size();
-				} else {
-					throw new UnimplementedException("Length function not implemented for this type");
+				}
+				case MiniZincSet ms -> {
+					return ms.size();
+				}
+				case MiniZincArray ma -> {
+					if (ma.getDimensions().size() > 0) {
+						throw new IllegalStateException(
+							"Unable to provide length for a MiniZinc array with multiple dimensions");
+					}
+					return ma.getDimensions().get(0).size();
+				}
+				case null, default -> throw new UnimplementedException("Length function not implemented for this type");
 				}
 			}
 			case "int2float" -> {
@@ -589,20 +601,26 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				// case of the arrayXd function call
 				if (functionName.startsWith("array")) {
 
-					// In the arrayXd function, all the arguments are
-					// List<Object>, so these casts are safe
-					@SuppressWarnings("unchecked")
-					List<Integer> dimensions = cfctx.expr()
+					List<MiniZincArray.IndexRange> ranges = cfctx.expr()
 						.subList(0, cfctx.expr().size() - 1)
 						.stream()
-						.map(extx -> (List<Object>) (visitExpr(extx)))
-						.map(List::size)
+						.map(this::visitExpr)
+						.map(e -> {
+							if (e instanceof List<?> l) {
+								return new MiniZincArray.IndexRange((Integer) l.getFirst(), (Integer) l.getLast());
+							} else if (e instanceof MiniZincSet s) {
+								return new MiniZincArray.IndexRange(s.lowerBound(), s.upperBound());
+							} else {
+								throw new UnimplementedException("Unkown type of " + e + " to be a range");
+							}
+						})
 						.toList();
 
-					@SuppressWarnings("unchecked")
-					List<Object> flattened = (List<Object>) (visitExpr(cfctx.expr().getLast()));
-
-					return reformatArray(dimensions, flattened);
+					// Last argument is always a flattened array
+					MiniZincArray lastArray = ((MiniZincArray) visitExpr(cfctx.expr().getLast()));
+					// Here we need to flatten the array because it is possible
+					// to use those arrayXd to "reshape" a MiniZinc array
+					return MiniZincArray.fromFlattened(ranges, lastArray.flatten());
 				} else {
 					throw new UnimplementedException("Unkown function");
 				}
@@ -628,9 +646,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			// Since the callSuffix was considered previously and we do not
 			// parse field access, we consider only array access in the postfix
 			// call, so this cast is safe
-			@SuppressWarnings("unchecked")
-			List<Object> array = (List<Object>) result;
-			return get(array, locations);
+			// @SuppressWarnings("unchecked")
+			MiniZincArray array = (MiniZincArray) result;
+			return array.getMiniZinc(locations);
 		}
 		return result;
 	}
@@ -678,10 +696,9 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 			.map(this::visitExpr)
 			.map(e -> {
 				if (e instanceof Integer ei) {
-					// MiniZinc array start at one
-					return ei - 1;
+					return ei;
 				} else if (e instanceof String es) {
-					return (Integer) env.get(es) - 1;
+					return (Integer) env.get(es);
 				} else {
 					throw new IllegalStateException("Trying to access an array without using an integer: " + e);
 				}
@@ -734,53 +751,76 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	}
 
 	@Override
-	public List<Object> visitSetLiteral(SetLiteralContext ctx) {
+	public MiniZincSet visitSetLiteral(SetLiteralContext ctx) {
 		if (ctx.generatorList() != null) {
 			List<Map<String, Object>> values = visitGeneratorList(ctx.generatorList());
-			return values.stream()
+			return new MiniZincSet(values.stream()
 				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
-				.toList();
+				.toList());
 		} else {
-			// At this point, a set literal of the form {1, 2, 3} is
-			// indistinguishable from a enum declaration of the form {a, b, c}.
-			// But in this env, there's no a, b, and c variables declared. This
-			// means that this literal is an enum. So if it fails, we parse the
-			// expression directly, if not it means that it was a proper one
+			// ANTLR, given an expression that is similar to another (like
+			// enumCasesList and set literals), is unable to distinguish between
+			// the two and apparently falls here. So to parse both cases, we
+			// look at the values inside the expression. We try to parse them
+			// all. If the parsing failes (because of the environment,
+			// tipically) we consider the expression to be an enum and parse it
+			// like so. If nothing fails, this is a proper set.
 			try {
-				return ctx.expr().stream().map(this::visitExpr).toList();
+				// Set literal if it does not fail
+				return new MiniZincSet(ctx.expr().stream().map(this::visitExpr).toList());
 			} catch (IllegalStateException e) {
+				// Enum case
 				List<String> identifiers = ctx.expr().stream()
 					.map(ParseTree::getText)
 					.toList();
 				for (int i = 0; i < identifiers.size(); i++) {
-					env.put(
-						identifiers.get(i),
-						i + 1); // MiniZinc Array start at 1
+					// MiniZinc indexes start at 1
+					env.put(identifiers.get(i), i + 1);
 				}
 
-				return identifiers.stream().map(Object.class::cast).toList();
+				return new MiniZincSet(
+					identifiers.stream().map(env::get).toList());
 			}
 		}
 	}
 
+//	@Override
+//	public MiniZincSet visitSetLiteral(SetLiteralContext ctx) {
+//		if (ctx.generatorList() != null) {
+//			List<Map<String, Object>> values = visitGeneratorList(ctx.generatorList());
+//			return new MiniZincSet(values.stream()
+//				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
+//				.toList());
+//		} else {
+//			return new MiniZincSet(ctx.expr().stream().map(this::visitExpr).toList());
+//		}
+//	}
+
 	@Override
-	public List<Object> visitArrayLiteral(ArrayLiteralContext ctx) {
+	public MiniZincArray visitArrayLiteral(ArrayLiteralContext ctx) {
 		if (ctx.generatorList() != null) {
-			List<Map<String, Object>> values = visitGeneratorList(ctx.generatorList());
-			return values.stream()
+			List<Map<String, Object>> generatorValues = visitGeneratorList(ctx.generatorList());
+			List<Object> computedValues = generatorValues.stream()
 				.map(v -> new EvaluatorVisitor(augmentEnv(v)).visitExpr(ctx.expr(0)))
 				.toList();
+
+			return new MiniZincArray(
+				List.of(new MiniZincArray.IndexRange(generatorValues)),
+				computedValues);
 		} else {
-			return ctx.expr().stream()
+			List<Object> evaluatedExprs = ctx.expr().stream()
 				.map(this::visitExpr)
-				// List needs to be modifiable for future lifting
+				// List needs to be modifiable for potential future lifting
 				.collect(Collectors.toCollection(ArrayList::new));
+			return new MiniZincArray(
+				List.of(new MiniZincArray.IndexRange(evaluatedExprs)),
+				evaluatedExprs);
 		}
 	}
 
 	@Override
 	public List<Map<String, Object>> visitGeneratorList(GeneratorListContext ctx) {
-		Map<String, Collection<?>> generators = ctx.generator().stream()
+		Map<String, Object> generators = ctx.generator().stream()
 			// get all the generators
 			.map(this::visitGenerator)
 			// flatten them in case there are multiple generators in one
@@ -797,15 +837,24 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 		// now we can compute the cartesian product
 		List<Map<String, Object>> product = new ArrayList<>();
 		product.add(new HashMap<>());
-		for (Map.Entry<String, Collection<?>> entry : generators.entrySet()) {
+		for (Map.Entry<String, Object> entry : generators.entrySet()) {
 			List<Map<String, Object>> newResult = new ArrayList<>();
 
 			for (Map<String, Object> partial : product) {
-				for (Object v : entry.getValue()) {
+				Object[] generatorValues;
+				if (entry.getValue() instanceof Collection<?> ec) {
+					generatorValues = ec.toArray();
+				} else if (entry.getValue() instanceof MiniZincSet es) {
+					generatorValues = es.toArray();
+				} else {
+					throw new UnimplementedException("Cannot use " + partial + " to get the cartesian product");
+				}
+				for (Object v : generatorValues) {
 					Map<String, Object> newMap = new HashMap<>(partial);
 					newMap.put(entry.getKey(), v);
 					newResult.add(newMap);
 				}
+
 			}
 
 			product = newResult;
@@ -822,20 +871,22 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 	/**
 	 * Since a generator can generate multiple identifiers, it returns a list of
-	 * singled keyed-maps, each containing a list of elements.
+	 * singled keyed-maps, each containing a list of elements. Object can be
+	 * {@link MiniZincSet}, here's why we use objects, but tipically they are
+	 * just Collections
 	 */
 	@Override
-	public List<Map<String, Collection<?>>> visitGenerator(GeneratorContext ctx) {
-		List<Map<String, Collection<?>>> result = new ArrayList<>();
+	public List<Map<String, Object>> visitGenerator(GeneratorContext ctx) {
+		List<Map<String, Object>> result = new ArrayList<>();
 		List<String> identifiers = ctx.children.stream()
 			.map(ParseTree::getText)
 			.takeWhile(c -> !"in".equals(c))
 			.filter(e -> !",".equals(e))
 			.map(i -> "_".equals(i) ? i + (underscoreCounter++) : i)
 			.toList();
-		Map<String, Collection<?>> acc = new HashMap<>();
+		Map<String, Object> acc = new HashMap<>();
 		for (String id : identifiers) {
-			acc.put(id, (Collection<?>) visitExpr(ctx.expr()));
+			acc.put(id, visitExpr(ctx.expr()));
 		}
 
 		result.add(acc);
@@ -843,16 +894,18 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 	}
 
 	@Override
-	public List<List<Object>> visitArrayLiteral2d(ArrayLiteral2dContext ctx) {
-		List<List<Object>> result = new ArrayList<>();
-		for (ArrayRowContext row : ctx.arrayRow()) {
-			result.add(row.expr().stream()
-				.map(this::visitExpr)
+	public MiniZincArray visitArrayLiteral2d(ArrayLiteral2dContext ctx) {
+		List<Integer> ranges = new ArrayList<>();
+		ranges.add(ctx.arrayRow().size());
+		// MiniZincArray has homogeneous dimensions
+		ranges.add(ctx.arrayRow(1).expr().size());
+
+		return MiniZincArray.fromFlattened(
+			ranges.stream().map(e -> new MiniZincArray.IndexRange(1, e)).toList(),
+			ctx.arrayRow().stream()
+				.flatMap(a -> a.expr().stream().map(this::visitExpr))
 				// List may need to be modifiable at the end
 				.collect(Collectors.toCollection(ArrayList::new)));
-		}
-
-		return result;
 	}
 
 	@Override

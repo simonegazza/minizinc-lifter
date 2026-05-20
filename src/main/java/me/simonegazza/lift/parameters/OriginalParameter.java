@@ -1,8 +1,9 @@
 package me.simonegazza.lift.parameters;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import me.simonegazza.lift.expressions.MiniZincArray;
+import me.simonegazza.lift.expressions.MiniZincSet;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.visitors.EvaluatorVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -212,21 +213,12 @@ public class OriginalParameter {
 			|| value instanceof Double
 			|| value instanceof String) {
 			return List.of(1);
-		} else if (value instanceof List<?> vc) {
-			// Assumption: the array has homogeneous dimension. This is false
-			// because arrays of sets can have different dimension (and at this
-			// level we do not distinguish anymore between arrays and sets, but
-			// this is a good approximation
-			List<Integer> result = new ArrayList<>();
-			while (true) {
-				result.add(vc.size());
-				if (vc.getFirst() instanceof List<?> vcFirst) {
-					vc = vcFirst;
-				} else {
-					break;
-				}
-			}
-			return result;
+		} else if (value instanceof MiniZincSet vs) {
+			return List.of(vs.size());
+		} else if (value instanceof MiniZincArray va) {
+			return va.getDimensions().stream()
+				.map(MiniZincArray.IndexRange::size)
+				.toList();
 		}
 
 		throw new IllegalStateException("Unsupported value for dimension request: " + value.toString());

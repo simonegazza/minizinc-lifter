@@ -14,7 +14,6 @@ import me.simonegazza.lift.types.MiniZincBasicType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
-import me.simonegazza.lift.visitors.EvaluatorVisitor;
 
 /**
  * Represents a lifted parameter where only specific elements of an array are
@@ -32,40 +31,32 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	 */
 	private final List<ArrayElementLiftRequest> changes;
 
-	/**
-	 * Internal representation of the array after lifting transformation.
-	 * <p>
-	 * This is a nested list structure mirroring the original array shape, where
-	 * lifted elements are replaced with "_".
-	 */
-	private List<Object> liftedValue;
-
-	private List<Object> liftValue(Map<String, Object> environment) {
-		if (liftedValue != null) {
-			return liftedValue;
-		}
-
-		// Evaluate the expression to get the actual value for the parameter.
-		// Since this is an array, it must be an array too
-		@SuppressWarnings("unchecked")
-		List<Object> result = (List<Object>) parameter.getValue();
-
-		changes.forEach(c -> {
-			List<Integer> locations = c.getLocationsAdjusted(environment);
-			// EvaluatorVisitor.get returns an Object, that can actually be a
-			// list, so this cast is safe
-			@SuppressWarnings("unchecked")
-			List<Object> lastDimension = (List<Object>) (EvaluatorVisitor.get(
-				result,
-				locations.subList(0, locations.size() - 1)));
-			// then we can just set it to the placeholder value.
-			lastDimension.set(locations.getLast(), "_");
-		});
-
-		liftedValue = EvaluatorVisitor.flatten(result);
-
-		return liftedValue;
-	}
+//	private List<Object> liftValue(Map<String, Object> environment) {
+//		if (liftedValue != null) {
+//			return liftedValue;
+//		}
+//
+//		// Evaluate the expression to get the actual value for the parameter.
+//		// Since this is an array, it must be an array too
+//		@SuppressWarnings("unchecked")
+//		List<Object> result = (List<Object>) parameter.getValue();
+//
+//		changes.forEach(c -> {
+//			List<Integer> locations = c.getLocationsAdjusted(environment);
+//			// EvaluatorVisitor.get returns an Object, that can actually be a
+//			// list, so this cast is safe
+//			@SuppressWarnings("unchecked")
+//			List<Object> lastDimension = (List<Object>) (EvaluatorVisitor.get(
+//				result,
+//				locations.subList(0, locations.size() - 1)));
+//			// then we can just set it to the placeholder value.
+//			lastDimension.set(locations.getLast(), "_");
+//		});
+//
+//		liftedValue = EvaluatorVisitor.flatten(result);
+//
+//		return liftedValue;
+//	}
 
 	public LiftedArrayElementParameter(
 		OriginalParameter parameter,
@@ -172,7 +163,7 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		}
 
 		result.append(", ");
-		result.append(liftValue(environment));
+//		result.append(liftValue(environment));
 		result.append(");");
 		return result.toString();
 	}
