@@ -52,11 +52,19 @@ import picocli.CommandLine.Option;
  * <li>Validate the parameters requested via CLI.</li>
  * <li>Apply the lifting transformation using {@link Lifter}.</li>
  * <li>Output the transformed model.</li>
+ * <li>Compile to FlatZinc and run the model</li>
+ * <li>Extract the unsat cores</li>
+ * <li>Repeat these lasts steps until all unsat core have been found</li>
+ * <li>Report unsat cores and solution found, if any</li>
  * </ol>
  * <p>
- * The tool relies heavily on the ANTLR visitor pattern to analyze and rewrite
- * the MiniZinc AST. Visitors are responsible for extracting semantic
- * information from the parsed model and applying structural transformations.
+ * Note that, if no solution are found during unsat core elimination, we run the
+ * model one last time using another solver as a last hope to solve the problem.
+ * <p>
+ * The tool relies heavily on the ANTLR visitor pattern and on MiniZinc to
+ * analyze and rewrite the MiniZinc AST. Visitors are responsible for extracting
+ * semantic information from the parsed models and applying structural
+ * transformations.
  * <p>
  * The CLI interface is implemented using Picocli.
  */

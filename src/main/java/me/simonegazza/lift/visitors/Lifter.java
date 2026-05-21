@@ -1,5 +1,8 @@
 package me.simonegazza.lift.visitors;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +57,11 @@ import org.antlr.v4.runtime.misc.Interval;
  * lifts all parameters that depend on it.
  */
 public class Lifter {
+
+	/**
+	 * Rewritings file path.
+	 */
+	private final static String REWRITINGS_NAME = "/global_constraints_rewriting.mzn";
 
 	/**
 	 * Internal visitor that applies lifting rules to AST nodes.
@@ -214,6 +222,7 @@ public class Lifter {
 	 * <p>
 	 * This method:
 	 * <ol>
+	 * <li>Add constraint rewriting</li>
 	 * <li>Traverses the AST and applies rewriting rules</li>
 	 * <li>Appends new declarations for lifted parameters</li>
 	 * <li>Adds solve/output blocks if not already present</li>
@@ -225,7 +234,18 @@ public class Lifter {
 	 */
 	public String execute(ModelContext ctx) {
 		visitor.visitModel(ctx);
-		StringBuilder model = new StringBuilder(rewriter.getText() + "\n");
+
+		String rewritings = "";
+		try {
+			Path rewritingsPath = Paths.get(Lifter.class.getResource(REWRITINGS_NAME).toURI());
+			rewritings = Files.readString(rewritingsPath);
+		} catch (Exception e) {
+			throw new IllegalStateException("Something went very wrong");
+		}
+		StringBuilder model = new StringBuilder(rewritings)
+			.append("\n")
+			.append(rewriter.getText())
+			.append("\n");
 
 		for (LiftedParameter lp : lifted) {
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
