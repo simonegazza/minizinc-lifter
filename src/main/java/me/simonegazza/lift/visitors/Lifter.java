@@ -92,12 +92,16 @@ public class Lifter {
 	 * @return the solve component of the combined lifts
 	 */
 	private String getSolve() {
-		return "solve\n\t :: assume(assumed)\nminimize "
-			+ lifted.stream()
+		StringBuilder obj = new StringBuilder("var int: objective_lifted :: output_var = ");
+		obj.append(
+			lifted.stream()
 				.sorted()
 				.map(LiftedParameter::getSolvePiece)
-				.collect(Collectors.joining("\n\t+ "))
-			+ "\n;\n";
+				.collect(Collectors.joining("\n\t+ ")))
+			.append("\n;\n")
+			.append("solve\n\t :: assume(assumed)\nminimize objective_lifted;\n\n");
+
+		return obj.toString();
 	}
 
 	/**

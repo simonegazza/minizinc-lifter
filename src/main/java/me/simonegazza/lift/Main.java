@@ -163,7 +163,36 @@ public class Main implements Callable<Integer> {
 		throws IOException, InterruptedException {
 
 		Process p;
-		if (compile) {
+		if (!compile && "chuffed".equals(solverName)) {
+			Path fznChuffedPath = Paths.get(
+				new ProcessBuilder("minizinc")
+					.start()
+					.info()
+					.command()
+					.orElseThrow())
+				.toAbsolutePath().getParent().resolve("bin/fzn-chuffed");
+
+			p = ProcessBuilder.startPipeline(List.of(
+				new ProcessBuilder()
+					.command(
+						fznChuffedPath.toString(),
+						(modelBasePath.toString() + ".fzn"))
+					.directory(modelBasePath.getParent().toFile())
+					.inheritIO()
+					.redirectOutput(ProcessBuilder.Redirect.PIPE),
+				new ProcessBuilder()
+					.command(
+						"minizinc",
+						// 1 minute timeout expressed in milliseconds
+						"--time-limit", String.valueOf(1000 * 60 * 1),
+						// "--output-objective",
+						"--ozn-file",
+						(modelBasePath.toString() + ".ozn"))
+					.redirectErrorStream(true)
+					.directory(modelBasePath.getParent().toFile())
+					.redirectError(ProcessBuilder.Redirect.INHERIT)))
+				.getLast();
+		} else {
 			p = new ProcessBuilder()
 				.command(
 					"minizinc",
@@ -177,32 +206,7 @@ public class Main implements Callable<Integer> {
 				.redirectErrorStream(true)
 				.directory(modelBasePath.getParent().toFile())
 				.start();
-		} else {
-			Path fznChuffedPath = Paths.get(
-				new ProcessBuilder("minizinc")
-					.start()
-					.info()
-					.command()
-					.orElseThrow())
-				.toAbsolutePath().getParent().resolve("bin/fzn-chuffed");
 
-			p = ProcessBuilder.startPipeline(List.of(
-				new ProcessBuilder()
-					.command(
-						fznChuffedPath.toString(),
-						(modelBasePath.toAbsolutePath().toString() + ".fzn"))
-					.directory(modelBasePath.getParent().toFile())
-					.inheritIO()
-					.redirectOutput(ProcessBuilder.Redirect.PIPE),
-				new ProcessBuilder()
-					.command(
-						"minizinc",
-						"--ozn-file",
-						(modelBasePath.toAbsolutePath().toString() + ".ozn"))
-					.redirectErrorStream(true)
-					.directory(modelBasePath.getParent().toFile())
-					.redirectError(ProcessBuilder.Redirect.INHERIT)))
-				.getLast();
 		}
 
 		InputStreamReader isr = new InputStreamReader(p.getInputStream());
