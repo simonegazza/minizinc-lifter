@@ -3,8 +3,10 @@ package me.simonegazza.lift;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +72,11 @@ import picocli.CommandLine.Option;
  */
 @CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
 public class Main implements Callable<Integer> {
+
+	/**
+	 * Run model script file path.
+	 */
+	private final static String RUN_MODEL_SCRIPT_PATH = "/run-model.sh";
 
 	/**
 	 * Application logger.
@@ -147,46 +154,77 @@ public class Main implements Callable<Integer> {
 	 * Helper method that passes the control to MiniZinc either to run the
 	 * compilation or to actually run the model.
 	 *
-	 * @param modelPath  the path to the model to run or compile
-	 * @param compile    whether we turn on compilation or run
-	 * @param solverName the solver name to pass to MiniZinc (like "chuffed" or
-	 *                       "gecode")
+	 * @param modelBasePath the path to the model to run or compile without the
+	 *                          ending extensions
+	 * @param compile       whether we turn on compilation or run
+	 * @param solverName    the solver name to pass to MiniZinc (like "chuffed"
+	 *                          or "gecode")
 	 *
 	 * @return the last 10 rows of the output
 	 *
 	 * @throws IOException          can occur when inheriting IO
 	 * @throws InterruptedException in case command get stopped by the OS
 	 */
-	private List<String> runCommand(Path modelPath, boolean compile, String solverName)
+	private List<String> runCommand(Path modelBasePath, boolean compile, String solverName)
 		throws IOException, InterruptedException {
-		List<String> command = List.of(
-			"minizinc",
-			"--solver", solverName,
-			"-w", // suppress warnings
-			// 1 minute timeout expressed in milliseconds
-			"--time-limit", String.valueOf(1000 * 60 * 1),
-			// "--verbose",
-			modelPath.toString());
 
+		Process p;
 		if (compile) {
-			command = new ArrayList<>(command);
-			command.add("--compile");
+			p = new ProcessBuilder()
+				.command(
+					"minizinc",
+					"--solver", solverName,
+					"-w", // suppress warnings
+					// 1 minute timeout expressed in milliseconds
+					"--time-limit", String.valueOf(1000 * 60 * 1),
+					// "--verbose",
+					"--compile",
+					(modelBasePath.toString() + ".mzn"))
+				.redirectErrorStream(true)
+				.directory(modelBasePath.getParent().toFile())
+				.start();
+		} else {
+			try {
+				Paths.get(Lifter.class.getResource(RUN_MODEL_SCRIPT_PATH).toURI());
+			} catch (URISyntaxException e) {
+				throw new IllegalStateException("Cannot load script file, something went very wrong");
+			}
+			Path fznChuffedPath = Paths.get(
+				new ProcessBuilder("minizinc")
+					.start()
+					.info()
+					.command()
+					.orElseThrow())
+				.toAbsolutePath().getParent().resolve("bin/fzn-chuffed");
+
+			p = ProcessBuilder.startPipeline(List.of(
+				new ProcessBuilder()
+					.command(
+						fznChuffedPath.toString(),
+						(modelBasePath.toAbsolutePath().toString() + ".fzn"))
+					.directory(modelBasePath.getParent().toFile())
+					.inheritIO()
+					.redirectOutput(ProcessBuilder.Redirect.PIPE),
+				new ProcessBuilder()
+					.command(
+						"minizinc",
+						"--ozn-file",
+						(modelBasePath.toAbsolutePath().toString() + ".ozn"))
+					.redirectErrorStream(true)
+					.directory(modelBasePath.getParent().toFile())
+					.redirectError(ProcessBuilder.Redirect.INHERIT)))
+				.getLast();
 		}
 
-		ProcessBuilder compilationPB = new ProcessBuilder(command);
-		compilationPB.redirectErrorStream(true);
-		compilationPB.directory(modelPath.getParent().toFile());
-
-		Process compilationProcess = compilationPB.start();
-
-		InputStreamReader isr = new InputStreamReader(compilationProcess.getInputStream());
+		InputStreamReader isr = new InputStreamReader(p.getInputStream());
 		BufferedReader reader = new BufferedReader(isr);
 		List<String> result = reader.lines()
 			.peek(System.out::println)
 			.toList();
 
-		int exitCode = compilationProcess.waitFor();
+		int exitCode = p.waitFor();
 		if (exitCode != 0) {
+			logger.error(result.stream().collect(Collectors.joining("\n")));
 			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
 		}
 
@@ -218,6 +256,8 @@ public class Main implements Callable<Integer> {
 	public Integer call() throws Exception {
 		logger.info("Application starts");
 
+		outputPath = outputPath.toAbsolutePath();
+
 		// Parse cli arguments
 		List<LiftRequest> cliParameters = parameters.stream()
 			.map(LiftRequest::parse).toList();
@@ -239,12 +279,11 @@ public class Main implements Callable<Integer> {
 			})
 			.findFirst()
 			.orElse("original");
-		Path originalModelPath = Path.of(outputPath.toString(), modelsNamePrefix + ".mzn");
+		Path modelBasePath = outputPath.resolve(modelsNamePrefix);
 
 		// Creates output folder if it does not exists
-		outputPath = outputPath.resolve(outputPath);
 		Files.createDirectories(outputPath);
-		Files.writeString(originalModelPath, originalModel);
+		Files.writeString(Path.of(modelBasePath.toString() + ".mzn"), originalModel);
 
 		// Parse the original model
 		logger.info("Parsing the original model...");
@@ -290,22 +329,17 @@ public class Main implements Callable<Integer> {
 
 			// Write .mzn to file
 			logger.info("Writing lifted .mzn with assumptions");
-			Path liftedModelPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".mzn")
-				.toAbsolutePath();
-			Files.writeString(liftedModelPath, liftedModel);
+			Path ithBaseModelPath = outputPath.resolve("" + i + "-" + modelsNamePrefix);
+			Path mznPath = Path.of(ithBaseModelPath.toString() + ".mzn");
+			Files.writeString(mznPath, liftedModel);
 
 			// Compile the .mzn and get the .fzn
 			logger.info("Compiling the .mzn...");
-			runCommand(liftedModelPath, true, "chuffed");
-			Path fznLiftedPath = Path.of(outputPath.toString(), "" + i + "-" + modelsNamePrefix + ".fzn")
-				.toAbsolutePath();
+			runCommand(ithBaseModelPath, true, "chuffed");
 
 			// Run the .fzn
 			logger.info("Running the lifted model...");
-			// var lastLinesCommandOutput = runCommand(fznLiftedPath, false);
-			// Currently running the .mzn (which means we compile the file two
-			// times) due to a bug in MiniZinc
-			List<String> commandOutput = runCommand(liftedModelPath, false, "chuffed");
+			List<String> commandOutput = runCommand(ithBaseModelPath, false, "chuffed");
 
 			// Check results
 			if ("=====UNKNOWN=====".equals(commandOutput.get(0))) {
@@ -325,8 +359,7 @@ public class Main implements Callable<Integer> {
 
 				// Write .mzn to file
 				logger.info("Writing lifted last .mzn without assumptions and with parameters fixed!");
-				Path lastModelPath = Path.of(outputPath.toString(), "last-" + modelsNamePrefix + ".mzn")
-					.toAbsolutePath();
+				Path lastModelPath = outputPath.resolve("last-" + modelsNamePrefix);
 				Files.writeString(lastModelPath, lastModel);
 
 				commandOutput = runCommand(lastModelPath, false, "gecode");
@@ -342,7 +375,7 @@ public class Main implements Callable<Integer> {
 				printAssumptions(assumptions);
 				return 0;
 
-			} else if ("----------".equals(commandOutput.get(2))) {
+			} else if (commandOutput.size() > 2 && "----------".equals(commandOutput.get(2))) {
 				logger.info("A solution has been found, exiting...");
 				printAssumptions(assumptions);
 				return 0;
@@ -358,6 +391,7 @@ public class Main implements Callable<Integer> {
 				.toList();
 
 			// Parse the .fzn
+			Path fznLiftedPath = Path.of(ithBaseModelPath.toString() + ".fzn");
 			CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
 			Lexer fznLexer = new FlatZincLexer(fznInput);
 			TokenStream fznTokens = new CommonTokenStream(fznLexer);
