@@ -3,7 +3,6 @@ package me.simonegazza.lift;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -72,11 +71,6 @@ import picocli.CommandLine.Option;
  */
 @CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
 public class Main implements Callable<Integer> {
-
-	/**
-	 * Run model script file path.
-	 */
-	private final static String RUN_MODEL_SCRIPT_PATH = "/run-model.sh";
 
 	/**
 	 * Application logger.
@@ -184,11 +178,6 @@ public class Main implements Callable<Integer> {
 				.directory(modelBasePath.getParent().toFile())
 				.start();
 		} else {
-			try {
-				Paths.get(Lifter.class.getResource(RUN_MODEL_SCRIPT_PATH).toURI());
-			} catch (URISyntaxException e) {
-				throw new IllegalStateException("Cannot load script file, something went very wrong");
-			}
 			Path fznChuffedPath = Paths.get(
 				new ProcessBuilder("minizinc")
 					.start()

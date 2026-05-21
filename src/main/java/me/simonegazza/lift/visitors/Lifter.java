@@ -458,13 +458,14 @@ public class Lifter {
 		@Override
 		public Void visitRangeExpr(RangeExprContext ctx) {
 			if (ctx.getChildCount() > 1) {
-				// It is a range and needs to be wrapper with at least the lower
-				// bounds
+				// Wrap with at least the lower bounds
 				boolean lhsHasLiftedParameter = lifted.stream()
 					.anyMatch(l -> ctx.addExpr(0).getText().contains(l.getOriginalName()));
 				if (lhsHasLiftedParameter) {
-					rewriter.insertBefore(ctx.addExpr(0).getStart(), "lb(");
-					rewriter.insertAfter(ctx.addExpr(0).getStop(), ")");
+					AddExprContext lhs = ctx.addExpr(0);
+					visitAddExpr(lhs);
+					rewriter.insertBefore(lhs.getStart(), "lb(");
+					rewriter.insertBefore(lhs.getStop(), ")");
 				}
 
 				if (ctx.getChildCount() > 2) {

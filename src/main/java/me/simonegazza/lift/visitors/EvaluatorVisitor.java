@@ -456,7 +456,19 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					yield ((Double) lhs) * ((Double) rhs);
 				}
 			}
-			case "/" -> (Double) lhs / (Double) rhs;
+			case "/" -> {
+				if (lhs instanceof Integer lhsi && rhs instanceof Integer rhsi) {
+					yield lhsi / rhsi;
+				} else if (lhs instanceof Double lhsd && rhs instanceof Integer rhsi) {
+					yield lhsd / Double.valueOf(rhsi);
+				} else if (lhs instanceof Integer lhsi && rhs instanceof Double rhsd) {
+					yield Double.valueOf(lhsi) / rhsd;
+				} else if (lhs instanceof Double lhsd && rhs instanceof Double rhsd) {
+					yield lhsd / rhsd;
+				} else {
+					throw new UnimplementedException("Unkown operand type for '/' operator");
+				}
+			}
 			case "div" -> (Integer) lhs / (Integer) rhs;
 			case "mod" -> (Integer) lhs % (Integer) rhs;
 			default -> throw new UnimplementedException(op);
@@ -596,7 +608,18 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					throw new UnimplementedException("Argument was not an Double for ceil");
 				}
 			}
+			case "round" -> {
+				if (cfctx.expr().size() > 1) {
+					throw new IllegalStateException("Unkown function call round with multiple arguments");
+				}
 
+				Object argument = visitExpr(cfctx.expr(0));
+				if (argument instanceof Double ad) {
+					return Math.round(ad);
+				} else {
+					throw new UnimplementedException("Argument was not an Double for round");
+				}
+			}
 			default -> {
 				// case of the arrayXd function call
 				if (functionName.startsWith("array")) {
@@ -622,7 +645,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					// to use those arrayXd to "reshape" a MiniZinc array
 					return MiniZincArray.fromFlattened(ranges, lastArray.flatten());
 				} else {
-					throw new UnimplementedException("Unkown function");
+					throw new UnimplementedException("Unkown function: " + functionName);
 				}
 			}
 			}
