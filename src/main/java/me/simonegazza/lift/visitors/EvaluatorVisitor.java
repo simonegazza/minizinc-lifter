@@ -578,7 +578,7 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 
 				Object argument = visitExpr(cfctx.expr(0));
 				if (argument instanceof Boolean ai) {
-					return ai ? ((double) 1) : ((double) 0);
+					return ai ? ((int) 1) : ((int) 0);
 				} else {
 					throw new UnimplementedException("Argument was not an Boolean for bool2int");
 				}
