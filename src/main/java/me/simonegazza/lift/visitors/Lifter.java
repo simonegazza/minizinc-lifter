@@ -84,27 +84,6 @@ public class Lifter {
 	private final Map<String, Object> env;
 
 	/**
-	 * Builds the solve statement based on lifted parameters.
-	 * <p>
-	 * The objective is constructed as the sum of all lifted parameter
-	 * contributions.
-	 *
-	 * @return the solve component of the combined lifts
-	 */
-	private String getSolve() {
-		StringBuilder obj = new StringBuilder("var int: objective_lifted :: output_var = ");
-		obj.append(
-			lifted.stream()
-				.sorted()
-				.map(LiftedParameter::getSolvePiece)
-				.collect(Collectors.joining("\n\t+ ")))
-			.append("\n;\n")
-			.append("solve\n\t :: assume(assumed)\nminimize objective_lifted;\n\n");
-
-		return obj.toString();
-	}
-
-	/**
 	 * Computes the value of the given parameter by recursively evaluating all
 	 * of its dependencies.
 	 * <p>
@@ -254,21 +233,6 @@ public class Lifter {
 		for (LiftedParameter lp : lifted) {
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
 		}
-
-		model.append("include \"chuffed.mzn\";\n\n");
-
-		model.append("array[int] of var bool: assumed = [params_lifted[i] = params[i] | i in index_set(params)];\n");
-		model.append("""
-			constraint assert(trace(
-				\"Length of params        = \\(length(params))\\n\",
-				length(params)
-			) = trace(
-				\"Length of params_lifted = \\(length(params_lifted))\\n\",
-				length(params_lifted)
-			), \"ERROR: length of parameters and lifted does not match\");\n
-			""");
-
-		model.append(getSolve());
 
 		return model.toString();
 	}
