@@ -164,7 +164,7 @@ public class Assumer {
 
 		String paramArrayType;
 		if (parameterType.equals(MiniZincSetType.class)) {
-			paramArrayType = "opt int";
+			paramArrayType = "set of int";
 			paramArrayName.append("set");
 		} else {
 			paramArrayType = parameterType.toString();

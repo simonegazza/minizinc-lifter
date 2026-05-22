@@ -170,7 +170,6 @@ public class LiftedArrayParameter extends LiftedParameter {
 		// leave it as is for now.
 
 		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
-		MiniZincType inner = ct.getSubtype();
 		List<String> dimensionsExpression = ct.getDimensionsString(false);
 		List<String> indices = IntStream.range(0, dimensionsExpression.size())
 			.mapToObj(e -> "i" + e)
@@ -191,7 +190,11 @@ public class LiftedArrayParameter extends LiftedParameter {
 
 		firstPart
 			.append(coordinates)
-			.append(" then\n\t\ttrue\n\telse\n\t\t")
+			.append(" then\n\t\t")
+			.append(ct.getSubtype() instanceof MiniZincSetType
+				? "{}"
+				: "true")
+			.append("\n\telse\n\t\t")
 			.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
 			.append("\n\tendif");
 
@@ -223,17 +226,6 @@ public class LiftedArrayParameter extends LiftedParameter {
 		StringBuilder preamble = new StringBuilder("");
 		if (parameter.isAssignedAtDeclaration() && assumptions.isEmpty()) {
 			preamble.append("[] %");
-		}
-
-		if (inner instanceof MiniZincSetType) {
-			return new StringBuilder("[if false then true else e endif | ")
-				.append(secondPart)
-				.append(", e in ")
-				.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
-				.append(" where e in ")
-				.append(arrayAccess(getOriginalName(), indices))
-				.append("]")
-				.toString();
 		}
 
 		return firstPart
