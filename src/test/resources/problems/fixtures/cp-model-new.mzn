@@ -2,8 +2,8 @@ include "globals.mzn";
 
 int: WTab = 2500;
 int: HTab = 1500;
-int: WMin = 200;
-int: HMin = 100;
+int: WMin = 2000; % <-- changed here from 200 to 2000
+int: HMin = 2000; % <-- changed here from 100 to 2000
 int: NTypes = 2;
 int: WBar = 145;
 array[1..NTypes] of int: _NFix = [24, 12];

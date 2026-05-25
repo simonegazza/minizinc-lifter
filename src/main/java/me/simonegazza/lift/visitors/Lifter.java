@@ -1,8 +1,5 @@
 package me.simonegazza.lift.visitors;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -219,11 +216,11 @@ public class Lifter {
 		visitor.visitModel(ctx);
 
 		String rewritings = "";
-		try {
-			Path rewritingsPath = Paths.get(Lifter.class.getResource(REWRITINGS_NAME).toURI());
-			rewritings = Files.readString(rewritingsPath);
+		try (var is = Lifter.class.getResourceAsStream(REWRITINGS_NAME)) {
+			rewritings = new String(is.readAllBytes());
 		} catch (Exception e) {
-			throw new IllegalStateException("Something went very wrong");
+			throw new IllegalStateException(
+				"Something went very wrong: cannot find the overriding of global constraints");
 		}
 		StringBuilder model = new StringBuilder(rewritings)
 			.append("\n")
