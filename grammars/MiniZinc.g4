@@ -156,8 +156,8 @@ arrayLiteral
     //| '[' expr '|' compTail ']'
     | '[' expr '|' generatorList ']'
     ;
-arrayLiteral2d: '[|' (arrayRow ('|' arrayRow)*)? '|]';
-arrayRow: expr (',' expr)*;
+arrayLiteral2d: '[|' (arrayRow ('|' arrayRow)*)? (',')? '|]';
+arrayRow: expr (',' expr)* ','?;
 
 tupleLiteral: '(' expr ',' expr (',' expr)* ')';
 recordLiteral: '(' ident ':' expr ',' ident ':' expr (',' ident ':' expr)* ')';
@@ -181,7 +181,7 @@ indexedArrayLiteral
     | '[' (indexTuple ':' expr (',' expr)+ )? ']'
     ;
 indexedArrayLiteral2d: '[|' (indexedArrayRow ('|' indexedArrayRow)*)? '|]';
-indexedArrayRow: (indexTuple ':' expr) (',' (indexTuple ':' expr))*;
+indexedArrayRow: (indexTuple ':' expr) (',' (indexTuple ':' expr))* ','?;
 indexTuple: expr | '(' expr (',' expr)* ')';
 arrayComp: '[' expr '|' generatorList ']';
 // arrayComp: '[' expr '|' compTail ']';

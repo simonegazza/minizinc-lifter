@@ -206,7 +206,6 @@ public class Main implements Callable<Integer> {
 				.redirectErrorStream(true)
 				.directory(modelBasePath.getParent().toFile())
 				.start();
-
 		}
 
 		InputStreamReader isr = new InputStreamReader(p.getInputStream());
