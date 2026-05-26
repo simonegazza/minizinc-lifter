@@ -343,11 +343,9 @@ public class Main implements Callable<Integer> {
 				// Remove lines regarding chuffed and add the fixing of
 				// parameters
 				String lastModel = liftedModel.lines()
-					.filter(r -> (!r.contains("include \"chuffed.mzn\";")
-						&& !r.contains("array[int] of var bool: assumed = ")
-						&& !r.contains("assume(assumed)")))
+					.filter(r -> (!r.contains("include \"chuffed.mzn\";") && !r.contains("assume(assumed)")))
 					.collect(Collectors.joining("\n"));
-				lastModel += "\nconstraint forall(i in index_set(params))(params_lifted[i] = params[i]);\n";
+				lastModel += "\nconstraint forall(assumed);\n";
 
 				// Write .mzn to file
 				logger.info("Writing lifted last .mzn without assumptions and with parameters fixed!");
