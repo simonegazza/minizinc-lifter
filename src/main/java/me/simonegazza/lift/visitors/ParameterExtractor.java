@@ -47,12 +47,12 @@ public class ParameterExtractor {
 	/**
 	 * The resulting dependency graph.
 	 */
-	private ParameterGraph graph;
+	private final ParameterGraph graph;
 
 	/**
 	 * The inner visitor that will perform the visit and fill the graph.
 	 */
-	private Visitor visitor;
+	private final Visitor visitor;
 
 	public ParameterExtractor() {
 		graph = new ParameterGraph();
@@ -68,6 +68,7 @@ public class ParameterExtractor {
 	 */
 	public ParameterGraph execute(ModelContext ctx) {
 		visitor.visitModel(ctx);
+
 		return graph;
 	}
 

@@ -21,6 +21,8 @@ import me.simonegazza.lift.assumptions.Assumer;
 import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
+import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ParameterGraph;
 import me.simonegazza.lift.visitors.FlatZincVisitor;
@@ -69,7 +71,7 @@ import picocli.CommandLine.Option;
  * <p>
  * The CLI interface is implemented using Picocli.
  */
-@CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Parameter lifts a MiniZinc Model")
+@CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Lift parameter for MiniZinc models")
 public class Main implements Callable<Integer> {
 
 	/**
@@ -123,11 +125,16 @@ public class Main implements Callable<Integer> {
 
 	/**
 	 * Folder path where models will be saved.
-	 * <p>
-	 * If not provided, a folder will be created with that name.
 	 */
 	@Option(names = { "-o", "--output" }, description = "Output folder path", required = true)
 	private Path outputPath;
+
+	/**
+	 * If specified, avoids lifting sets and array of sets in the MiniZinc
+	 * model.
+	 */
+	@Option(names = { "--disallow-sets-lifting" }, description = "Avoid lifting sets and array of sets")
+	private boolean setsDisallowed;
 
 	/**
 	 * Helper method to print {@link RevokedAssumption}.
@@ -295,7 +302,14 @@ public class Main implements Callable<Integer> {
 					+ request.getName()
 					+ " but it does not exists");
 			}
-
+			OriginalParameter p = toLift.get();
+			if (setsDisallowed && (p.getType() instanceof MiniZincSetType
+				|| p.getType() instanceof MiniZincArrayType t
+					&& t.getSubtype() instanceof MiniZincSetType)) {
+				throw new IllegalArgumentException("Requested lift for "
+					+ request.getName()
+					+ " that has set type but also requesting to disallowing sets");
+			}
 		}
 
 		// Reset the token for the next pass
@@ -303,7 +317,7 @@ public class Main implements Callable<Integer> {
 
 		// Resolve the dependencies of the parameters and create base model
 		logger.info("Lifting parameter representation...");
-		Lifter lifter = new Lifter(tokens, cliParameters, graph);
+		Lifter lifter = new Lifter(tokens, cliParameters, graph, setsDisallowed);
 		String baseModel = lifter.execute(parser.model());
 
 		List<Set<RevokedAssumption>> assumptions = new ArrayList<>();

@@ -22,6 +22,8 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
+import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.ParameterGraph;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
@@ -138,14 +140,16 @@ public class Lifter {
 	 * Note that even parameters not explicitly requested may be lifted if they
 	 * are required to preserve correctness.
 	 *
-	 * @param tokens the token stream of the parsed model
-	 * @param toLift the user-provided lift requests
-	 * @param graph  the parameter dependency graph
+	 * @param tokens         the token stream of the parsed model
+	 * @param toLift         the user-provided lift requests
+	 * @param graph          the parameter dependency graph
+	 * @param setsDisallowed whether sets should be lifted or not
 	 */
 	public Lifter(
 		TokenStream tokens,
 		List<LiftRequest> toLift,
-		ParameterGraph graph) {
+		ParameterGraph graph,
+		boolean setsDisallowed) {
 
 		visitor = new LiftingVisitor();
 		rewriter = new TokenStreamRewriter(tokens);
@@ -170,6 +174,11 @@ public class Lifter {
 			.map(graph::dependsOn)
 			// return a set
 			.flatMap(Set::stream)
+			// if setsDisallowed is set, then filter away parameters that have a
+			// set type or are array of sets
+			.filter(p -> !setsDisallowed || (p.getType() instanceof MiniZincSetType
+				|| p.getType() instanceof MiniZincArrayType t
+					&& t.getSubtype() instanceof MiniZincSetType))
 			.collect(Collectors.toSet());
 
 		lifted = toLiftAll.stream()
