@@ -1,8 +1,6 @@
 package me.simonegazza.lift;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -175,11 +173,13 @@ public class Main implements Callable<Integer> {
 			.directory(modelBasePath.getParent().toFile())
 			.start();
 
+		List<String> result = p.inputReader().lines()
+			.peek(System.out::println)
+			.toList();
+
 		int exitCode = p.waitFor();
 		if (exitCode != 0) {
-			InputStreamReader isr = new InputStreamReader(p.getErrorStream());
-			BufferedReader reader = new BufferedReader(isr);
-			logger.error(reader.lines().collect(Collectors.joining("\n")));
+			logger.error(result.stream().collect(Collectors.joining("\n")));
 			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
 		}
 	}
@@ -245,9 +245,7 @@ public class Main implements Callable<Integer> {
 				.start();
 		}
 
-		InputStreamReader isr = new InputStreamReader(p.getInputStream());
-		BufferedReader reader = new BufferedReader(isr);
-		List<String> result = reader.lines()
+		List<String> result = p.inputReader().lines()
 			.peek(System.out::println)
 			.toList();
 
