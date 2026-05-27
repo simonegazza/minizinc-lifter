@@ -171,15 +171,23 @@ public class Lifter {
 			// is safe to Optional::get here without checking
 			.map(Optional::get)
 			// get all parameters, even with their dependencies
-			.map(graph::dependsOn)
+			.map(graph::backwardClosure)
 			// return a set
 			.flatMap(Set::stream)
-			// if setsDisallowed is set, then filter away parameters that have a
-			// set type or are array of sets
-			.filter(p -> !setsDisallowed || (p.getType() instanceof MiniZincSetType
-				|| p.getType() instanceof MiniZincArrayType t
-					&& t.getSubtype() instanceof MiniZincSetType))
 			.collect(Collectors.toSet());
+
+		Set<OriginalParameter> markedForRemoval = toLiftAll.stream()
+			// filter away all elements by default (i.e. sets are allowed)
+			.filter(_ -> setsDisallowed)
+			// if something remains, it means that sets are *not* allowed, so we
+			// filter away all elements that are not sets
+			.filter(p -> p.getType() instanceof MiniZincSetType
+				|| (p.getType() instanceof MiniZincArrayType t && t.getSubtype() instanceof MiniZincSetType))
+			.map(graph::backwardClosure)
+			.flatMap(Set::stream)
+			.collect(Collectors.toSet());
+
+		toLiftAll.removeAll(markedForRemoval);
 
 		lifted = toLiftAll.stream()
 			// now, for each parameter we got, we get a list of all the lifts

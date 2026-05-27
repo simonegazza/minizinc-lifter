@@ -121,6 +121,12 @@ public class ParameterExtractor {
 			assignments.putIfAbsent(ident, exprCtx);
 		}
 
+		/**
+		 * Registers a dependency for a given identifier.
+		 *
+		 * @param ident      the ident name
+		 * @param dependency the dependency to add
+		 */
 		private void addDependency(String ident, String dependency) {
 			dependencies.putIfAbsent(ident, new ArrayList<String>());
 			dependencies.get(ident).add(dependency);

@@ -14,32 +14,34 @@ import me.simonegazza.lift.parameters.OriginalParameter;
 public class ParameterGraph extends DirectedGraph<OriginalParameter> {
 
 	/**
-	 * Computes the transitive closure of dependencies for a given parameter.
+	 * Computes all parameters that transitively depend on the given parameter.
 	 * <p>
-	 * This method returns all parameters that directly or indirectly depend on
-	 * the given one. It iteratively expands the set until a fixpoint is
-	 * reached.
+	 * Starting from the input parameter, this method walks the graph in the
+	 * reverse direction, collecting every parameter that directly or indirectly
+	 * references it.
 	 *
-	 * @param parameter the starting parameter
+	 * @param parameter the parameter from which the reverse dependency
+	 *                      traversal starts
 	 *
-	 * @return the set of dependent parameters (including the input)
+	 * @return all parameters that directly or indirectly depend on the given
+	 *             parameter, including the parameter itself
 	 */
-	public Set<OriginalParameter> dependsOn(OriginalParameter parameter) {
+	public Set<OriginalParameter> backwardClosure(OriginalParameter parameter) {
 
-		Queue<OriginalParameter> stack = new LinkedList<>();
+		Queue<OriginalParameter> queue = new LinkedList<>();
 		Set<OriginalParameter> visited = new HashSet<>();
-		stack.add(parameter);
-		while (!stack.isEmpty()) {
-			OriginalParameter current = stack.poll();
+		queue.add(parameter);
+		while (!queue.isEmpty()) {
+			OriginalParameter current = queue.poll();
 			visited.add(current);
 
-			Set<OriginalParameter> dependencies = getNodes().stream()
-				.filter(p -> getAdjacent(p).stream()
-					.anyMatch(a -> a.equals(current)))
+			Set<OriginalParameter> dependants = getNodes().stream()
+				.filter(p -> getAdjacent(p).contains(current))
 				.collect(Collectors.toSet());
 
-			for (OriginalParameter adj : dependencies) {
-				stack.add(adj);
+			for (OriginalParameter dependant : dependants) {
+				queue.add(dependant);
+
 			}
 		}
 
