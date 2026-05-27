@@ -152,12 +152,43 @@ public class Main implements Callable<Integer> {
 	}
 
 	/**
-	 * Helper method that passes the control to MiniZinc either to run the
-	 * compilation or to actually run the model.
+	 * Helper method that passes the control to MiniZinc to compile the model.
 	 *
-	 * @param modelBasePath the path to the model to run or compile without the
-	 *                          ending extensions
-	 * @param compile       whether we turn on compilation or run
+	 * @param modelBasePath the path to the model to compile without the ending
+	 *                          extensions
+	 *
+	 * @throws IOException          can occur when inheriting IO
+	 * @throws InterruptedException in case command get stopped by the OS
+	 */
+	private void compile(Path modelBasePath) throws IOException, InterruptedException {
+		Process p = new ProcessBuilder()
+			.command(
+				"minizinc",
+				"--solver", "chuffed",
+				"-w", // suppress warnings
+				//// 1 minute timeout expressed in milliseconds
+				// "--time-limit", String.valueOf(1000 * 60 * 1),
+				// "--verbose",
+				"--compile",
+				(modelBasePath.toString() + ".mzn"))
+			.redirectErrorStream(true)
+			.directory(modelBasePath.getParent().toFile())
+			.start();
+
+		int exitCode = p.waitFor();
+		if (exitCode != 0) {
+			InputStreamReader isr = new InputStreamReader(p.getErrorStream());
+			BufferedReader reader = new BufferedReader(isr);
+			logger.error(reader.lines().collect(Collectors.joining("\n")));
+			throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
+		}
+	}
+
+	/**
+	 * Helper method that passes the control to MiniZinc to run the model.
+	 *
+	 * @param modelBasePath the path to the model to run without the ending
+	 *                          extensions
 	 * @param solverName    the solver name to pass to MiniZinc (like "chuffed"
 	 *                          or "gecode")
 	 *
@@ -166,11 +197,10 @@ public class Main implements Callable<Integer> {
 	 * @throws IOException          can occur when inheriting IO
 	 * @throws InterruptedException in case command get stopped by the OS
 	 */
-	private List<String> runCommand(Path modelBasePath, boolean compile, String solverName)
-		throws IOException, InterruptedException {
+	private List<String> run(Path modelBasePath, String solverName) throws IOException, InterruptedException {
 
 		Process p;
-		if (!compile && "chuffed".equals(solverName)) {
+		if ("chuffed".equals(solverName)) {
 			Path fznChuffedPath = Paths.get(
 				new ProcessBuilder("minizinc")
 					.start()
@@ -183,6 +213,9 @@ public class Main implements Callable<Integer> {
 				new ProcessBuilder()
 					.command(
 						fznChuffedPath.toString(),
+						// "-a",
+						// 1 minute timeout expressed in milliseconds
+						"--time-out", String.valueOf(1000 * 60 * 1),
 						(modelBasePath.toString() + ".fzn"))
 					.directory(modelBasePath.getParent().toFile())
 					.inheritIO()
@@ -190,8 +223,6 @@ public class Main implements Callable<Integer> {
 				new ProcessBuilder()
 					.command(
 						"minizinc",
-						// 1 minute timeout expressed in milliseconds
-						"--time-limit", String.valueOf(1000 * 60 * 1),
 						// "--output-objective",
 						"--ozn-file",
 						(modelBasePath.toString() + ".ozn"))
@@ -208,7 +239,6 @@ public class Main implements Callable<Integer> {
 					// 1 minute timeout expressed in milliseconds
 					"--time-limit", String.valueOf(1000 * 60 * 1),
 					// "--verbose",
-					"--compile",
 					(modelBasePath.toString() + ".mzn"))
 				.redirectErrorStream(true)
 				.directory(modelBasePath.getParent().toFile())
@@ -336,19 +366,18 @@ public class Main implements Callable<Integer> {
 			// Write .mzn to file
 			logger.info("Writing lifted .mzn with assumptions");
 			Path ithBaseModelPath = outputPath.resolve("" + i + "-" + modelsNamePrefix);
-			Path mznPath = Path.of(ithBaseModelPath.toString() + ".mzn");
-			Files.writeString(mznPath, liftedModel);
+			Files.writeString(Path.of(ithBaseModelPath.toString() + ".mzn"), liftedModel);
 
 			// Compile the .mzn and get the .fzn
 			logger.info("Compiling the .mzn...");
-			runCommand(ithBaseModelPath, true, "chuffed");
+			compile(ithBaseModelPath);
 
 			// Run the .fzn
 			logger.info("Running the lifted model...");
-			List<String> commandOutput = runCommand(ithBaseModelPath, false, "chuffed");
+			List<String> commandOutput = run(ithBaseModelPath, "chuffed");
 
 			// Check results
-			if ("=====UNKNOWN=====".equals(commandOutput.get(0))) {
+			if ("% Time limit exceeded!".equals(commandOutput.get(0))) {
 				logger.info("""
 					A solution or an unsat core cannot be found, \
 					trying to recover by running the solver with parameter values \
@@ -357,28 +386,31 @@ public class Main implements Callable<Integer> {
 				// Remove lines regarding chuffed and add the fixing of
 				// parameters
 				String lastModel = liftedModel.lines()
-					.filter(r -> (!r.contains("include \"chuffed.mzn\";") && !r.contains("assume(assumed)")))
+					.filter(r -> !r.contains("include \"chuffed.mzn\";") && !r.contains("assume(assumed)"))
 					.collect(Collectors.joining("\n"));
 				lastModel += "\nconstraint forall(assumed);\n";
 
 				// Write .mzn to file
 				logger.info("Writing lifted last .mzn without assumptions and with parameters fixed!");
 				Path lastModelPath = outputPath.resolve("last-" + modelsNamePrefix);
-				Files.writeString(lastModelPath, lastModel);
+				Files.writeString(Path.of(lastModelPath.toString() + ".mzn"), lastModel);
 
-				commandOutput = runCommand(lastModelPath, false, "gecode");
-
-				if ("----------".equals(commandOutput.get(1))) {
-					logger.info("A solution has been found!");
-				}
+				commandOutput = run(lastModelPath, "gecode");
 
 				if ("==========".equals(commandOutput.get(0))) {
 					logger.info("The optimal solution has been found!");
+					printAssumptions(assumptions);
+					return 0;
+				} else if ("----------".equals(commandOutput.get(1))) {
+					logger.info("A solution has been found!");
+					printAssumptions(assumptions);
+					return 0;
+				} else {
+					logger.info("We were not able to find any solutions, sorry!");
+					logger.info("These are the unsat cores found so far...");
+					printAssumptions(assumptions);
+					return 1;
 				}
-
-				printAssumptions(assumptions);
-				return 0;
-
 			} else if (commandOutput.size() > 2 && "----------".equals(commandOutput.get(2))) {
 				logger.info("A solution has been found, exiting...");
 				printAssumptions(assumptions);
