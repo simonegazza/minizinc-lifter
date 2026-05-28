@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AddExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayTiExprContext;
@@ -176,16 +177,32 @@ public class Lifter {
 			.flatMap(Set::stream)
 			.collect(Collectors.toSet());
 
-		Set<OriginalParameter> markedForRemoval = toLiftAll.stream()
+		Set<OriginalParameter> setsMarkedForRemoval = toLiftAll.stream()
 			// filter away all elements by default (i.e. sets are allowed)
 			.filter(_ -> setsDisallowed)
 			// if something remains, it means that sets are *not* allowed, so we
 			// filter away all elements that are not sets
 			.filter(p -> p.getType() instanceof MiniZincSetType
 				|| (p.getType() instanceof MiniZincArrayType t && t.getSubtype() instanceof MiniZincSetType))
-			.map(graph::backwardClosure)
-			.flatMap(Set::stream)
 			.collect(Collectors.toSet());
+
+		Set<OriginalParameter> closuredMarkedForRemoval = setsMarkedForRemoval.stream()
+			// get all the backward closures but temporarily remove the current
+			// node
+			.map(p -> graph.backwardClosure(p).stream()
+				.filter(bc -> !bc.equals(p))
+				.toList())
+			.flatMap(List::stream)
+			.collect(Collectors.toSet());
+
+		// Filter away all the elements that do not present a dependency in the
+		// closures of sets or in the sets themselves
+		Set<OriginalParameter> markedForRemoval = Stream.concat(
+			closuredMarkedForRemoval.stream()
+				.filter(c -> graph.getAdjacent(c).stream()
+					.allMatch(e -> setsMarkedForRemoval.contains(e)
+						|| closuredMarkedForRemoval.contains(e))),
+			setsMarkedForRemoval.stream()).collect(Collectors.toSet());
 
 		toLiftAll.removeAll(markedForRemoval);
 
