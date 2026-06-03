@@ -1,4 +1,4 @@
-package me.simonegazza.lift.visitors;
+package me.simonegazza.lift.visitors.flatzinc;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,19 +23,23 @@ import me.simonegazza.lift.parameters.LiftedParameter;
  * Visits a FlatZinc model and extracts the set of {@link RevokedAssumption}s
  * that must be disabled in the next MiniZinc execution.
  */
-public class FlatZincVisitor {
+public class VariableCoreExtractor {
 
 	/**
 	 * List of nogood variable names given by the solver.
 	 */
-	private final List<String> nogoods;
+	private final Set<String> nogoods;
 
 	/**
 	 * List of {@link LiftedParameter}.
 	 */
 	private final List<LiftedParameter> liftedParameters;
 
-	public FlatZincVisitor(Path modelPath, List<LiftedParameter> liftedParameters, List<String> nogoods) {
+	public VariableCoreExtractor(
+		Path modelPath,
+		List<LiftedParameter> liftedParameters,
+		Set<String> nogoods) {
+
 		this.nogoods = nogoods;
 		this.liftedParameters = liftedParameters;
 	}

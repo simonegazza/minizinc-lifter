@@ -1,4 +1,4 @@
-package me.simonegazza.lift.visitors;
+package me.simonegazza.lift.visitors.minizinc;
 
 import java.util.ArrayList;
 import java.util.Collection;
