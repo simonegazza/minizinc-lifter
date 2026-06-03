@@ -325,13 +325,23 @@ public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 	/**
 	 * Generates the contribution to the params arrays.
 	 *
-	 * @param lifted             whether we should consider lifted quantities or
-	 *                               not
+	 * @param lifted             whether we should consider lifted names or not
 	 * @param revokedAssumptions the assumptions to be revoked
 	 *
-	 * @return a sum of absolute differences over selected indices
+	 * @return a sum of absolute differences over selected indices, if the
 	 */
 	public abstract String paramArrayPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions);
+
+	/**
+	 * Generates the contribution to the warm start arrays.
+	 *
+	 * @param lifted             whether we should consider lifted names or not
+	 * @param revokedAssumptions the assumptions to be revoked.Assumptions not
+	 *                               related to this parameter are ignored
+	 *
+	 * @return an array of absolute differences over selected indices
+	 */
+	public abstract Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions);
 
 	/**
 	 * Generates the contribution to the objective function.

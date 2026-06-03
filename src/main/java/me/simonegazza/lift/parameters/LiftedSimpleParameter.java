@@ -41,7 +41,12 @@ public class LiftedSimpleParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> assumptions) {
+	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions) {
+		// Filter and keep only the appropriate assumptions
+		List<RevokedAssumption> assumptions = revokedAssumptions.stream()
+			.filter(a -> a.name().equals(getLiftedName()))
+			.toList();
+
 		StringBuilder result = new StringBuilder();
 		boolean condition = assumptions.stream()
 			.anyMatch(a -> a.name().equals(getLiftedName()));
@@ -50,6 +55,18 @@ public class LiftedSimpleParameter extends LiftedParameter {
 		}
 		result.append("[").append(lifted ? getLiftedName() : getOriginalName()).append("]");
 		return result.toString();
+	}
+
+	@Override
+	public Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions) {
+		// Filter and keep only the appropriate assumptions
+		List<RevokedAssumption> assumptions = revokedAssumptions.stream()
+			.filter(a -> a.name().equals(getLiftedName()))
+			.toList();
+		if (assumptions.isEmpty()) {
+			return Optional.empty();
+		}
+		return Optional.of("[" + (lifted ? getLiftedName() : getOriginalName()) + "]");
 	}
 
 	@Override

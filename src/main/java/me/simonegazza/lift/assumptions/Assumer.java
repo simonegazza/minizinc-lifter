@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -109,9 +111,6 @@ public class Assumer implements Callable<String> {
 
 	/**
 	 * Builds the solve statement based on lifted parameters.
-	 * <p>
-	 * The objective is constructed as the sum of all lifted parameter
-	 * contributions.
 	 *
 	 * @return the solve component of the combined lifts
 	 */
@@ -123,6 +122,35 @@ public class Assumer implements Callable<String> {
 			obj.append("int");
 		}
 
+		List<String> warmStarts = parameterTypeCollector.values().stream().map(parametersByType -> {
+			List<RevokedAssumption> assumptionsFilteredByType = assumptions.stream()
+				.filter(a -> parametersByType.stream()
+					.map(LiftedParameter::getLiftedName)
+					.anyMatch(p -> p.equals(a.name())))
+				.toList();
+
+			List<String> warmStartOriginal = new ArrayList<>();
+			List<String> warmStartLifted = new ArrayList<>();
+
+			for (LiftedParameter parameter : parametersByType) {
+				Optional<String> pieceOriginal = parameter.warmStartPiece(false, assumptionsFilteredByType);
+				if (pieceOriginal.isPresent()) {
+					warmStartOriginal.add(pieceOriginal.get());
+					warmStartLifted.add(parameter.warmStartPiece(true, assumptionsFilteredByType).get());
+				}
+			}
+
+			if (warmStartLifted.isEmpty() && warmStartOriginal.isEmpty()) {
+				return null;
+			}
+
+			return ":: warm_start(\n\t\t"
+				+ warmStartLifted.stream().collect(Collectors.joining("\n\t\t\t++ "))
+				+ ",\n\t\t"
+				+ warmStartOriginal.stream().collect(Collectors.joining("\n\t\t\t++ "))
+				+ "\n\t)";
+		}).filter(Objects::nonNull).toList();
+
 		obj.append(": objective_lifted :: output_var = ");
 		obj.append(
 			lifted.stream()
@@ -130,7 +158,10 @@ public class Assumer implements Callable<String> {
 				.map(LiftedParameter::getSolvePiece)
 				.collect(Collectors.joining("\n\t+ ")))
 			.append("\n;\n")
-			.append("solve\n\t :: assume(assumed)\nminimize objective_lifted;\n\n");
+			.append("solve")
+			.append("\n\t:: assume(assumed)")
+			.append(warmStarts.stream().collect(Collectors.joining("\n", "\n\t", "")))
+			.append("\nminimize objective_lifted;\n\n");
 
 		return obj.toString();
 	}
@@ -188,13 +219,8 @@ public class Assumer implements Callable<String> {
 		result.append(" = ");
 
 		String ending = parameters.stream()
-			.map(p -> {
-				List<RevokedAssumption> parameterAssumption = revoked.stream()
-					.filter(a -> a.name().equals(p.getLiftedName()))
-					.sorted()
-					.toList();
-				return p.paramArrayPiece(ofLifted, parameterAssumption);
-			}).collect(Collectors.joining("\n\t ++ "));
+			.map(p -> p.paramArrayPiece(ofLifted, revoked.stream().toList()))
+			.collect(Collectors.joining("\n\t ++ "));
 		result.append(ending);
 		result.append("\n;\n");
 

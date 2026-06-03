@@ -173,6 +173,11 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		throw new UnimplementedException("Unimplemented piece for parameter");
 	}
 
+	@Override
+	public Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> assumptions) {
+		throw new UnimplementedException("Unimplemented piece for parameter");
+	}
+
 	/**
 	 * Generates the lifted array declaration.
 	 * <p>
