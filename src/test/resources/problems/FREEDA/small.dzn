@@ -92,14 +92,15 @@ bestBounds = [
 	MAX_RBOUNDS, % resource_4_resource_4_3
 ];
 
+% DOING 10x ON SOME ELEMENT OF TO THE resource_0 COLUMN
 comReq = array2d(CompFlavs, Res, [
 	%resource_0, resource_2, resource_1, resource_3_resource_3_0, resource_3_resource_3_1, resource_4_resource_4_0, resource_4_resource_4_1, resource_4_resource_4_2, resource_4_resource_4_3
 	1303, 1297, 392, 1, 1, 1, 1, 1, MIN_RBOUNDS, % component_2_flavour_0
-	469, 1091, 711, MIN_RBOUNDS, MIN_RBOUNDS, 1, 1, 1, 1, % component_4_flavour_0
+	4690, 1091, 711, MIN_RBOUNDS, MIN_RBOUNDS, 1, 1, 1, 1, % component_4_flavour_0
 	163, 607, 183, 1, 1, 1, 1, 1, 1, % component_3_flavour_0
-	116, 524, 167, MIN_RBOUNDS, MIN_RBOUNDS, 1, 1, 1, 1, % component_3_flavour_1
+	1160, 524, 167, MIN_RBOUNDS, MIN_RBOUNDS, 1, 1, 1, 1, % component_3_flavour_1
 	113, 403, 158, 1, MIN_RBOUNDS, 1, 1, 1, 1, % component_3_flavour_2
-	863, 272, 172, MIN_RBOUNDS, MIN_RBOUNDS, 1, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0_flavour_0
+	8630, 272, 172, MIN_RBOUNDS, MIN_RBOUNDS, 1, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0_flavour_0
 	836, 382, 803, MIN_RBOUNDS, MIN_RBOUNDS, 1, MIN_RBOUNDS, 1, 1, % component_1_flavour_0
 ]);
 Nodes = {node_0, node_1, node_2, node_3, node_4};
