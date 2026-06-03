@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.lift.expressions.MiniZincArray;
@@ -20,7 +21,7 @@ import me.simonegazza.lift.types.MiniZincSetType;
  * Enriches a base MiniZinc model with assumption handling logic and applies
  * assumption revocations when required.
  */
-public class Assumer {
+public class Assumer implements Callable<String> {
 
 	/**
 	 * Original MiniZinc model before assumption injection.
@@ -205,7 +206,8 @@ public class Assumer {
 	 *
 	 * @return the customized model source code
 	 */
-	public String execute() {
+	@Override
+	public String call() {
 		StringBuilder result = new StringBuilder(baseModel);
 
 		parameterTypeCollector.entrySet().stream().forEach(entry -> {

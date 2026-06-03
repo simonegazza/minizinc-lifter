@@ -13,11 +13,48 @@ import me.simonegazza.antlr.flatzinc.FlatZincParser.PredicateItemContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.SolveItemContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.VarDeclItemContext;
 
+/**
+ * Visitor that partitions a FlatZinc model into its main components.
+ * <p>
+ * During traversal, the visitor collects:
+ * <ul>
+ * <li>Model declarations (predicates, parameters, and variables).</li>
+ * <li>Constraints associated with variables through the {@code defines_var}
+ * annotation.</li>
+ * <li>All remaining constraints.</li>
+ * <li>The solve item.</li>
+ * </ul>
+ * <p>
+ * This separation allows callers to reconstruct partial FlatZinc models or
+ * analyze constraints independently from declarations.
+ * <p>
+ * Constraints annotated with {@code defines_var} are indexed by the variable
+ * they define, enabling efficient lookup of the defining constraint for a
+ * particular variable.
+ */
 public class FlatZincDivider extends FlatZincBaseVisitor<Void> {
 
+	/**
+	 * Portion of the FlatZinc model preceding the constraint section, including
+	 * predicate, parameter, and variable declarations.
+	 */
 	private final StringBuilder firstModelPart;
+
+	/**
+	 * Mapping between a variable name and the constraint annotated with
+	 * {@code defines_var} that defines it.
+	 */
 	private final Map<String, String> variableConstraintAssociation;
+
+	/**
+	 * Constraints that are not associated with a variable through a
+	 * {@code defines_var} annotation.
+	 */
 	private final List<String> otherConstraints;
+
+	/**
+	 * The solve item of the FlatZinc model.
+	 */
 	private final StringBuilder solveItem;
 
 	public FlatZincDivider() {
@@ -71,14 +108,13 @@ public class FlatZincDivider extends FlatZincBaseVisitor<Void> {
 	}
 
 	/**
-	 * Getter for the list of constraints present in the model.
+	 * Returns all constraints extracted from the model.
 	 * <p>
-	 * Due to the FlatZinc model being very big, we return a list instead of a
-	 * set (even an ordered one) due to potential performance issues.
-	 * <p>
-	 * Can be an empty list if the extractor wasn't called for parsing.
+	 * A {@link List} is used instead of a {@link java.util.Set} to avoid the
+	 * overhead of duplicate elimination on potentially large FlatZinc models.
 	 *
-	 * @return the list of constraints
+	 * @return all extracted constraints, or an empty list if the visitor has
+	 *             not processed any constraint items
 	 */
 	public List<String> getConstraints() {
 		return Stream.concat(
@@ -86,6 +122,15 @@ public class FlatZincDivider extends FlatZincBaseVisitor<Void> {
 			otherConstraints.stream()).toList();
 	}
 
+	/**
+	 * Returns the portion of the FlatZinc model that appears before the first
+	 * constraint declaration.
+	 * <p>
+	 * This typically includes predicate declarations, parameter declarations,
+	 * and variable declarations.
+	 *
+	 * @return the model preamble as FlatZinc source code
+	 */
 	public String getAboveConstraints() {
 		return firstModelPart.toString();
 	}

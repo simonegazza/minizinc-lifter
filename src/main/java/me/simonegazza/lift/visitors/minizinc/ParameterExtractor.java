@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ArrayTiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.AssignItemContext;
@@ -42,7 +43,7 @@ import org.antlr.v4.runtime.misc.Interval;
  * This graph is later used by the lifting phase to understand how
  * transformations should propagate across parameters.
  */
-public class ParameterExtractor {
+public class ParameterExtractor implements Callable<ParameterGraph> {
 
 	/**
 	 * The resulting dependency graph.
@@ -54,19 +55,24 @@ public class ParameterExtractor {
 	 */
 	private final Visitor visitor;
 
-	public ParameterExtractor() {
+	/**
+	 * The context in which this will be called.
+	 */
+	private final ModelContext ctx;
+
+	public ParameterExtractor(ModelContext ctx) {
 		graph = new ParameterGraph();
 		visitor = new Visitor();
+		this.ctx = ctx;
 	}
 
 	/**
 	 * Executes a visit of the model and returns the graph.
 	 *
-	 * @param ctx the {@link ModelContext}
-	 *
 	 * @return the {@link ParameterGraph}
 	 */
-	public ParameterGraph execute(ModelContext ctx) {
+	@Override
+	public ParameterGraph call() {
 		visitor.visitModel(ctx);
 
 		return graph;

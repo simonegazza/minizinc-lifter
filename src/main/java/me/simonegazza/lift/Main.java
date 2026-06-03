@@ -80,9 +80,6 @@ public class Main implements Callable<Integer> {
 	 */
 	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Main.class.getSimpleName());
 
-	private static final String RECOVERY_SOLVER = "gecode";
-	private static final String QUICKXPLAIN_SOLVER = "cp-sat";
-
 	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
 	 * context.
@@ -141,6 +138,22 @@ public class Main implements Callable<Integer> {
 	private boolean setsDisallowed;
 
 	/**
+	 * If specified, use the provided identifier as solver for solution recovery
+	 * attempt.
+	 */
+	@Option(names = {
+			"--recovery-solver" }, defaultValue = "gecode", description = "Solver used when running the recovery model (default: ${DEFAULT-VALUE})")
+	private String recoverySolver;
+
+	/**
+	 * If specified, use the provided identifier as solver for the QuickXPlain
+	 * algorithm.
+	 */
+	@Option(names = {
+			"--quickxplain-solver" }, defaultValue = "cp-sat", description = "Solver used by QuickXPlain (default: ${DEFAULT-VALUE})")
+	private String quickXPlainSolver;
+
+	/**
 	 * Application entry point.
 	 * <p>
 	 * Delegates execution to Picocli which handles argument parsing and command
@@ -154,6 +167,24 @@ public class Main implements Callable<Integer> {
 		System.exit(exitCode);
 	}
 
+	/**
+	 * Executes a recovery version of the generated MiniZinc model using fixed
+	 * parameter values instead of assumptions.
+	 * <p>
+	 * This method is used when the goal is to determine whether a concrete
+	 * solution exists for the current parameter assignment rather than to
+	 * extract an unsatisfiable core.
+	 *
+	 * @param solverName       the MiniZinc solver identifier to use when
+	 *                             executing the recovery model
+	 * @param model            the MiniZinc model source code
+	 * @param modelsNamePrefix prefix used to generate the recovery model
+	 *                             filename
+	 *
+	 * @return the output produced by {@link ModelRunner#run(Path, String)}
+	 *
+	 * @throws IOException if the recovery model cannot be written to disk
+	 */
 	private List<String> runWithFixedParameters(
 		String solverName,
 		String model,
@@ -175,10 +206,24 @@ public class Main implements Callable<Integer> {
 		return ModelRunner.run(lastModelPath, solverName);
 	}
 
+	/**
+	 * Runs the QuickXPlain algorithm.
+	 * <p>
+	 * The conflicting constraints returned by {@link QuickXPlain} are converted
+	 * into a FlatZinc model and traversed to collect all variable names
+	 * referenced by the failing constraints.
+	 *
+	 * @param baseModelPath path to the base model used by QuickXPlain
+	 * @param lifted        lifted parameters used to initialize the QuickXPlain
+	 *                          search
+	 *
+	 * @return the set of variable names appearing in the conflicting
+	 *             constraints identified by QuickXPlain
+	 */
 	private Set<String> runQuickExplain(Path baseModelPath, List<LiftedParameter> lifted) {
-		QuickXPlain qx = new QuickXPlain(baseModelPath, lifted, QUICKXPLAIN_SOLVER);
+		QuickXPlain qx = new QuickXPlain(baseModelPath, lifted, quickXPlainSolver);
 
-		String failingConstraints = qx.execute().stream()
+		String failingConstraints = qx.call().stream()
 			// add "solve satisfy" to these constraints accepted by the parser
 			.collect(Collectors.joining("\n", "", "\nsolve satisfy;"));
 
@@ -192,7 +237,22 @@ public class Main implements Callable<Integer> {
 		return variableCollector.visitModel(constaintParser.model());
 	}
 
-	private Optional<Set<String>> checkSolutionFound(List<String> commandOutput) {
+	/**
+	 * Interprets the output produced by a MiniZinc execution and determines
+	 * whether a solution, an unsatisfiable core, or no useful core was
+	 * obtained.
+	 *
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)}
+	 *
+	 * @return an {@link Optional} containing the set of variables extracted
+	 *             from the reported nogood, or {@link Optional#empty()} if no
+	 *             core could be obtained
+	 *
+	 * @throws IndexOutOfBoundsException if {@code commandOutput} is
+	 *                                       unexpectedly empty
+	 */
+	private Optional<Set<String>> analyzeOutput(List<String> commandOutput) {
 		if (commandOutput.size() > 2 && commandOutput.contains("----------")) {
 			logger.info("A solution has been found!");
 			System.exit(0);
@@ -267,8 +327,8 @@ public class Main implements Callable<Integer> {
 
 		// Get the dependency graph of the parameters and verify the existence
 		// of the parameters to be lifted
-		ParameterExtractor pe = new ParameterExtractor();
-		ParameterGraph graph = pe.execute(parser.model());
+		ParameterExtractor pe = new ParameterExtractor(parser.model());
+		ParameterGraph graph = pe.call();
 		for (LiftRequest request : cliParameters) {
 			Optional<OriginalParameter> toLift = graph.getByName(request.getName());
 			if (toLift.isEmpty()) {
@@ -291,8 +351,13 @@ public class Main implements Callable<Integer> {
 
 		// Resolve the dependencies of the parameters and create base model
 		logger.info("Lifting parameter representation...");
-		Lifter lifter = new Lifter(tokens, cliParameters, graph, setsDisallowed);
-		String baseModel = lifter.execute(parser.model());
+		Lifter lifter = new Lifter(
+			tokens,
+			parser.model(),
+			cliParameters,
+			graph,
+			setsDisallowed);
+		String baseModel = lifter.call();
 
 		List<LiftedParameter> liftedParameters = lifter.getLifted();
 
@@ -307,7 +372,7 @@ public class Main implements Callable<Integer> {
 					.flatMap(Set::stream)
 					.sorted()
 					.collect(Collectors.toSet()));
-			String liftedModel = assumer.execute();
+			String liftedModel = assumer.call();
 
 			// Write .mzn to file
 			logger.info("Writing lifted .mzn with assumptions");
@@ -326,17 +391,17 @@ public class Main implements Callable<Integer> {
 			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "chuffed");
 
 			Set<String> coreInvolvedVariables;
-			Optional<Set<String>> anyVariable = checkSolutionFound(commandOutput);
+			Optional<Set<String>> anyVariable = analyzeOutput(commandOutput);
 			if (anyVariable.isEmpty()) {
 				logger.info("A solution or an unsat core cannot be found, trying with another solver: "
-					+ RECOVERY_SOLVER);
+					+ recoverySolver);
 
 				List<String> recoveryOuput = runWithFixedParameters(
-					RECOVERY_SOLVER,
+					recoverySolver,
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
 
-				if (checkSolutionFound(recoveryOuput).isEmpty()) {
+				if (analyzeOutput(recoveryOuput).isEmpty()) {
 					logger.info("""
 						I'll run QuickXPlain trying to find a solution, but be aware that the process \
 						might get in a loop if the solver answered with UNKNOWN \
@@ -365,8 +430,9 @@ public class Main implements Callable<Integer> {
 			VariableCoreExtractor coreExtractor = new VariableCoreExtractor(
 				fznLiftedPath,
 				liftedParameters,
-				coreInvolvedVariables);
-			Set<RevokedAssumption> newNogoodAssumptions = coreExtractor.execute(fznParser.model());
+				coreInvolvedVariables,
+				fznParser.model());
+			Set<RevokedAssumption> newNogoodAssumptions = coreExtractor.call();
 			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
 				.map(RevokedAssumption::toString)
 				.collect(Collectors.joining(", ")));

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
@@ -56,7 +57,7 @@ import org.antlr.v4.runtime.misc.Interval;
  * Dependencies are resolved transitively: lifting a parameter automatically
  * lifts all parameters that depend on it.
  */
-public class Lifter {
+public class Lifter implements Callable<String> {
 
 	/**
 	 * Rewritings file path.
@@ -82,6 +83,11 @@ public class Lifter {
 	 * The environment in which the expressions should be evaluated.
 	 */
 	private final Map<String, Object> env;
+
+	/**
+	 * The model context in which this will be called.
+	 */
+	private final ModelContext ctx;
 
 	/**
 	 * Computes the value of the given parameter by recursively evaluating all
@@ -128,34 +134,17 @@ public class Lifter {
 		return value;
 	}
 
-	/**
-	 * Construct and prepares the lifting transformation.
-	 * <p>
-	 * This constructor:
-	 * <ul>
-	 * <li>Resolves all parameters that need to be lifted</li>
-	 * <li>Expands lifting to include dependencies</li>
-	 * <li>Creates {@link LiftedParameter} instances</li>
-	 * </ul>
-	 * <p>
-	 * Note that even parameters not explicitly requested may be lifted if they
-	 * are required to preserve correctness.
-	 *
-	 * @param tokens         the token stream of the parsed model
-	 * @param toLift         the user-provided lift requests
-	 * @param graph          the parameter dependency graph
-	 * @param setsDisallowed whether sets should be lifted or not
-	 */
 	public Lifter(
 		TokenStream tokens,
+		ModelContext ctx,
 		List<LiftRequest> toLift,
 		ParameterGraph graph,
 		boolean setsDisallowed) {
 
 		visitor = new LiftingVisitor();
 		rewriter = new TokenStreamRewriter(tokens);
-
 		env = new HashMap<String, Object>();
+		this.ctx = ctx;
 
 		// collect all dependencies
 		Set<OriginalParameter> toLiftAll = toLift.stream()
@@ -242,11 +231,10 @@ public class Lifter {
 	 * <li>Adds solve/output blocks if not already present</li>
 	 * </ol>
 	 *
-	 * @param ctx the root model context
-	 *
 	 * @return the rewritten MiniZinc model as a string
 	 */
-	public String execute(ModelContext ctx) {
+	@Override
+	public String call() {
 		visitor.visitModel(ctx);
 
 		String rewritings = "";

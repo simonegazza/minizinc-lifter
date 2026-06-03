@@ -5,24 +5,57 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ModelRunner;
 
-public class QuickXPlain {
+/**
+ * Implementation of the QuickXPlain algorithm for identifying a minimal
+ * unsatisfiable subset (MUS) of constraints in a FlatZinc model.
+ * <p>
+ * The algorithm works by recursively partitioning the set of constraints and
+ * performing satisfiability checks to isolate the constraints responsible for
+ * an inconsistency. Each satisfiability check is performed by generating a
+ * temporary MiniZinc model containing a subset of the original constraints and
+ * invoking the configured solver.
+ * <p>
+ * The input model is first transformed into a FlatZinc representation from
+ * which all constraints are extracted. The resulting minimal conflict set can
+ * then be used for explanation generation.
+ */
+public class QuickXPlain implements Callable<List<String>> {
 	/**
 	 * Application logger.
 	 */
 	private static final ApplicationLogger logger = ApplicationLogger.getLogger(QuickXPlain.class.getSimpleName());
 
+	/**
+	 * Model Path that constitutes naming for the models that will be created.
+	 */
 	private final Path baseModelPath;
 
+	/**
+	 * Solver identifier for MiniZinc.
+	 */
 	private final String solverName;
 
+	/**
+	 * Internal incremental counter used for naming files.
+	 */
 	private int counter;
+
+	/**
+	 * List of constraints of the original model.
+	 */
 	private List<String> constraints;
+
+	/**
+	 * Internal, upper and constant part of the model that has nothing to do
+	 * with constraints.
+	 */
 	private String aboveModel;
 
 	public QuickXPlain(Path baseModelPath, List<LiftedParameter> liftedParameters, String solverName) {
@@ -32,7 +65,28 @@ public class QuickXPlain {
 		this.solverName = solverName;
 	}
 
-	public List<String> execute() {
+	/**
+	 * Executes the QuickXPlain algorithm on the current model.
+	 * <p>
+	 * The method:
+	 * <ol>
+	 * <li>Creates a recovery version of the MiniZinc model without
+	 * assumption-based solving.</li>
+	 * <li>Compiles the model to FlatZinc.</li>
+	 * <li>Extracts all FlatZinc constraints.</li>
+	 * <li>Runs QuickXPlain to identify a minimal conflicting subset of those
+	 * constraints.</li>
+	 * </ol>
+	 *
+	 * @return the minimal set of FlatZinc constraints responsible for the
+	 *             detected inconsistency
+	 *
+	 * @throws IllegalStateException    if the MiniZinc model cannot be read
+	 * @throws IllegalArgumentException if temporary MiniZinc or FlatZinc files
+	 *                                      cannot be created or accessed
+	 */
+	@Override
+	public List<String> call() {
 		// Read and write the last model to remove the chuffed parts
 		String mznModel;
 		try {
@@ -54,19 +108,6 @@ public class QuickXPlain {
 		ModelRunner.compile(modelBasePath, solverName);
 		// Prepare the divider
 		Path fznPath = Path.of(modelBasePath + ".fzn");
-//		CharStream fznInput;
-//		try {
-//			fznInput = CharStreams.fromPath(fznPath);
-//		} catch (IOException e) {
-//			throw new IllegalStateException("Unable to find model in " + fznPath);
-//		}
-//		Lexer fznLexer = new FlatZincLexer(fznInput);
-//		TokenStream fznTokens = new CommonTokenStream(fznLexer);
-//		FlatZincParser fznParser = new FlatZincParser(fznTokens);
-//		divider.visitModel(fznParser.model());
-//
-//		// run with extracted constraints
-//		List<String> constraints = divider.getConstraints();
 		try {
 			List<String> fznModel = Files.readAllLines(fznPath);
 			constraints = fznModel.stream()
@@ -82,12 +123,35 @@ public class QuickXPlain {
 		return quickXPlain(List.of(), constraints);
 	}
 
+	/**
+	 * Computes the union of two constraint sets while removing duplicates.
+	 *
+	 * @param a first constraint set
+	 * @param b second constraint set
+	 *
+	 * @return a list containing all distinct constraints from both inputs
+	 */
 	private List<String> union(List<String> a, List<String> b) {
 		return Stream.concat(a.stream(), b.stream())
 			.distinct()
 			.toList();
 	}
 
+	/**
+	 * Determines whether a given set of constraints is unsatisfiable.
+	 * <p>
+	 * A temporary MiniZinc model containing only the supplied constraints is
+	 * generated and executed using the configured solver.
+	 * <p>
+	 * If the solver returns {@code UNKNOWN}, the search is aborted because the
+	 * satisfiability status cannot be determined reliably within the configured
+	 * limits.
+	 *
+	 * @param constraints constraints to test
+	 *
+	 * @return {@code true} if the constraint set is unsatisfiable;
+	 *             {@code false} otherwise
+	 */
 	private boolean checkUnsat(List<String> constraints) {
 		logger.info("Running iteration " + counter);
 		Path model = buildModel(constraints);
@@ -101,6 +165,23 @@ public class QuickXPlain {
 		return output.stream().anyMatch(l -> l.contains("UNSATISFIABLE"));
 	}
 
+	/**
+	 * Creates a temporary MiniZinc model containing the specified constraints.
+	 * <p>
+	 * The generated model consists of:
+	 * <ul>
+	 * <li>The non-constraint declarations extracted from the original FlatZinc
+	 * model.</li>
+	 * <li>The supplied subset of constraints.</li>
+	 * <li>A {@code solve satisfy;} statement.</li>
+	 * </ul>
+	 *
+	 * @param constraints constraints to include in the generated model
+	 *
+	 * @return the base path of the generated model (without file extension)
+	 *
+	 * @throws IllegalStateException if the model cannot be written to disk
+	 */
 	private Path buildModel(List<String> constraints) {
 		StringBuilder sb = new StringBuilder(aboveModel);
 
@@ -117,6 +198,27 @@ public class QuickXPlain {
 		}
 	}
 
+	/**
+	 * QuickXPlain algorithm.
+	 * <p>
+	 * Given a background constraint set {@code B} and a candidate conflict set
+	 * {@code C}, the algorithm recursively partitions {@code C} and performs
+	 * satisfiability checks to isolate a minimal subset of constraints whose
+	 * presence causes unsatisfiability.
+	 * <p>
+	 * The recursion terminates when:
+	 * <ul>
+	 * <li>{@code B} is already unsatisfiable, in which case no additional
+	 * constraints are required for the conflict.</li>
+	 * <li>{@code C} contains a single constraint, which is therefore part of
+	 * the conflict set.</li>
+	 * </ul>
+	 *
+	 * @param B background constraints assumed to be present
+	 * @param C candidate constraints that may contribute to the conflict
+	 *
+	 * @return a minimal conflicting subset of {@code C}
+	 */
 	private List<String> quickXPlain(List<String> B, List<String> C) {
 		boolean unsat = checkUnsat(B);
 		if (!B.isEmpty() && unsat) {

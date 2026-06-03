@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.antlr.flatzinc.FlatZincBaseVisitor;
@@ -23,7 +24,7 @@ import me.simonegazza.lift.parameters.LiftedParameter;
  * Visits a FlatZinc model and extracts the set of {@link RevokedAssumption}s
  * that must be disabled in the next MiniZinc execution.
  */
-public class VariableCoreExtractor {
+public class VariableCoreExtractor implements Callable<Set<RevokedAssumption>> {
 
 	/**
 	 * List of nogood variable names given by the solver.
@@ -35,13 +36,20 @@ public class VariableCoreExtractor {
 	 */
 	private final List<LiftedParameter> liftedParameters;
 
+	/**
+	 * The context in which this will run.
+	 */
+	private final ModelContext ctx;
+
 	public VariableCoreExtractor(
 		Path modelPath,
 		List<LiftedParameter> liftedParameters,
-		Set<String> nogoods) {
+		Set<String> nogoods,
+		ModelContext ctx) {
 
 		this.nogoods = nogoods;
 		this.liftedParameters = liftedParameters;
+		this.ctx = ctx;
 	}
 
 	/**
@@ -119,7 +127,10 @@ public class VariableCoreExtractor {
 	 * Recursively traverses introduced variables in order to identify the
 	 * original parameters involved in a failure.
 	 */
-	private class BackwardFinder extends FlatZincBaseVisitor<Optional<Set<String>>> {
+	private class BackwardFinder
+		extends FlatZincBaseVisitor<Optional<Set<String>>>
+		implements Callable<Set<String>> {
+
 		/**
 		 * Current variable name being analyzed.
 		 */
@@ -171,7 +182,7 @@ public class VariableCoreExtractor {
 						return e.startsWith("X_INTRODUCED_") || hasNameInLifted;
 					})
 					.filter(e -> !e.equals(name))
-					.flatMap(vn -> new BackwardFinder(vn, this.ctx).execute().stream())
+					.flatMap(vn -> new BackwardFinder(vn, this.ctx).call().stream())
 					.collect(Collectors.toSet());
 
 				return Optional.of(variables);
@@ -187,7 +198,8 @@ public class VariableCoreExtractor {
 		 *
 		 * @return the set of discovered variable names
 		 */
-		public Set<String> execute() {
+		@Override
+		public Set<String> call() {
 			return Stream.concat(ctx.constraintItem().stream(), ctx.varDeclItem().stream())
 				.map(this::visit)
 				.filter(Optional::isPresent)
@@ -202,14 +214,23 @@ public class VariableCoreExtractor {
 	 * Constructs the {@link RevokedAssumption} from the FlatZinc variable name
 	 * and the FlatZinc file.
 	 */
-	private class Namer extends FlatZincBaseVisitor<String> {
+	private class Namer
+		extends FlatZincBaseVisitor<String>
+		implements Callable<RevokedAssumption> {
+
 		/**
 		 * The name flattened name of the variable to be constructed.
 		 */
 		private final String varName;
 
-		public Namer(String varName) {
+		/**
+		 * The context in which this will run.
+		 */
+		private final ModelContext ctx;
+
+		public Namer(String varName, ModelContext ctx) {
 			this.varName = varName;
+			this.ctx = ctx;
 		}
 
 		/**
@@ -244,11 +265,10 @@ public class VariableCoreExtractor {
 		 * Retrieves all the necessary informations to build a
 		 * {@link RevokedAssumption} and construct it.
 		 *
-		 * @param ctx the root FlatZinc model context
-		 *
 		 * @return the reconstructed revoked assumption
 		 */
-		public RevokedAssumption retrieve(ModelContext ctx) {
+		@Override
+		public RevokedAssumption call() {
 			String originalVarName = ctx.varDeclItem().stream()
 				.map(this::visit)
 				.filter(Objects::nonNull)
@@ -292,11 +312,10 @@ public class VariableCoreExtractor {
 	 * Performs the full analysis of the FlatZinc model and determines which
 	 * assumptions must be revoked.
 	 *
-	 * @param ctx the root FlatZinc model context
-	 *
 	 * @return the set of revoked assumptions
 	 */
-	public Set<RevokedAssumption> execute(ModelContext ctx) {
+	@Override
+	public Set<RevokedAssumption> call() {
 		String assumedName = new SolveAssumeFinder().visitSolveItem(ctx.solveItem());
 		List<String> flatAssumedNames = new VarNamesFinder(assumedName).getVarNames(ctx);
 
@@ -309,9 +328,9 @@ public class VariableCoreExtractor {
 					"The nogood variable " + nogoodName + " is not in the assumption annotation");
 			}
 
-			Set<String> nogoodParamNames = new BackwardFinder(nogoodName, ctx).execute();
+			Set<String> nogoodParamNames = new BackwardFinder(nogoodName, ctx).call();
 			Set<RevokedAssumption> nogoodAssumptions = nogoodParamNames.stream()
-				.map(n -> new Namer(n).retrieve(ctx))
+				.map(n -> new Namer(n, ctx).call())
 				.collect(Collectors.toSet());
 			assumptions.addAll(nogoodAssumptions);
 		}

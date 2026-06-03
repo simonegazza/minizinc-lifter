@@ -22,9 +22,9 @@ public class TypeVisitorTest {
 		Lexer lexer = new MiniZincLexer(input);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		MiniZincParser parser = new MiniZincParser(tokens);
-		ParameterExtractor pe = new ParameterExtractor();
+		ParameterExtractor pe = new ParameterExtractor(parser.model());
 
-		return pe.execute(parser.model());
+		return pe.call();
 	}
 
 	@Test

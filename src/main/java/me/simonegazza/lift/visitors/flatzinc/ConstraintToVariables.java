@@ -8,6 +8,17 @@ import me.simonegazza.antlr.flatzinc.FlatZincParser.BasicExprContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.ConstraintItemContext;
 import me.simonegazza.antlr.flatzinc.FlatZincParser.ModelContext;
 
+/**
+ * Visitor that extracts variable names referenced by FlatZinc constraints.
+ * <p>
+ * The visitor traverses constraint expressions and collects all variable
+ * identifiers appearing within them. For constraints annotated with
+ * {@code defines_var}, the defined variable can be reported directly instead of
+ * traversing the constraint expression.
+ * <p>
+ * The resulting set can be used to identify the variables involved in a
+ * conflict, explanation, or unsatisfiable core.
+ */
 public class ConstraintToVariables extends FlatZincBaseVisitor<Set<String>> {
 	@Override
 	public Set<String> visitModel(ModelContext ctx) {
@@ -25,7 +36,7 @@ public class ConstraintToVariables extends FlatZincBaseVisitor<Set<String>> {
 			.map(a -> a.annExpr(0).basicAnnExpr(0).getText())
 			.findFirst();
 
-		if (definesVarName.isEmpty()) {
+		if (definesVarName.isPresent()) {
 			return Set.of(definesVarName.get());
 		}
 
@@ -42,5 +53,4 @@ public class ConstraintToVariables extends FlatZincBaseVisitor<Set<String>> {
 		}
 		return Set.of();
 	}
-
 }
