@@ -177,6 +177,7 @@ public class ModelRunner {
 					.command(
 						"minizinc",
 						"--solver", solverName,
+						"-a",
 						"-w", // suppress warnings
 						// 1 minute timeout expressed in milliseconds
 						"--time-limit", String.valueOf(1000 * 60 * 1),
