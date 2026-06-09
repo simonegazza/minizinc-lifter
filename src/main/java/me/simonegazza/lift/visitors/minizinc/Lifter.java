@@ -17,6 +17,7 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprTailContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.RangeExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.SolveItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
@@ -90,6 +91,16 @@ public class Lifter implements Callable<String> {
 	private final ModelContext ctx;
 
 	/**
+	 * The output text to be added to the model.
+	 */
+	private final String outputText;
+
+	/**
+	 * Whether this model has an output.
+	 */
+	private boolean hasOutput;
+
+	/**
 	 * Computes the value of the given parameter by recursively evaluating all
 	 * of its dependencies.
 	 * <p>
@@ -145,6 +156,7 @@ public class Lifter implements Callable<String> {
 		rewriter = new TokenStreamRewriter(tokens);
 		env = new HashMap<String, Object>();
 		this.ctx = ctx;
+		hasOutput = false;
 
 		// collect all dependencies
 		Set<OriginalParameter> toLiftAll = toLift.stream()
@@ -211,6 +223,11 @@ public class Lifter implements Callable<String> {
 						.toList());
 			}).sorted((p1, p2) -> p1.getOriginalName().compareTo(p2.getOriginalName()))
 			.toList();
+
+		outputText = lifted.stream()
+			.map(l -> "[\"original " + l.getOriginalName() + " = \\(" + l.getOriginalName() + ")\\n"
+				+ "lifted   " + l.getOriginalName() + " = \\(" + l.getLiftedName() + ")\\n\\n\"]")
+			.collect(Collectors.joining(" ++ "));
 	}
 
 	/**
@@ -248,6 +265,10 @@ public class Lifter implements Callable<String> {
 			.append("\n")
 			.append(rewriter.getText())
 			.append("\n");
+
+		if (!hasOutput) {
+			model.append("output " + outputText + ";\n\n");
+		}
 
 		for (LiftedParameter lp : lifted) {
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
@@ -473,6 +494,13 @@ public class Lifter implements Callable<String> {
 				// It is an identifier that needed to be lifted: pass through
 				return visitAddExpr(ctx.addExpr(0));
 			}
+		}
+
+		@Override
+		public Void visitOutputItem(OutputItemContext ctx) {
+			hasOutput = true;
+			rewriter.insertBefore(ctx.expr().getStart(), outputText + " ++ ");
+			return null;
 		}
 	}
 }
