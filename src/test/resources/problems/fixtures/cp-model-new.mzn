@@ -1,18 +1,18 @@
 include "globals.mzn";
 
-int: WTab = 2500;
-int: HTab = 1500;
-int: WMin = 2000; % <-- changed here from 200 to 2000
-int: HMin = 2000; % <-- changed here from 100 to 2000
-int: NTypes = 2;
-int: WBar = 145;
-array[1..NTypes] of int: _NFix = [24, 12];
-array[0..NTypes] of int: WFix = array1d(0..NTypes, [0, 145, 180]);
-array[0..NTypes] of int: HFix = array1d(0..NTypes, [0, 145,  65]);
+int: WTab;
+int: HTab;
+int: WMin;
+int: HMin;
+int: NTypes;
+int: WBar;
+array[1..NTypes] of int: _NFix;
+array[0..NTypes] of int: WFix;
+array[0..NTypes] of int: HFix;
 
 int: minFix; % min no. of fixtures.
 int: maxFix; % max no. of fixtures.
-int: maxFixBars = 3;
+int: maxFixBars;
 
 array [1..maxFix] of var 0..WTab: x;
 array [1..maxFix] of var 0..HTab: y;

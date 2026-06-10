@@ -1,3 +1,13 @@
+WTab = 2500;
+HTab = 1500;
+WMin = 2000; % <-- changed here from 200 to 2000
+HMin = 2000; % <-- changed here from 100 to 2000
+NTypes = 2;
+WBar = 145;
+_NFix = [24, 12];
+WFix = array1d(0..NTypes, [0, 145, 180]);
+HFix = array1d(0..NTypes, [0, 145,  65]);
+maxFixBars = 3;
 minFix = 6;
 maxFix = 10;
 NExt = 0;
