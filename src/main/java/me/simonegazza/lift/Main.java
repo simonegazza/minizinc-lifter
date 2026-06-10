@@ -110,7 +110,7 @@ public class Main implements Callable<Integer> {
 	 * Multiple files can be provided. Their contents are concatenated and
 	 * parsed as a single MiniZinc model.
 	 */
-	@Option(names = { "-m", "--models" }, arity = "1..*", description = "MZN and MDN file paths", required = true)
+	@Option(names = { "-m", "--models" }, arity = "1..*", description = "MZN and DZN file paths", required = true)
 	private List<Path> filePaths;
 
 	/**

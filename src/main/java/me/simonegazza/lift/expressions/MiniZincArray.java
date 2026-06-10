@@ -165,30 +165,14 @@ public class MiniZincArray {
 	 * <p>
 	 * MiniZinc arrays are not restricted to zero-based indexing. Any integer
 	 * interval is allowed, including negative indices.
+	 *
+	 * @param lowerBound the lower bound of this range
+	 * @param upperBound the upper bound of this range
 	 */
-	public static final class IndexRange {
-
-		/**
-		 * Inclusive lower bound of this range.
-		 */
-		private final int lowerBound;
-		/**
-		 * Inclusive upper bound of this range.
-		 */
-		private final int upperBound;
-
-		public IndexRange(int lowerBound, int upperBound) {
-			if (upperBound < lowerBound) {
-				throw new IllegalArgumentException(
-					"Upper bound must be >= lower bound");
-			}
-			this.lowerBound = lowerBound;
-			this.upperBound = upperBound;
-		}
+	public record IndexRange(int lowerBound, int upperBound) {
 
 		public IndexRange(List<?> range) {
-			lowerBound = 1;
-			upperBound = range.size();
+			this(1, range.size());
 		}
 
 		/**

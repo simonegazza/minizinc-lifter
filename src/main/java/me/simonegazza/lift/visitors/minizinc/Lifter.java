@@ -126,7 +126,7 @@ public class Lifter implements Callable<String> {
 	 *
 	 * @throws StackOverflowError if the dependency graph contains cycles
 	 */
-	private Object computeValue(
+	public static Object computeValue(
 		OriginalParameter p,
 		ParameterGraph graph,
 		Map<String, Object> env) {
