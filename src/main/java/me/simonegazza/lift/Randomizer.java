@@ -32,7 +32,7 @@ import picocli.CommandLine.Option;
 /**
  * Randomize a single data file with a specified amount of changes.
  */
-@CommandLine.Command(name = "mzn-parameter-lifting", mixinStandardHelpOptions = true, version = "0.1", description = "Randomize a single data file")
+@CommandLine.Command(name = "dzn-randomizer", mixinStandardHelpOptions = true, version = "0.1", description = "Randomize a single data file")
 public class Randomizer implements Callable<Integer> {
 	/**
 	 * Input MiniZinc files to parse.
