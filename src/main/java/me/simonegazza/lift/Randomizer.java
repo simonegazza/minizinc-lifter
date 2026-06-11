@@ -72,12 +72,24 @@ public class Randomizer implements Callable<Integer> {
 	}
 
 	/**
-	 * A randomization request for a specific parameter
-	 *
-	 * @param name   the name of the parameter
-	 * @param amount the amount of changes to introduce per parameter
+	 * A randomization request for a specific parameter.
 	 */
-	private record RandomizeRequest(String name, int amount) {
+	private static class RandomizeRequest {
+		/**
+		 * The name of the requested parameter.
+		 */
+		private final String name;
+
+		/**
+		 * The number of changes to make to this parameter.
+		 */
+		private final int amount;
+
+		/**
+		 * A.
+		 *
+		 * @param request B
+		 */
 		RandomizeRequest(String request) {
 			String[] userData = request.split(":");
 			List<String> data = new ArrayList<>();
@@ -86,9 +98,28 @@ public class Randomizer implements Callable<Integer> {
 				data.add("1");
 			}
 
-			this(data.get(0), Integer.parseInt(data.get(1)));
-
+			name = data.get(0);
+			amount = Integer.parseInt(data.get(1));
 		}
+
+		/**
+		 * Get the name of this request.
+		 *
+		 * @return the name of this request
+		 */
+		public String getName() {
+			return name;
+		}
+
+		/**
+		 * Get the amount of changes to be done to this request.
+		 *
+		 * @return the changes to do to this request
+		 */
+		public int getAmount() {
+			return amount;
+		}
+
 	}
 
 	/**
@@ -253,12 +284,12 @@ public class Randomizer implements Callable<Integer> {
 			HashMap<String, Object> env = new HashMap<>();
 			List<String> redefinitions = new ArrayList<>();
 			for (RandomizeRequest request : parameters) {
-				Optional<OriginalParameter> randomizable = graph.getByName(request.name());
+				Optional<OriginalParameter> randomizable = graph.getByName(request.getName());
 
 				// Check existence
 				if (randomizable.isEmpty()) {
 					throw new IllegalArgumentException("Requested lift for "
-						+ request.name()
+						+ request.getName()
 						+ " but it does not exists");
 				}
 
@@ -272,7 +303,7 @@ public class Randomizer implements Callable<Integer> {
 					value,
 					Optional.empty(),
 					Optional.empty(),
-					request.amount(),
+					request.getAmount(),
 					randomGenerator);
 				String toPrint = toRandomize.toString() + " = " + stringify(newValue) + ";";
 
@@ -289,7 +320,7 @@ public class Randomizer implements Callable<Integer> {
 					}
 				}).flatMap(f -> Arrays.stream(f.split(";")))
 				.filter(e -> !parameters.stream()
-					.map(RandomizeRequest::name)
+					.map(RandomizeRequest::getName)
 					.anyMatch(n -> e.startsWith(n)))
 				.collect(Collectors.joining(";\n", "", ";"));
 

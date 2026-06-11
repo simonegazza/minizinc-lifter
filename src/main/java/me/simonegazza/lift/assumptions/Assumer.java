@@ -31,11 +31,6 @@ public class Assumer implements Callable<String> {
 	private final String baseModel;
 
 	/**
-	 * List of parameters that have been lifted in the model.
-	 */
-	private final List<LiftedParameter> lifted;
-
-	/**
 	 * List of parameters divided by base type.
 	 */
 	private final Map<Object, List<LiftedParameter>> parameterTypeCollector;
@@ -56,7 +51,7 @@ public class Assumer implements Callable<String> {
 	private final List<String> paramArrayLiftedIdentifiers;
 
 	/**
-	 * The cliParameters
+	 * The parameters that will appear in the objective function.
 	 */
 	private final List<LiftedParameter> maxParameters;
 
@@ -67,7 +62,6 @@ public class Assumer implements Callable<String> {
 		Set<RevokedAssumption> revokedAssumption) {
 
 		this.baseModel = baseModel;
-		this.lifted = lifted;
 		this.maxParameters = maxParameters;
 		assumptions = revokedAssumption;
 		paramArrayIdentifiers = new ArrayList<>();
@@ -164,9 +158,8 @@ public class Assumer implements Callable<String> {
 
 		obj.append(": objective_lifted :: output_var = ");
 		obj.append(
-			lifted.stream()
+			maxParameters.stream()
 				.sorted()
-				.filter(maxParameters::contains)
 				.map(LiftedParameter::getSolvePiece)
 				.collect(Collectors.joining("\n\t+ ")))
 			.append("\n;\n")

@@ -165,12 +165,12 @@ public class Main implements Callable<Integer> {
 	 * Delegates execution to Picocli which handles argument parsing and command
 	 * invocation.
 	 *
-	 * @param args a {@link String} array from the command link as arguments for
-	 *                 this program
+	 * @param args a {@link String} array from the command line as arguments
+	 *
+	 * @return the status code.
 	 */
-	public static void main(String[] args) {
-		int exitCode = new CommandLine(new Main()).execute(args);
-		System.exit(exitCode);
+	public static int main(String[] args) {
+		return new CommandLine(new Main()).execute(args);
 	}
 
 	/**
