@@ -149,9 +149,15 @@ public class Main implements Callable<Integer> {
 	 * If specified, use the provided identifier as solver for the QuickXPlain
 	 * algorithm.
 	 */
-	@Option(names = {
-			"--quickxplain-solver" }, defaultValue = "cp-sat", description = "Solver used by QuickXPlain (default: ${DEFAULT-VALUE})")
+	@Option(names = "--quickxplain-solver", defaultValue = "cp-sat", description = "Solver used by QuickXPlain (default: ${DEFAULT-VALUE})")
 	private String quickXPlainSolver;
+
+	/**
+	 * If specified, uses only the parameter specified by the user during
+	 * lifting in the objective function.
+	 */
+	@Option(names = "--maximize-user-params-only", description = "Put only user specified parameters in the maximize objective")
+	private boolean maximizeUserParamsOnly;
 
 	/**
 	 * Application entry point.
@@ -360,6 +366,16 @@ public class Main implements Callable<Integer> {
 
 		List<LiftedParameter> liftedParameters = lifter.getLifted();
 
+		List<LiftedParameter> parameterToMaximize;
+		if (maximizeUserParamsOnly) {
+			parameterToMaximize = liftedParameters.stream()
+				.filter(p -> cliParameters.stream()
+					.anyMatch(c -> c.getName().equals(p.getOriginalName())))
+				.toList();
+		} else {
+			parameterToMaximize = liftedParameters;
+		}
+
 		List<Set<RevokedAssumption>> assumptions = new ArrayList<>();
 		for (int i = 1;; i++) {
 			// Customize the model
@@ -367,6 +383,7 @@ public class Main implements Callable<Integer> {
 			Assumer assumer = new Assumer(
 				baseModel,
 				liftedParameters,
+				parameterToMaximize,
 				assumptions.stream()
 					.flatMap(Set::stream)
 					.sorted()

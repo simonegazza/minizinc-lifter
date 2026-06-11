@@ -55,9 +55,20 @@ public class Assumer implements Callable<String> {
 	 */
 	private final List<String> paramArrayLiftedIdentifiers;
 
-	public Assumer(String baseModel, List<LiftedParameter> lifted, Set<RevokedAssumption> revokedAssumption) {
+	/**
+	 * The cliParameters
+	 */
+	private final List<LiftedParameter> maxParameters;
+
+	public Assumer(
+		String baseModel,
+		List<LiftedParameter> lifted,
+		List<LiftedParameter> maxParameters,
+		Set<RevokedAssumption> revokedAssumption) {
+
 		this.baseModel = baseModel;
 		this.lifted = lifted;
+		this.maxParameters = maxParameters;
 		assumptions = revokedAssumption;
 		paramArrayIdentifiers = new ArrayList<>();
 		paramArrayLiftedIdentifiers = new ArrayList<>();
@@ -155,6 +166,7 @@ public class Assumer implements Callable<String> {
 		obj.append(
 			lifted.stream()
 				.sorted()
+				.filter(maxParameters::contains)
 				.map(LiftedParameter::getSolvePiece)
 				.collect(Collectors.joining("\n\t+ ")))
 			.append("\n;\n")
