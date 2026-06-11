@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
@@ -78,7 +79,7 @@ public class Runner implements Callable<Integer> {
 			throw new IllegalArgumentException("Data folder is empty!");
 		}
 
-		List<Integer> correct = new ArrayList<>(filesPath.size());
+		List<Optional<Throwable>> correct = new ArrayList<>(filesPath.size());
 		for (Path dznPath : filesPath) {
 			logger.info("Running data file " + dznPath.toString());
 
@@ -97,10 +98,15 @@ public class Runner implements Callable<Integer> {
 			commandArgument.add("-o");
 			commandArgument.add(mainOutPath.toString());
 
-			correct.add(new CommandLine(new Main()).execute(commandArgument.toArray(new String[0])));
+			try {
+				new CommandLine(new Main()).execute(commandArgument.toArray(new String[0]));
+				correct.add(Optional.empty());
+			} catch (Throwable t) {
+				correct.add(Optional.of(t));
+			}
 		}
 
-		if (correct.stream().allMatch(c -> c == 0)) {
+		if (correct.stream().allMatch(Optional::isEmpty)) {
 			return 0;
 		} else {
 			logger.info("Some run failed:");

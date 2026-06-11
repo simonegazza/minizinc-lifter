@@ -166,11 +166,9 @@ public class Main implements Callable<Integer> {
 	 * invocation.
 	 *
 	 * @param args a {@link String} array from the command line as arguments
-	 *
-	 * @return the status code.
 	 */
-	public static int main(String[] args) {
-		return new CommandLine(new Main()).execute(args);
+	public static void main(String[] args) {
+		new CommandLine(new Main()).execute(args);
 	}
 
 	/**
@@ -261,6 +259,9 @@ public class Main implements Callable<Integer> {
 	private Optional<Set<String>> analyzeOutput(List<String> commandOutput) {
 		if (commandOutput.size() > 2 && commandOutput.contains("----------")) {
 			logger.info("A solution has been found!");
+			return Optional.empty();
+		} else if (commandOutput.size() == 1 && commandOutput.get(0).contains("UNSATISFIABLE")) {
+			logger.info("Unable to find a solution for the entire problem class.");
 			return Optional.empty();
 		}
 

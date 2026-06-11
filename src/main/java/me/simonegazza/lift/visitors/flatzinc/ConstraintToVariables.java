@@ -20,6 +20,12 @@ import me.simonegazza.antlr.flatzinc.FlatZincParser.ModelContext;
  * conflict, explanation, or unsatisfiable core.
  */
 public class ConstraintToVariables extends FlatZincBaseVisitor<Set<String>> {
+
+	@Override
+	protected Set<String> defaultResult() {
+		return Set.of();
+	}
+
 	@Override
 	public Set<String> visitModel(ModelContext ctx) {
 		return ctx.constraintItem().stream()

@@ -56,7 +56,7 @@ public class QuickXPlain implements Callable<List<String>> {
 	 * Internal, upper and constant part of the model that has nothing to do
 	 * with constraints.
 	 */
-	private String aboveModel;
+	private List<String> aboveModel;
 
 	public QuickXPlain(Path baseModelPath, List<LiftedParameter> liftedParameters, String solverName) {
 		this.baseModelPath = baseModelPath;
@@ -66,7 +66,9 @@ public class QuickXPlain implements Callable<List<String>> {
 	}
 
 	/**
-	 * Executes the QuickXPlain algorithm on the current model.
+	 * Executes the QuickXPlain algorithm on the current model and returns a the
+	 * minimal set of constraints (but not of variables!) that caused the
+	 * failure.
 	 * <p>
 	 * The method:
 	 * <ol>
@@ -79,7 +81,7 @@ public class QuickXPlain implements Callable<List<String>> {
 	 * </ol>
 	 *
 	 * @return the minimal set of FlatZinc constraints responsible for the
-	 *             detected inconsistency
+	 *             detected inconsistency with the upper part of the model above
 	 *
 	 * @throws IllegalStateException    if the MiniZinc model cannot be read
 	 * @throws IllegalArgumentException if temporary MiniZinc or FlatZinc files
@@ -115,7 +117,7 @@ public class QuickXPlain implements Callable<List<String>> {
 				.toList();
 			aboveModel = fznModel.stream()
 				.takeWhile(r -> !r.startsWith("constraint"))
-				.collect(Collectors.joining("\n"));
+				.toList();
 		} catch (IOException e) {
 			throw new IllegalArgumentException("Unable to read FlatZinc model");
 		}
@@ -183,15 +185,14 @@ public class QuickXPlain implements Callable<List<String>> {
 	 * @throws IllegalStateException if the model cannot be written to disk
 	 */
 	private Path buildModel(List<String> constraints) {
-		StringBuilder sb = new StringBuilder(aboveModel);
-
-		constraints.forEach(c -> sb.append(c).append("\n"));
-		sb.append("solve satisfy;\n\n");
+		List<String> modelList = new ArrayList<>(aboveModel);
+		modelList.addAll(constraints);
+		String model = modelList.stream().collect(Collectors.joining("\n", "", "solve satisfy;"));
 
 		Path qxModelPath = Path.of(baseModelPath.toString() + "-qx-" + (counter++));
 
 		try {
-			Files.writeString(Path.of(qxModelPath + ".mzn"), sb.toString());
+			Files.writeString(Path.of(qxModelPath + ".mzn"), model);
 			return qxModelPath;
 		} catch (IOException e) {
 			throw new IllegalStateException("Cannot write QuickExplain model to file: " + qxModelPath);
