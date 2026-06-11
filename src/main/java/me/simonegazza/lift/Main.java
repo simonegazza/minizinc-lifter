@@ -255,8 +255,7 @@ public class Main implements Callable<Integer> {
 	private Optional<Set<String>> analyzeOutput(List<String> commandOutput) {
 		if (commandOutput.size() > 2 && commandOutput.contains("----------")) {
 			logger.info("A solution has been found!");
-			System.exit(0);
-			throw new IllegalStateException("Why are we still here after the exit?");
+			return Optional.empty();
 		}
 
 		if ("% Time limit exceeded!".equals(commandOutput.get(0))
@@ -265,7 +264,7 @@ public class Main implements Callable<Integer> {
 			||
 			// Rule for when we fix parameters
 			commandOutput.get(0).contains("UNSATISFIABLE")) {
-			return Optional.empty();
+			return Optional.of(Set.of());
 		} else {
 			// solution was not found but a core was correctly given
 			logger.info("Extracting nogoods...");
@@ -393,6 +392,9 @@ public class Main implements Callable<Integer> {
 			Set<String> coreInvolvedVariables;
 			Optional<Set<String>> anyVariable = analyzeOutput(commandOutput);
 			if (anyVariable.isEmpty()) {
+				logger.info("Exiting");
+				return 0;
+			} else if (anyVariable.get().isEmpty()) {
 				logger.info("A solution or an unsat core cannot be found, trying with another solver: "
 					+ recoverySolver);
 
@@ -401,7 +403,11 @@ public class Main implements Callable<Integer> {
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
 
-				if (analyzeOutput(recoveryOuput).isEmpty()) {
+				Optional<Set<String>> recoveryAssumptions = analyzeOutput(recoveryOuput);
+				if (recoveryAssumptions.isEmpty()) {
+					logger.info("Exiting");
+					return 0;
+				} else if (recoveryAssumptions.get().isEmpty()) {
 					logger.info("""
 						I'll run QuickXPlain trying to find a solution, but be aware that the process \
 						might get in a loop if the solver answered with UNKNOWN \

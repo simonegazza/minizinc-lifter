@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.IntStream;
+import me.simonegazza.lift.utils.ApplicationLogger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -14,6 +16,12 @@ import picocli.CommandLine.Option;
  */
 @CommandLine.Command(name = "mzn-runner", mixinStandardHelpOptions = true, version = "0.1", description = "Run a model with data files contained in a folder")
 public class Runner implements Callable<Integer> {
+
+	/**
+	 * Application logger.
+	 */
+	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Runner.class.getSimpleName());
+
 	/**
 	 * Input MiniZinc model file path.
 	 */
@@ -55,8 +63,25 @@ public class Runner implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
+		logger.info("Runner starts");
 
-		for (Path dznPath : Files.list(dataPath).filter(Files::isRegularFile).toList()) {
+		List<Path> filesPath = Files.list(dataPath)
+			.filter(Files::isRegularFile)
+			.filter(f -> f.toString().endsWith(".dzn"))
+			.toList();
+
+		logger.info("""
+			Runner will ask the satisfiability \
+			recovery process with the following files: """ + filesPath);
+
+		if (filesPath.size() == 0) {
+			throw new IllegalArgumentException("Data folder is empty!");
+		}
+
+		List<Integer> correct = new ArrayList<>(filesPath.size());
+		for (Path dznPath : filesPath) {
+			logger.info("Running data file " + dznPath.toString());
+
 			List<String> ps = parameters.stream()
 				.flatMap(n -> List.of("-p", n).stream())
 				.toList();
@@ -72,9 +97,18 @@ public class Runner implements Callable<Integer> {
 			commandArgument.add("-o");
 			commandArgument.add(mainOutPath.toString());
 
-			return new CommandLine(new Main()).execute(commandArgument.toArray(new String[0]));
+			correct.add(new CommandLine(new Main()).execute(commandArgument.toArray(new String[0])));
 		}
 
-		throw new IllegalArgumentException("Data folder is empty");
+		if (correct.stream().allMatch(c -> c == 0)) {
+			return 0;
+		} else {
+			logger.info("Some run failed:");
+			IntStream.range(0, correct.size()).boxed()
+				.map(i -> "\nRun " + i + " with data file " + filesPath.get(i))
+				.forEach(logger::error);
+
+			return 1;
+		}
 	}
 }

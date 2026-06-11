@@ -42,20 +42,18 @@ public class ApplicationLogger {
 		if (logger.getHandlers().length == 0) {
 			ConsoleHandler consoleHandler = new ConsoleHandler();
 			consoleHandler.setFormatter(new Formatter() {
-				private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+				private final DateTimeFormatter dtf = DateTimeFormatter
+					.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 					.withZone(ZoneId.systemDefault());
 
 				@Override
 				public String format(LogRecord record) {
 
-					String dateTime = dtf.format(
-						Instant.ofEpochMilli(record.getMillis()));
-
 					return String.format(
 						"[%s, %s, %s] %s%n",
 						record.getLevel(),
 						record.getLoggerName(),
-						dateTime,
+						dtf.format(Instant.ofEpochMilli(record.getMillis())),
 						record.getMessage());
 				}
 			});
