@@ -1,4 +1,5 @@
 target
+dependency-reduced-pom.xml
 
 # Eclipse
 .classpath
@@ -13,3 +14,4 @@ target
 
 # OS
 .DS_Store
+
