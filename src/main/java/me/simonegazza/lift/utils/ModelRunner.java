@@ -1,9 +1,7 @@
 package me.simonegazza.lift.utils;
 
 import java.io.IOException;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,6 +82,7 @@ public class ModelRunner {
 			p = new ProcessBuilder()
 				.command(
 					"minizinc",
+					"--keep-paths",
 					"--solver", solverName,
 					"-w", // suppress warnings
 					//// 1 minute timeout expressed in milliseconds
@@ -96,7 +95,7 @@ public class ModelRunner {
 				.start();
 		} catch (IOException e) {
 			e.printStackTrace();
-			throw new IllegalStateException("Unable to inherit IO for compiling the model with " + solverName);
+			throw new IllegalStateException("Problem encountered when compiling for " + solverName);
 		}
 
 		getOutputAndVerify(p);
@@ -106,17 +105,14 @@ public class ModelRunner {
 	 * Executes a MiniZinc model using the specified solver.
 	 * <p>
 	 * For most solvers, the model is executed directly through the MiniZinc
-	 * command-line interface. Chuffed is handled specially: the precompiled
-	 * FlatZinc model is executed through {@code fzn-chuffed} and the results
-	 * are post-processed using the corresponding MiniZinc output specification
-	 * file ({@code .ozn}).
+	 * command-line interface. Note that this behaviour wil fail with Chuffed.
 	 * <p>
 	 * A solver time limit of one minute is applied to all executions.
 	 *
 	 * @param modelBasePath path to the model without file extension (e.g.
 	 *                          {@code model} for {@code model.mzn})
-	 * @param solverName    MiniZinc solver identifier such as {@code chuffed}
-	 *                          or {@code gecode}
+	 * @param solverName    MiniZinc solver identifier such as {@code huub} or
+	 *                          {@code gecode}
 	 *
 	 * @return the solver output lines in reverse order, allowing callers to
 	 *             inspect the final solver messages first
@@ -128,70 +124,24 @@ public class ModelRunner {
 	 *                                      be created
 	 */
 	public static List<String> run(Path modelBasePath, String solverName) {
-
-		Process p;
-		if ("chuffed".equals(solverName)) {
-			Path fznChuffedPath;
-			try {
-				fznChuffedPath = Paths.get(
-					new ProcessBuilder("minizinc")
-						.start()
-						.info()
-						.command()
-						.orElseThrow())
-					.toAbsolutePath().getParent().resolve("bin/fzn-chuffed");
-			} catch (InvalidPathException e) {
-				throw new IllegalStateException("MiniZinc was not found on your machine");
-			} catch (IOException e) {
-				throw new IllegalStateException("Unable to start the process for finding MiniZinc on your machine");
-			}
-
-			try {
-				p = ProcessBuilder.startPipeline(List.of(
-					new ProcessBuilder()
-						.command(
-							fznChuffedPath.toString(),
-							// "-a",
-							// 1 minute timeout expressed in milliseconds
-							"--time-out", String.valueOf(1000 * 60 * 1),
-							(modelBasePath.toString() + ".fzn"))
-						.directory(modelBasePath.getParent().toFile())
-						.inheritIO()
-						.redirectOutput(ProcessBuilder.Redirect.PIPE),
-					new ProcessBuilder()
-						.command(
-							"minizinc",
-							// "--output-objective",
-							"--ozn-file",
-							(modelBasePath.toString() + ".ozn"))
-						.redirectErrorStream(true)
-						.directory(modelBasePath.getParent().toFile())
-						.redirectError(ProcessBuilder.Redirect.INHERIT)))
-					.getLast();
-			} catch (IOException e) {
-				throw new IllegalArgumentException("Unable to inherit IO for running the model with chuffed");
-			}
-
-		} else {
-			try {
-				p = new ProcessBuilder()
-					.command(
-						"minizinc",
-						"--solver", solverName,
-						// "-a",
-						"-w", // suppress warnings
-						// 1 minute timeout expressed in milliseconds
-						"--time-limit", String.valueOf(1000 * 60 * 1),
-						// "--verbose",
-						(modelBasePath.toString() + ".mzn"))
-					.redirectErrorStream(true)
-					.directory(modelBasePath.getParent().toFile())
-					.start();
-			} catch (IOException e) {
-				throw new IllegalStateException("Unable to inherit IO for compiling the model with " + solverName);
-			}
+		try {
+			Process p = new ProcessBuilder()
+				.command(
+					"minizinc",
+					"--solver", solverName,
+					// "-a",
+					"-w", // suppress warnings
+					// 1 minute timeout expressed in milliseconds
+					"--time-limit", String.valueOf(1000 * 60 * 1),
+					// "--verbose",
+					(modelBasePath.toString() + ".mzn"))
+				.redirectErrorStream(true)
+				.directory(modelBasePath.getParent().toFile())
+				.start();
+			return getOutputAndVerify(p).reversed();
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Problem encountered when running with " + solverName);
 		}
-
-		return getOutputAndVerify(p).reversed();
 	}
 }

@@ -1,7 +1,9 @@
 package me.simonegazza.lift.assumptions;
 
+import java.util.ArrayList;
 import java.util.List;
 import me.simonegazza.lift.parameters.LiftedArrayParameter;
+import me.simonegazza.lift.parameters.LiftedParameter;
 
 /**
  * Immutable container used to transfer information between the Lifter and the
@@ -18,6 +20,35 @@ import me.simonegazza.lift.parameters.LiftedArrayParameter;
  *                    must never be null
  */
 public record RevokedAssumption(String name, List<Integer> indices) implements Comparable<RevokedAssumption> {
+
+	/**
+	 * Converts a flattened parameter index into MiniZinc-style multidimensional
+	 * coordinates.
+	 *
+	 * @param lifted    the lifted parameter defining the dimensions
+	 * @param flatIndex the zero-based flattened index
+	 *
+	 * @return the corresponding one-based coordinate tuple
+	 */
+	private static List<Integer> computeIndices(LiftedParameter lifted, int flatIndex) {
+		List<Integer> coordinates = new ArrayList<>();
+
+		for (Integer dim : lifted.getDimensions().reversed()) {
+			coordinates.add(flatIndex % dim);
+			flatIndex /= dim;
+		}
+
+		return coordinates.reversed()
+			.stream()
+			.map(i -> i + 1)
+			.toList();
+	}
+
+	public RevokedAssumption(LiftedParameter lifted, int flatIndex) {
+		this(
+			lifted.getLiftedName(),
+			computeIndices(lifted, flatIndex));
+	}
 
 	@Override
 	public int compareTo(RevokedAssumption other) {

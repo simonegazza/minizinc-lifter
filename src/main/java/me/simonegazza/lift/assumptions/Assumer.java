@@ -164,7 +164,6 @@ public class Assumer implements Callable<String> {
 				.collect(Collectors.joining("\n\t+ ")))
 			.append("\n;\n")
 			.append("solve")
-			.append("\n\t:: assume(assumed)")
 			.append(warmStarts.stream().collect(Collectors.joining("\n", "\n\t", "")))
 			.append("\nminimize objective_lifted;\n\n");
 
@@ -250,7 +249,9 @@ public class Assumer implements Callable<String> {
 				.append("\n");
 		});
 
-		result.append("include \"chuffed.mzn\";\n\n");
+		result.append("include \"huub.mzn\";\n\n");
+
+		result.append("constraint assume(assumed);\n\n");
 
 		result.append("array[int] of var bool: assumed = ");
 		result.append(IntStream.range(0, paramArrayIdentifiers.size())

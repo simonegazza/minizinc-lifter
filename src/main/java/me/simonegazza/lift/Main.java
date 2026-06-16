@@ -5,17 +5,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import me.simonegazza.antlr.flatzinc.FlatZincLexer;
-import me.simonegazza.antlr.flatzinc.FlatZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.assumptions.Assumer;
 import me.simonegazza.lift.assumptions.RevokedAssumption;
+import me.simonegazza.lift.expressions.MiniZincArray;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
@@ -24,9 +24,8 @@ import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ModelRunner;
 import me.simonegazza.lift.utils.ParameterGraph;
-import me.simonegazza.lift.visitors.flatzinc.ConstraintToVariables;
 import me.simonegazza.lift.visitors.flatzinc.QuickXPlain;
-import me.simonegazza.lift.visitors.flatzinc.VariableCoreExtractor;
+import me.simonegazza.lift.visitors.flatzinc.UnsatCoreExtractor;
 import me.simonegazza.lift.visitors.minizinc.Lifter;
 import me.simonegazza.lift.visitors.minizinc.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
@@ -214,9 +213,9 @@ public class Main implements Callable<Integer> {
 		String solverName,
 		String model,
 		String modelsNamePrefix) throws IOException {
-		// Remove lines regarding chuffed and add the fixing of parameters
+		// Fixing parameters
 		String lastModel = model.lines()
-			.filter(r -> !r.contains("include \"chuffed.mzn\";") && !r.contains("assume(assumed)"))
+			.filter(r -> !r.contains("include \"huub.mzn\";") && !r.contains("constraint assume(assumed)"))
 			.collect(Collectors.joining("\n"));
 		lastModel += "\nconstraint forall(assumed);\n";
 
@@ -248,18 +247,23 @@ public class Main implements Callable<Integer> {
 	private Set<String> runQuickExplain(Path baseModelPath, List<LiftedParameter> lifted) {
 		QuickXPlain qx = new QuickXPlain(baseModelPath, lifted, quickXPlainSolver);
 
-		String failingConstraints = qx.call().stream()
-			// add "solve satisfy" to these constraints accepted by the parser
-			.collect(Collectors.joining("\n", "", "\nsolve satisfy;"));
+		return qx.call().stream()
+			// Each Object is actually a map
+			.map(Map.class::cast)
+			// that has an "args" that contains our variables
+			.map(cObj -> cObj.get("args"))
+			// that are multi-lists that needs flattening
+			.map(MiniZincArray::flatten)
+			// put everything in a list
+			.flatMap(List::stream)
+			// avoid duplicates
+			.distinct()
+			// take only variables names (and not integers, floats, ...)
+			.filter(String.class::isInstance)
+			.map(String.class::cast)
+			// sorted to reduce randomizations
+			.collect(Collectors.toSet());
 
-		// Parse the constraints to get the variable names
-		CharStream constraintInput = CharStreams.fromString(failingConstraints);
-		Lexer constriantLexer = new FlatZincLexer(constraintInput);
-		TokenStream constraintTokens = new CommonTokenStream(constriantLexer);
-		FlatZincParser constaintParser = new FlatZincParser(constraintTokens);
-		ConstraintToVariables variableCollector = new ConstraintToVariables();
-
-		return variableCollector.visitModel(constaintParser.model());
 	}
 
 	/**
@@ -270,39 +274,28 @@ public class Main implements Callable<Integer> {
 	 * @param commandOutput output lines returned by
 	 *                          {@link ModelRunner#run(Path, String)}
 	 *
-	 * @return an {@link Optional} containing the set of variables extracted
-	 *             from the reported nogood, or {@link Optional#empty()} if no
-	 *             core could be obtained
-	 *
-	 * @throws IndexOutOfBoundsException if {@code commandOutput} is
-	 *                                       unexpectedly empty
+	 * @return an {@link Optional} containing the list of variable indices
+	 *             extracted from the reported nogood, or
+	 *             {@link Optional#empty()} if no core could be obtained
 	 */
-	private Optional<Set<String>> analyzeOutput(List<String> commandOutput) {
+	private Optional<List<Integer>> analyzeOutput(List<String> commandOutput) {
 		if (commandOutput.size() > 2 && commandOutput.contains("----------")) {
 			logger.info("A solution has been found!");
 			return Optional.empty();
-		} else if (commandOutput.size() == 1 && commandOutput.get(0).contains("UNSATISFIABLE")) {
-			logger.info("Unable to find a solution for the entire problem class.");
-			return Optional.empty();
+		} else {
+			if (commandOutput.size() == 1) {
+				throw new IllegalStateException("A core wasn't return");
+			}
+
+			String core = commandOutput.get(1);
+			core = core.substring(14, core.length() - 1);
+
+			return Optional.of(Pattern.compile(", ").splitAsStream(core)
+				.map(s -> s.substring(8, s.length() - 1))
+				.map(Integer::valueOf)
+				.toList());
 		}
 
-		if ("% Time limit exceeded!".equals(commandOutput.get(0))
-			||
-			commandOutput.get(0).contains("UNKNOWN")
-			||
-			// Rule for when we fix parameters
-			commandOutput.get(0).contains("UNSATISFIABLE")) {
-			return Optional.of(Set.of());
-		} else {
-			// solution was not found but a core was correctly given
-			logger.info("Extracting nogoods...");
-			String nogoodLine = commandOutput.get(0);
-			return Optional.of(Pattern.compile(",")
-				.splitAsStream(
-					nogoodLine.substring(2, nogoodLine.length() - 1))
-				.map(s -> s.substring(3))
-				.collect(Collectors.toSet()));
-		}
 	}
 
 	/**
@@ -443,7 +436,7 @@ public class Main implements Callable<Integer> {
 			stats.startIteration(i);
 			boolean usedQuickXPlain = false;
 			long quickXPlainDurationMs = 0;
-			String solverUsed = "chuffed";
+			String solverUsed = "huub";
 			String quickXPlainSolverUsed = null;
 
 			// Customize the model
@@ -467,15 +460,15 @@ public class Main implements Callable<Integer> {
 
 			// Compile the .mzn and get the .fzn
 			logger.info("Compiling the .mzn...");
-			ModelRunner.compile(ithBaseModelPath, "chuffed");
-			Path fznLiftedPath = Path.of(ithBaseModelPath.toString() + ".fzn");
+			ModelRunner.compile(ithBaseModelPath, "huub");
+			Path fznLiftedPath = Path.of(ithBaseModelPath.toString() + ".fzn.json");
 
 			// Run the .fzn
 			logger.info("Running the lifted model...");
-			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "chuffed");
+			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "huub");
 
-			Set<String> coreInvolvedVariables;
-			Optional<Set<String>> anyVariable = analyzeOutput(commandOutput);
+			Optional<List<Integer>> anyVariable = analyzeOutput(commandOutput);
+			UnsatCoreExtractor coreExtractor;
 			if (anyVariable.isEmpty()) {
 				stats.endIteration(Set.of(), solverUsed, false, null, 0);
 				stats.finish(finalStateFromOutput(commandOutput, false));
@@ -492,7 +485,7 @@ public class Main implements Callable<Integer> {
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
 
-				Optional<Set<String>> recoveryAssumptions = analyzeOutput(recoveryOuput);
+				Optional<List<Integer>> recoveryAssumptions = analyzeOutput(recoveryOuput);
 				if (recoveryAssumptions.isEmpty()) {
 					stats.endIteration(Set.of(), solverUsed, false, null, 0);
 					stats.finish(finalStateFromOutput(recoveryOuput, true));
@@ -506,11 +499,15 @@ public class Main implements Callable<Integer> {
 						""");
 					long qxStart = System.nanoTime();
 					quickXPlainSolverUsed = quickXPlainSolver;
-					coreInvolvedVariables = runQuickExplain(
+					Set<String> qxVariables = runQuickExplain(
 						ithBaseModelPath,
 						liftedParameters);
 					quickXPlainDurationMs = (System.nanoTime() - qxStart) / 1_000_000L;
 					usedQuickXPlain = true;
+					coreExtractor = new UnsatCoreExtractor(
+						ithMznModelPath,
+						liftedParameters,
+						qxVariables);
 				} else {
 					stats.endIteration(Set.of(), solverUsed, false, null, 0);
 					stats.finish(RunStatistics.FinalState.ABORTED);
@@ -522,21 +519,13 @@ public class Main implements Callable<Integer> {
 						""");
 				}
 			} else {
-				coreInvolvedVariables = anyVariable.get();
+				// Visit the .fzn.json to extract the assumptions
+				coreExtractor = new UnsatCoreExtractor(
+					fznLiftedPath,
+					liftedParameters,
+					anyVariable.get());
 			}
 
-			// Parse the .fzn
-			CharStream fznInput = CharStreams.fromPath(fznLiftedPath);
-			Lexer fznLexer = new FlatZincLexer(fznInput);
-			TokenStream fznTokens = new CommonTokenStream(fznLexer);
-			FlatZincParser fznParser = new FlatZincParser(fznTokens);
-
-			// Visit the .fzn for original names and indexes of parameters
-			VariableCoreExtractor coreExtractor = new VariableCoreExtractor(
-				fznLiftedPath,
-				liftedParameters,
-				coreInvolvedVariables,
-				fznParser.model());
 			Set<RevokedAssumption> newNogoodAssumptions = coreExtractor.call();
 			stats.endIteration(
 				newNogoodAssumptions,

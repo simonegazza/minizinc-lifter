@@ -13,11 +13,13 @@
 		<maven.compiler.release>25</maven.compiler.release>
 	</properties>
 	<dependencies>
+		<!-- ANTLR -->
 		<dependency>
 			<groupId>org.antlr</groupId>
 			<artifactId>antlr4-runtime</artifactId>
 			<version>4.13.2</version>
 		</dependency>
+		<!-- Tests -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter</artifactId>
@@ -29,6 +31,12 @@
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
 			<version>4.7.7</version>
+		</dependency>
+		<!--Json parsing for MiniZinc results -->
+		<dependency>
+		    <groupId>org.json</groupId>
+		    <artifactId>json</artifactId>
+		    <version>20260522</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -143,21 +151,6 @@
 		                </arguments>
 		            </configuration>
 		        </execution>
-		        <!-- Execution for FlatZinc -->
-		        <execution>
-		            <id>antlr-flatzinc</id>
-		            <goals><goal>antlr4</goal></goals>
-		            <configuration>
-		                <sourceDirectory>${project.basedir}/grammars</sourceDirectory>
-		                <includes><include>FlatZinc.g4</include></includes>
-		                <outputDirectory>${project.basedir}/src/main/java/me/simonegazza/antlr/flatzinc</outputDirectory>
-		                <visitor>true</visitor>
-		                <arguments>
-		                    <argument>-package</argument>
-		                    <argument>me.simonegazza.antlr.flatzinc</argument>
-		                </arguments>
-		            </configuration>
-		        </execution>
 		    </executions>
 			</plugin>
 			<!-- Creates the jars -->
@@ -182,7 +175,6 @@
 			                </descriptorRefs>
 			            </configuration>
 			        </execution>
-			
 			        <!-- test-run.jar -->
 			        <execution>
 			            <id>test-run</id>
@@ -201,7 +193,6 @@
 			                </descriptorRefs>
 			            </configuration>
 			        </execution>
-			
 			        <!-- test-randomizer.jar -->
 			        <execution>
 			            <id>test-randomizer</id>

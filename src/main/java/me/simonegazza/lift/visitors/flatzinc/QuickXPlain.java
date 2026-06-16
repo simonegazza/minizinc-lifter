@@ -4,13 +4,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ModelRunner;
+import org.json.JSONObject;
 
 /**
  * Implementation of the QuickXPlain algorithm for identifying a minimal
@@ -26,7 +29,7 @@ import me.simonegazza.lift.utils.ModelRunner;
  * which all constraints are extracted. The resulting minimal conflict set can
  * then be used for explanation generation.
  */
-public class QuickXPlain implements Callable<List<String>> {
+public class QuickXPlain implements Callable<List<Object>> {
 	/**
 	 * Application logger.
 	 */
@@ -50,25 +53,74 @@ public class QuickXPlain implements Callable<List<String>> {
 	/**
 	 * List of constraints of the original model.
 	 */
-	private List<String> constraints;
+	private List<Object> constraints;
 
 	/**
 	 * Internal, upper and constant part of the model that has nothing to do
 	 * with constraints.
 	 */
-	private List<String> aboveModel;
+	private final Map<String, Object> otherModelParts;
 
-	public QuickXPlain(Path baseModelPath, List<LiftedParameter> liftedParameters, String solverName) {
+	public QuickXPlain(
+		Path baseModelPath,
+		List<LiftedParameter> liftedParameters,
+		String solverName) {
+
 		this.baseModelPath = baseModelPath;
-		// divider = new FlatZincDivider();
 		counter = 0;
 		this.solverName = solverName;
+
+		// retrieve both the constraints and the other parts of the model
+		String mznModel;
+		try {
+			mznModel = Files.readString(Path.of(baseModelPath.toString() + ".mzn")).lines()
+				.filter(r -> !r.contains("include \"huub.mzn\";")
+					&& !r.contains("assume(assumed)"))
+				.collect(Collectors.joining(
+					"\n",
+					"\nconstraint forall(assumed);\n",
+					""));
+		} catch (IOException e) {
+			throw new IllegalStateException(
+				"Unable to read last MiniZinc file for QuickXPlain");
+		}
+		Path modelBasePath = Path.of(baseModelPath + "-qx");
+		Path modelPath = Path.of(modelBasePath + ".mzn");
+		try {
+			Files.writeString(modelPath, mznModel);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(
+				"Unable to write MiniZinc model for QuickXPlain to file");
+		}
+
+		ModelRunner.compile(modelBasePath, solverName);
+		Path fznPath = Path.of(modelBasePath + ".fzn.json");
+
+		JSONObject fzn;
+		try {
+			fzn = new JSONObject(Files.readAllLines(fznPath));
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new IllegalStateException(
+				"Unable to read last FlatZinc file for QuickXPlain");
+		}
+
+		constraints = fzn.getJSONArray("constraints").toList();
+
+		otherModelParts = new HashMap<String, Object>();
+		fzn.keySet().stream()
+			.filter(k -> !"constraints".equals(k))
+			.forEach(k -> otherModelParts.put(k, fzn.get(k)));
+		// "solve": { "method" : "satisfy" },
+		otherModelParts.replace(
+			"solve",
+			Map.of("method", "satisfy"));
+
 	}
 
 	/**
 	 * Executes the QuickXPlain algorithm on the current model and returns a the
-	 * minimal set of constraints (but not of variables!) that caused the
-	 * failure.
+	 * minimal set of constraints that caused the failure.
 	 * <p>
 	 * The method:
 	 * <ol>
@@ -82,46 +134,9 @@ public class QuickXPlain implements Callable<List<String>> {
 	 *
 	 * @return the minimal set of FlatZinc constraints responsible for the
 	 *             detected inconsistency with the upper part of the model above
-	 *
-	 * @throws IllegalStateException    if the MiniZinc model cannot be read
-	 * @throws IllegalArgumentException if temporary MiniZinc or FlatZinc files
-	 *                                      cannot be created or accessed
 	 */
 	@Override
-	public List<String> call() {
-		// Read and write the last model to remove the chuffed parts
-		String mznModel;
-		try {
-			mznModel = Files.readString(Path.of(baseModelPath.toString() + ".mzn")).lines()
-				.filter(r -> !r.contains("include \"chuffed.mzn\";") && !r.contains("assume(assumed)"))
-				.collect(Collectors.joining("\n"));
-		} catch (IOException e) {
-			throw new IllegalStateException("Unable to read last MiniZinc file");
-		}
-		mznModel += "\nconstraint forall(assumed);\n";
-		Path modelBasePath = Path.of(baseModelPath + "-qx");
-		Path modelPath = Path.of(modelBasePath + ".mzn");
-		try {
-			Files.writeString(modelPath, mznModel);
-		} catch (IOException e) {
-			throw new IllegalArgumentException("Unable to write MiniZinc model to file");
-		}
-
-		ModelRunner.compile(modelBasePath, solverName);
-		// Prepare the divider
-		Path fznPath = Path.of(modelBasePath + ".fzn");
-		try {
-			List<String> fznModel = Files.readAllLines(fznPath);
-			constraints = fznModel.stream()
-				.filter(r -> r.startsWith("constraint"))
-				.toList();
-			aboveModel = fznModel.stream()
-				.takeWhile(r -> !r.startsWith("constraint"))
-				.toList();
-		} catch (IOException e) {
-			throw new IllegalArgumentException("Unable to read FlatZinc model");
-		}
-
+	public List<Object> call() {
 		return quickXPlain(List.of(), constraints);
 	}
 
@@ -133,7 +148,7 @@ public class QuickXPlain implements Callable<List<String>> {
 	 *
 	 * @return a list containing all distinct constraints from both inputs
 	 */
-	private List<String> union(List<String> a, List<String> b) {
+	private List<Object> union(List<Object> a, List<Object> b) {
 		return Stream.concat(a.stream(), b.stream())
 			.distinct()
 			.toList();
@@ -154,7 +169,7 @@ public class QuickXPlain implements Callable<List<String>> {
 	 * @return {@code true} if the constraint set is unsatisfiable;
 	 *             {@code false} otherwise
 	 */
-	private boolean checkUnsat(List<String> constraints) {
+	private boolean checkUnsat(List<Object> constraints) {
 		logger.info("Running iteration " + counter);
 		Path model = buildModel(constraints);
 		List<String> output = ModelRunner.run(model, solverName);
@@ -184,15 +199,16 @@ public class QuickXPlain implements Callable<List<String>> {
 	 *
 	 * @throws IllegalStateException if the model cannot be written to disk
 	 */
-	private Path buildModel(List<String> constraints) {
-		List<String> modelList = new ArrayList<>(aboveModel);
-		modelList.addAll(constraints);
-		String model = modelList.stream().collect(Collectors.joining("\n", "", "solve satisfy;"));
+	private Path buildModel(List<Object> constraints) {
+		Map<String, Object> model = new HashMap<>(otherModelParts);
+		model.put("constraints", constraints);
 
 		Path qxModelPath = Path.of(baseModelPath.toString() + "-qx-" + (counter++));
 
 		try {
-			Files.writeString(Path.of(qxModelPath + ".mzn"), model);
+			Files.writeString(
+				Path.of(qxModelPath + ".mzn"),
+				JSONObject.valueToString(model));
 			return qxModelPath;
 		} catch (IOException e) {
 			throw new IllegalStateException("Cannot write QuickExplain model to file: " + qxModelPath);
@@ -220,7 +236,7 @@ public class QuickXPlain implements Callable<List<String>> {
 	 *
 	 * @return a minimal conflicting subset of {@code C}
 	 */
-	private List<String> quickXPlain(List<String> B, List<String> C) {
+	private List<Object> quickXPlain(List<Object> B, List<Object> C) {
 		boolean unsat = checkUnsat(B);
 		if (!B.isEmpty() && unsat) {
 			return List.of();
@@ -231,11 +247,11 @@ public class QuickXPlain implements Callable<List<String>> {
 		}
 
 		int mid = C.size() / 2;
-		List<String> C1 = new ArrayList<>(C.subList(0, mid));
-		List<String> C2 = new ArrayList<>(C.subList(mid, C.size()));
+		List<Object> C1 = new ArrayList<>(C.subList(0, mid));
+		List<Object> C2 = new ArrayList<>(C.subList(mid, C.size()));
 
-		List<String> delta1 = quickXPlain(union(B, C2), C1);
-		List<String> delta2 = quickXPlain(union(B, delta1), C2);
+		List<Object> delta1 = quickXPlain(union(B, C2), C1);
+		List<Object> delta2 = quickXPlain(union(B, delta1), C2);
 
 		return union(delta1, delta2);
 	}
