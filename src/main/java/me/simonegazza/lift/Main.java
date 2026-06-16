@@ -81,6 +81,27 @@ public class Main implements Callable<Integer> {
 	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Main.class.getSimpleName());
 
 	/**
+	 * Statistics gathered during the last execution of {@link #call()}.
+	 * <p>
+	 * Initialised to an empty instance so that {@link #getStats()} never
+	 * returns {@code null} even when {@link #call()} has not been invoked.
+	 */
+	private RunStatistics stats = new RunStatistics();
+
+	/**
+	 * Returns the statistics gathered during the last execution of
+	 * {@link #call()}.
+	 * <p>
+	 * If {@link #call()} has not been invoked yet, an empty
+	 * {@link RunStatistics} instance with no recorded iterations is returned.
+	 *
+	 * @return the run statistics; never {@code null}
+	 */
+	public RunStatistics getStats() {
+		return stats;
+	}
+
+	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
 	 * context.
 	 * <p>
@@ -285,6 +306,38 @@ public class Main implements Callable<Integer> {
 	}
 
 	/**
+	 * Derives the {@link RunStatistics.FinalState} that corresponds to a solver
+	 * output for which {@link #analyzeOutput(List)} returned an empty
+	 * {@link Optional}.
+	 * <p>
+	 * Reuses the same output-pattern heuristics as
+	 * {@link #analyzeOutput(List)}.
+	 *
+	 * @param output     output lines returned by
+	 *                       {@link ModelRunner#run(Path, String)}
+	 * @param isRecovery {@code true} when the output comes from the recovery
+	 *                       solver; in that case a detected solution is mapped
+	 *                       to
+	 *                       {@link RunStatistics.FinalState#SOLUTION_FOUND_VIA_RECOVERY}
+	 *                       instead of
+	 *                       {@link RunStatistics.FinalState#SOLUTION_FOUND}
+	 *
+	 * @return {@link RunStatistics.FinalState#SOLUTION_FOUND} (or
+	 *             {@link RunStatistics.FinalState#SOLUTION_FOUND_VIA_RECOVERY}
+	 *             when {@code isRecovery} is {@code true}) when a solution
+	 *             separator is present in {@code output}; otherwise
+	 *             {@link RunStatistics.FinalState#UNSATISFIABLE}
+	 */
+	private RunStatistics.FinalState finalStateFromOutput(List<String> output, boolean isRecovery) {
+		if (output.size() > 2 && output.contains("----------")) {
+			return isRecovery
+				? RunStatistics.FinalState.SOLUTION_FOUND_VIA_RECOVERY
+				: RunStatistics.FinalState.SOLUTION_FOUND;
+		}
+		return RunStatistics.FinalState.UNSATISFIABLE;
+	}
+
+	/**
 	 * Executes the lifting pipeline.
 	 *
 	 * @return {@code 0} if execution completes successfully
@@ -294,6 +347,9 @@ public class Main implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 		logger.info("Application starts");
+
+		stats = new RunStatistics();
+		stats.start();
 
 		outputPath = outputPath.toAbsolutePath();
 
@@ -309,6 +365,9 @@ public class Main implements Callable<Integer> {
 		}
 
 		String originalModel = sb.toString();
+
+		stats.countChanges(originalModel);
+
 		String modelsNamePrefix = filePaths.stream()
 			.filter(fp -> fp.toFile().getName().endsWith(".mzn"))
 			.map(fp -> {
@@ -377,8 +436,16 @@ public class Main implements Callable<Integer> {
 			parameterToMaximize = liftedParameters;
 		}
 
+		stats.parameterCount(liftedParameters);
+
 		List<Set<RevokedAssumption>> assumptions = new ArrayList<>();
 		for (int i = 1;; i++) {
+			stats.startIteration(i);
+			boolean usedQuickXPlain = false;
+			long quickXPlainDurationMs = 0;
+			String solverUsed = "chuffed";
+			String quickXPlainSolverUsed = null;
+
 			// Customize the model
 			logger.info("Adding assumptions...");
 			Assumer assumer = new Assumer(
@@ -410,11 +477,15 @@ public class Main implements Callable<Integer> {
 			Set<String> coreInvolvedVariables;
 			Optional<Set<String>> anyVariable = analyzeOutput(commandOutput);
 			if (anyVariable.isEmpty()) {
+				stats.endIteration(Set.of(), solverUsed, false, null, 0);
+				stats.finish(finalStateFromOutput(commandOutput, false));
+				System.out.println(stats.toJson());
 				logger.info("Exiting");
 				return 0;
 			} else if (anyVariable.get().isEmpty()) {
 				logger.info("A solution or an unsat core cannot be found, trying with another solver: "
 					+ recoverySolver);
+				solverUsed = recoverySolver;
 
 				List<String> recoveryOuput = runWithFixedParameters(
 					recoverySolver,
@@ -423,6 +494,9 @@ public class Main implements Callable<Integer> {
 
 				Optional<Set<String>> recoveryAssumptions = analyzeOutput(recoveryOuput);
 				if (recoveryAssumptions.isEmpty()) {
+					stats.endIteration(Set.of(), solverUsed, false, null, 0);
+					stats.finish(finalStateFromOutput(recoveryOuput, true));
+					System.out.println(stats.toJson());
 					logger.info("Exiting");
 					return 0;
 				} else if (recoveryAssumptions.get().isEmpty()) {
@@ -430,10 +504,17 @@ public class Main implements Callable<Integer> {
 						I'll run QuickXPlain trying to find a solution, but be aware that the process \
 						might get in a loop if the solver answered with UNKNOWN \
 						""");
+					long qxStart = System.nanoTime();
+					quickXPlainSolverUsed = quickXPlainSolver;
 					coreInvolvedVariables = runQuickExplain(
 						ithBaseModelPath,
 						liftedParameters);
+					quickXPlainDurationMs = (System.nanoTime() - qxStart) / 1_000_000L;
+					usedQuickXPlain = true;
 				} else {
+					stats.endIteration(Set.of(), solverUsed, false, null, 0);
+					stats.finish(RunStatistics.FinalState.ABORTED);
+					System.out.println(stats.toJson());
 					logger.info("I've tried, sorry!");
 					throw new IllegalStateException("""
 						Tried to recover by running another solver and QuickXPlain \
@@ -457,6 +538,12 @@ public class Main implements Callable<Integer> {
 				coreInvolvedVariables,
 				fznParser.model());
 			Set<RevokedAssumption> newNogoodAssumptions = coreExtractor.call();
+			stats.endIteration(
+				newNogoodAssumptions,
+				solverUsed,
+				usedQuickXPlain,
+				quickXPlainSolverUsed,
+				quickXPlainDurationMs);
 			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
 				.map(RevokedAssumption::toString)
 				.collect(Collectors.joining(", ")));

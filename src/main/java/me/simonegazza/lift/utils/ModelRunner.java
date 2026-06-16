@@ -95,6 +95,7 @@ public class ModelRunner {
 				.directory(modelBasePath.getParent().toFile())
 				.start();
 		} catch (IOException e) {
+			e.printStackTrace();
 			throw new IllegalStateException("Unable to inherit IO for compiling the model with " + solverName);
 		}
 

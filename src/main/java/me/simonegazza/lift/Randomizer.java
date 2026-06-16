@@ -44,7 +44,7 @@ public class Randomizer implements Callable<Integer> {
 	private List<Path> filePaths;
 
 	/**
-	 * Parameters that should be lifted.
+	 * Parameters that should be randomized.
 	 * <p>
 	 * Each parameter specification is parsed into a {@link RandomizeRequest}.
 	 */
@@ -85,11 +85,6 @@ public class Randomizer implements Callable<Integer> {
 		 */
 		private final int amount;
 
-		/**
-		 * A.
-		 *
-		 * @param request B
-		 */
 		RandomizeRequest(String request) {
 			String[] userData = request.split(":");
 			List<String> data = new ArrayList<>();

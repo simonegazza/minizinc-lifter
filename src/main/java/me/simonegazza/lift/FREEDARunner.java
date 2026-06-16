@@ -1,7 +1,13 @@
 package me.simonegazza.lift;
 
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,24 +32,24 @@ import picocli.CommandLine.Option;
  * aggregate output.
  */
 @CommandLine.Command(name = "mzn-runner", mixinStandardHelpOptions = true, version = "0.1", description = "Run a model with data files contained in a folder")
-public class Runner implements Callable<Integer> {
+public class FREEDARunner implements Callable<Integer> {
 
 	/**
 	 * Application logger.
 	 */
-	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Runner.class.getSimpleName());
+	private static final ApplicationLogger logger = ApplicationLogger.getLogger(FREEDARunner.class.getSimpleName());
 
 	/**
-	 * Input MiniZinc model file path.
+	 * Input MiniZinc model for FREEDA.
 	 */
-	@Option(names = { "-m", "--model" }, arity = "1", description = "MZN model file path", required = true)
-	private Path modelPath;
+	@Option(names = "-f", arity = "1", description = "MZN FREEDA model file path", required = true)
+	private Path freedaPath;
 
 	/**
 	 * Folder where the data is.
 	 */
 	@Option(names = { "-d", "--data-folder" }, description = "Data folder path", required = true)
-	private Path dataPath;
+	private Path generalDataPath;
 
 	/**
 	 * Parameters that should be lifted as Strings.
@@ -51,12 +57,6 @@ public class Runner implements Callable<Integer> {
 	@Option(names = { "-p",
 			"--parameters" }, arity = "1..*", description = "Parameter to lift the model with", required = true)
 	private Set<String> parameters;
-
-	/**
-	 * Folder path where models will be saved.
-	 */
-	@Option(names = { "-o", "--output" }, description = "Output folder path", required = true)
-	private Path outputPath;
 
 	/**
 	 * Runner entry point.
@@ -84,24 +84,27 @@ public class Runner implements Callable<Integer> {
 	 */
 	@Override
 	public Integer call() throws Exception {
-		logger.info("Runner starts");
+		logger.info("FREEDARunner starts");
 
-		List<Path> filesPath = Files.list(dataPath)
-			.filter(Files::isRegularFile)
-			.filter(f -> f.toString().endsWith(".dzn"))
-			.toList();
+		List<Path> dataPaths = new ArrayList<>();
+		PathMatcher matcher = FileSystems.getDefault().getPathMatcher("*.dzn");
+		Files.walkFileTree(generalDataPath, new SimpleFileVisitor<>() {
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				if (matcher.matches(file)) {
+					dataPaths.add(file);
+				}
+				return FileVisitResult.CONTINUE;
+			}
+		});
 
-		logger.info("""
-			Runner will ask the satisfiability \
-			recovery process with the following files: """ + filesPath);
-
-		if (filesPath.size() == 0) {
-			throw new IllegalArgumentException("Data folder is empty!");
+		if (dataPaths.size() == 0) {
+			throw new IllegalArgumentException("Unable to find files!");
 		}
 
 		BatchRunStatistics batchStats = new BatchRunStatistics();
-		List<Optional<Throwable>> correct = new ArrayList<>(filesPath.size());
-		for (Path dznPath : filesPath) {
+		List<Optional<Throwable>> correct = new ArrayList<>(dataPaths.size());
+		for (Path dznPath : dataPaths) {
 			logger.info("Running data file " + dznPath.toString());
 
 			List<String> ps = parameters.stream()
@@ -113,11 +116,11 @@ public class Runner implements Callable<Integer> {
 
 			List<String> commandArgument = new ArrayList<>(ps);
 			commandArgument.add("-m");
-			commandArgument.add(modelPath.toAbsolutePath().toString());
+			commandArgument.add(freedaPath.toAbsolutePath().toString());
 			commandArgument.add("-m");
 			commandArgument.add(dznPath.toAbsolutePath().toString());
 			commandArgument.add("-o");
-			commandArgument.add(mainOutPath.toString());
+			commandArgument.add(dznPath.toAbsolutePath().toString());
 
 			Main mainInstance = new Main();
 			try {
@@ -137,7 +140,7 @@ public class Runner implements Callable<Integer> {
 		} else {
 			logger.info("Some run failed:");
 			IntStream.range(0, correct.size()).boxed()
-				.map(i -> "\nRun " + i + " with data file " + filesPath.get(i))
+				.map(i -> "\nRun " + i + " with data file " + dataPaths.get(i))
 				.forEach(logger::error);
 
 			return 1;
