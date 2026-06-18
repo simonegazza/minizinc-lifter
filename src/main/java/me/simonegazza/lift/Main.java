@@ -288,7 +288,7 @@ public class Main implements Callable<Integer> {
 			String core = commandOutput.get(1);
 			core = core.substring(14, core.length() - 1);
 
-			if ("[]".equals(core)) {
+			if ("".equals(core)) {
 				return Optional.empty();
 			}
 
@@ -470,7 +470,7 @@ public class Main implements Callable<Integer> {
 			if (coreAssumptionIndeces.isEmpty()) {
 				stats.endIteration(List.of(), solverUsed, false, null, 0);
 				stats.finish(finalStateFromOutput(commandOutput, false));
-				System.out.println(stats.toJson());
+				System.out.println(stats);
 				logger.info("Exiting");
 				return 0;
 			} else if (coreAssumptionIndeces.get().isEmpty()) {
@@ -487,7 +487,7 @@ public class Main implements Callable<Integer> {
 				if (recoveryAssumptions.isEmpty()) {
 					stats.endIteration(List.of(), solverUsed, false, null, 0);
 					stats.finish(finalStateFromOutput(recoveryOuput, true));
-					System.out.println(stats.toJson());
+					System.out.println(stats);
 					logger.info("Exiting");
 					return 0;
 				} else if (recoveryAssumptions.get().isEmpty()) {
@@ -502,14 +502,10 @@ public class Main implements Callable<Integer> {
 						liftedParameters);
 					quickXPlainDurationMs = (System.nanoTime() - qxStart) / 1_000_000L;
 					usedQuickXPlain = true;
-//					coreExtractor = new UnsatCoreExtractor(
-//						ithMznModelPath,
-//						liftedParameters,
-//						qxVariables);
 				} else {
 					stats.endIteration(List.of(), solverUsed, false, null, 0);
 					stats.finish(RunStatistics.FinalState.ABORTED);
-					System.out.println(stats.toJson());
+					System.out.println(stats);
 					logger.info("I've tried, sorry!");
 					throw new IllegalStateException("""
 						Tried to recover by running another solver and QuickXPlain \
@@ -517,13 +513,6 @@ public class Main implements Callable<Integer> {
 						""");
 				}
 			}
-//			else {
-//				// Visit the .fzn.json to extract the assumptions
-//				coreExtractor = new UnsatCoreExtractor(
-//					fznLiftedPath,
-//					liftedParameters,
-//					coreAssumptionIndex.get());
-//			}
 
 			List<Integer> newNogoodAssumptions = coreAssumptionIndeces.get();
 			stats.endIteration(
@@ -532,9 +521,6 @@ public class Main implements Callable<Integer> {
 				usedQuickXPlain,
 				quickXPlainSolverUsed,
 				quickXPlainDurationMs);
-//			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
-//				.map(Integer::toString)
-//				.collect(Collectors.joining(", ")));
 			assumptions.addAll(newNogoodAssumptions);
 		}
 	}

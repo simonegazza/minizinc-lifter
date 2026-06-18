@@ -4,6 +4,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  * Aggregates the {@link RunStatistics} produced by multiple executions of the
@@ -81,43 +83,23 @@ public class BatchRunStatistics {
 	 *
 	 * @return a self-contained JSON string
 	 */
-	public String toJson() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("{\n");
-		sb.append("  \"runs\": [\n");
-		for (int i = 0; i < entries.size(); i++) {
-			RunEntry entry = entries.get(i);
-			sb.append("    {\n");
-			sb.append("      \"dataFile\": \"")
-				.append(RunStatistics.escapeJsonString(entry.dataFile().getFileName().toString()))
-				.append("\",\n");
-			sb.append("      \"statistics\": ")
-				.append(indentTail(entry.statistics().toJson(), "      "))
-				.append("\n");
-			sb.append("    }");
-			if (i < entries.size() - 1) {
-				sb.append(",");
-			}
-			sb.append("\n");
+	public JSONObject toJson() {
+		JSONObject root = new JSONObject();
+		JSONArray runs = new JSONArray();
+
+		for (RunEntry entry : entries) {
+			JSONObject run = new JSONObject();
+			run.put("dataFile", entry.dataFile().getFileName().toString());
+			run.put("statistics", entry.statistics().toJson());
+			runs.put(run);
 		}
-		sb.append("  ]\n");
-		sb.append("}");
-		return sb.toString();
+		root.put("runs", runs);
+
+		return root;
 	}
 
-	/**
-	 * Adds {@code prefix} to the beginning of every line after the first in
-	 * {@code text}.
-	 * <p>
-	 * Used to nest the output of {@link RunStatistics#toJson()} inside a deeper
-	 * JSON structure without altering the indentation of the first line.
-	 *
-	 * @param text   the multi-line string to indent
-	 * @param prefix the prefix to insert after every newline
-	 *
-	 * @return the indented string
-	 */
-	private static String indentTail(String text, String prefix) {
-		return text.replace("\n", "\n" + prefix);
+	@Override
+	public String toString() {
+		return toJson().toString(2);
 	}
 }

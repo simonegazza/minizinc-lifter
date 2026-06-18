@@ -130,7 +130,7 @@ public class Runner implements Callable<Integer> {
 		}
 
 		System.out.println("*********************************************");
-		System.out.println(batchStats.toJson());
+		System.out.println(batchStats);
 
 		if (correct.stream().allMatch(Optional::isEmpty)) {
 			return 0;
