@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
-import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincSetType;
@@ -164,157 +163,46 @@ public class LiftedArrayParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions) {
-		// TODO: to do this properly, this function should be made recursive (on
-		// the subtypes) but it would mean restructuring these classes, so I'll
-		// leave it as is for now.
-
-		// Filter and keep only the appropriate assumptions
-		List<RevokedAssumption> assumptions = revokedAssumptions.stream()
-			.filter(a -> a.name().equals(getLiftedName()))
-			.toList();
+	public String paramArrayPiece(boolean lifted) {
+		StringBuilder firstPart = new StringBuilder("[");
 
 		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
 		List<String> dimensionsExpression = ct.getDimensionsString(false);
 		List<String> indices = IntStream.range(0, dimensionsExpression.size())
 			.mapToObj(e -> "i" + e)
 			.toList();
-
-		StringBuilder firstPart = new StringBuilder("[if ");
-
-		String coordinates;
-		if (assumptions.size() > 0) {
-			coordinates = assumptions.stream()
-				.map(a -> "(" + IntStream.range(0, a.indices().size())
-					.mapToObj(i -> "i" + i + " = " + a.indices().get(i))
-					.collect(Collectors.joining(" /\\ ")) + ")")
-				.collect(Collectors.joining(" \\/ "));
-		} else {
-			coordinates = "false";
-		}
-
-		firstPart
-			.append(coordinates)
-			.append(" then\n\t\t")
-			.append(ct.getSubtype() instanceof MiniZincSetType
-				? "{}"
-				: "true")
-			.append("\n\telse\n\t\t")
-			.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
-			.append("\n\tendif");
+		firstPart.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices));
 
 		StringBuilder secondPart = new StringBuilder().append(
 			IntStream.range(0, dimensionsExpression.size()).mapToObj(i -> {
-				StringBuilder result = new StringBuilder(indices.get(i));
-				result.append(" in ");
+				StringBuilder internal = new StringBuilder(indices.get(i));
+				internal.append(" in ");
 				// TODO: check that this is enough; we do not parse
 				// dimensions and the only case that is considered now for "any
 				// range" is "int" even we are not sure it is the only one
 				if ("int".equals(dimensionsExpression.get(i))) {
-					result.append("index_set");
+					internal.append("index_set");
 
 					if (dimensionsExpression.size() != 1) {
-						result.append("_");
-						result.append(i + 1);
-						result.append("of");
-						result.append(dimensionsExpression.size());
+						internal.append("_");
+						internal.append(i + 1);
+						internal.append("of");
+						internal.append(dimensionsExpression.size());
 					}
 
-					result.append(parenthesize(getOriginalName()));
+					internal.append(parenthesize(getOriginalName()));
 				} else {
-					result.append(dimensionsExpression.get(i));
+					internal.append(dimensionsExpression.get(i));
 				}
 
-				return result.toString();
+				return internal.toString();
 			}).collect(Collectors.joining(", ")));
-
-		StringBuilder preamble = new StringBuilder("");
-		if (parameter.isAssignedAtDeclaration() && assumptions.isEmpty()) {
-			preamble.append("[] %");
-		}
 
 		return firstPart
 			.append(" | ")
 			.append(secondPart)
 			.append("]")
 			.toString();
-	}
-
-	@Override
-	public Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions) {
-		// TODO: to do this properly, this function should be made recursive (on
-		// the subtypes) but it would mean restructuring these classes, so I'll
-		// leave it as is for now.
-
-		// Filter and keep only the appropriate assumptions
-		List<RevokedAssumption> assumptions = revokedAssumptions.stream()
-			.filter(a -> a.name().equals(getLiftedName()))
-			.toList();
-		if (assumptions.isEmpty()) {
-			return Optional.empty();
-		}
-
-		MiniZincArrayType ct = (MiniZincArrayType) parameter.getType();
-		List<String> dimensionsExpression = ct.getDimensionsString(false);
-		List<String> indices = IntStream.range(0, dimensionsExpression.size())
-			.mapToObj(e -> "i" + e)
-			.toList();
-
-		StringBuilder firstPart = new StringBuilder("[if ");
-
-		String coordinates = assumptions.stream()
-			.map(a -> "(" + IntStream.range(0, a.indices().size())
-				.mapToObj(i -> "i" + i + " = " + a.indices().get(i))
-				.collect(Collectors.joining(" /\\ ")) + ")")
-			.collect(Collectors.joining(" \\/ "));
-
-		firstPart
-			.append(coordinates)
-			.append(" then\n\t\t")
-			.append(ct.getSubtype() instanceof MiniZincSetType
-				? "{}"
-				: "true")
-			.append("\n\telse\n\t\t")
-			.append(arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices))
-			.append("\n\tendif");
-
-		StringBuilder secondPart = new StringBuilder().append(
-			IntStream.range(0, dimensionsExpression.size()).mapToObj(i -> {
-				StringBuilder result = new StringBuilder(indices.get(i));
-				result.append(" in ");
-				// TODO: check that this is enough; we do not parse
-				// dimensions and the only case that is considered now for "any
-				// range" is "int" even we are not sure it is the only one
-				if ("int".equals(dimensionsExpression.get(i))) {
-					result.append("index_set");
-
-					if (dimensionsExpression.size() != 1) {
-						result.append("_");
-						result.append(i + 1);
-						result.append("of");
-						result.append(dimensionsExpression.size());
-					}
-
-					result.append(parenthesize(getOriginalName()));
-				} else {
-					result.append(dimensionsExpression.get(i));
-				}
-
-				return result.toString();
-			}).collect(Collectors.joining(", ")));
-
-		StringBuilder preamble = new StringBuilder("");
-		if (parameter.isAssignedAtDeclaration() && assumptions.isEmpty()) {
-			preamble.append("[] %");
-		}
-
-		return Optional.of("["
-			+ arrayAccess(lifted ? getLiftedName() : getOriginalName(), indices)
-			+ " | "
-			+ secondPart
-			+ " where "
-			+ coordinates
-			+ "]");
 	}
 
 }

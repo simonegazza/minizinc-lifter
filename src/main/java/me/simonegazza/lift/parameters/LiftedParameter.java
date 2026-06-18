@@ -9,7 +9,6 @@ import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
-import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.requests.SimpleLiftRequest;
@@ -325,23 +324,11 @@ public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 	/**
 	 * Generates the contribution to the params arrays.
 	 *
-	 * @param lifted             whether we should consider lifted names or not
-	 * @param revokedAssumptions the assumptions to be revoked
+	 * @param lifted whether we should consider lifted names or not
 	 *
 	 * @return a sum of absolute differences over selected indices, if the
 	 */
-	public abstract String paramArrayPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions);
-
-	/**
-	 * Generates the contribution to the warm start arrays.
-	 *
-	 * @param lifted             whether we should consider lifted names or not
-	 * @param revokedAssumptions the assumptions to be revoked.Assumptions not
-	 *                               related to this parameter are ignored
-	 *
-	 * @return an array of absolute differences over selected indices
-	 */
-	public abstract Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions);
+	public abstract String paramArrayPiece(boolean lifted);
 
 	/**
 	 * Generates the contribution to the objective function.

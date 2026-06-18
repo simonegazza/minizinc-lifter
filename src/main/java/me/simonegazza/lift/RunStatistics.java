@@ -3,12 +3,9 @@ package me.simonegazza.lift;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.parameters.LiftedParameter;
-import me.simonegazza.lift.visitors.flatzinc.QuickXPlain;
 
 /**
  * Collects and exposes runtime statistics for a single execution of the lifting
@@ -88,7 +85,7 @@ public class RunStatistics {
 		 * core (e.g. a solution was found or the problem was deemed
 		 * unsatisfiable).
 		 */
-		private final Set<RevokedAssumption> coreVariables;
+		private final List<Integer> coreVariables;
 
 		/**
 		 * Whether the {@link QuickXPlain} algorithm was invoked during this
@@ -134,14 +131,15 @@ public class RunStatistics {
 		public IterationRecord(
 			int iteration,
 			long durationMs,
-			Set<RevokedAssumption> coreVariables,
+			List<Integer> coreVariables,
 			String solverUsed,
 			boolean quickXPlainUsed,
 			String quickXPlainSolver,
 			long quickXPlainDurationMs) {
+
 			this.iteration = iteration;
 			this.durationMs = durationMs;
-			this.coreVariables = Collections.unmodifiableSet(coreVariables);
+			this.coreVariables = coreVariables;
 			this.solverUsed = solverUsed;
 			this.quickXPlainUsed = quickXPlainUsed;
 			this.quickXPlainSolver = quickXPlainSolver;
@@ -173,10 +171,9 @@ public class RunStatistics {
 		 * The set is empty when the iteration terminated the procedure without
 		 * producing a core.
 		 *
-		 * @return unmodifiable set of {@link RevokedAssumption}; never
-		 *             {@code null}
+		 * @return a list of Integer
 		 */
-		public Set<RevokedAssumption> getCoreVariables() {
+		public List<Integer> getCoreVariables() {
 			return coreVariables;
 		}
 
@@ -320,7 +317,7 @@ public class RunStatistics {
 			result++;
 		}
 
-		this.changes = result;
+		changes = result;
 	}
 
 	/**
@@ -329,7 +326,7 @@ public class RunStatistics {
 	 * @param parameters the list of parameters to lift
 	 */
 	public void parameterCount(List<LiftedParameter> parameters) {
-		this.parameterNumber = parameters.stream()
+		parameterNumber = parameters.stream()
 			.mapToInt(p -> p.getDimensions().stream().reduce(1, (a, b) -> a * b))
 			.sum();
 	}
@@ -381,7 +378,7 @@ public class RunStatistics {
 	 *                                  {@code quickXPlainUsed} is {@code false}
 	 */
 	public void endIteration(
-		Set<RevokedAssumption> coreVariables,
+		List<Integer> coreVariables,
 		String solverUsed,
 		boolean quickXPlainUsed,
 		String quickXPlainSolver,

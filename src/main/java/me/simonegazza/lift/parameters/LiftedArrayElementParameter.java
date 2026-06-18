@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.ArrayElementLiftRequest;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
@@ -30,33 +29,6 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 	 * The list of element-wise lift requests.
 	 */
 	private final List<ArrayElementLiftRequest> changes;
-
-//	private List<Object> liftValue(Map<String, Object> environment) {
-//		if (liftedValue != null) {
-//			return liftedValue;
-//		}
-//
-//		// Evaluate the expression to get the actual value for the parameter.
-//		// Since this is an array, it must be an array too
-//		@SuppressWarnings("unchecked")
-//		List<Object> result = (List<Object>) parameter.getValue();
-//
-//		changes.forEach(c -> {
-//			List<Integer> locations = c.getLocationsAdjusted(environment);
-//			// EvaluatorVisitor.get returns an Object, that can actually be a
-//			// list, so this cast is safe
-//			@SuppressWarnings("unchecked")
-//			List<Object> lastDimension = (List<Object>) (EvaluatorVisitor.get(
-//				result,
-//				locations.subList(0, locations.size() - 1)));
-//			// then we can just set it to the placeholder value.
-//			lastDimension.set(locations.getLast(), "_");
-//		});
-//
-//		liftedValue = EvaluatorVisitor.flatten(result);
-//
-//		return liftedValue;
-//	}
 
 	public LiftedArrayElementParameter(
 		OriginalParameter parameter,
@@ -163,18 +135,12 @@ public class LiftedArrayElementParameter extends LiftedParameter {
 		}
 
 		result.append(", ");
-//		result.append(liftValue(environment));
 		result.append(");");
 		return result.toString();
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> assumptions) {
-		throw new UnimplementedException("Unimplemented piece for parameter");
-	}
-
-	@Override
-	public Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> assumptions) {
+	public String paramArrayPiece(boolean lifted) {
 		throw new UnimplementedException("Unimplemented piece for parameter");
 	}
 

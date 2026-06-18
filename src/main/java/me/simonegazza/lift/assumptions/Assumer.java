@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -38,7 +35,7 @@ public class Assumer implements Callable<String> {
 	/**
 	 * The assumptions that needs to be revoked.
 	 */
-	private final Set<RevokedAssumption> assumptions;
+	private final List<Integer> assumptions;
 
 	/**
 	 * The names of the parameter array.
@@ -59,7 +56,7 @@ public class Assumer implements Callable<String> {
 		String baseModel,
 		List<LiftedParameter> lifted,
 		List<LiftedParameter> maxParameters,
-		Set<RevokedAssumption> revokedAssumption) {
+		List<Integer> revokedAssumption) {
 
 		this.baseModel = baseModel;
 		this.maxParameters = maxParameters;
@@ -127,35 +124,6 @@ public class Assumer implements Callable<String> {
 			obj.append("int");
 		}
 
-		List<String> warmStarts = parameterTypeCollector.values().stream().map(parametersByType -> {
-			List<RevokedAssumption> assumptionsFilteredByType = assumptions.stream()
-				.filter(a -> parametersByType.stream()
-					.map(LiftedParameter::getLiftedName)
-					.anyMatch(p -> p.equals(a.name())))
-				.toList();
-
-			List<String> warmStartOriginal = new ArrayList<>();
-			List<String> warmStartLifted = new ArrayList<>();
-
-			for (LiftedParameter parameter : parametersByType) {
-				Optional<String> pieceOriginal = parameter.warmStartPiece(false, assumptionsFilteredByType);
-				if (pieceOriginal.isPresent()) {
-					warmStartOriginal.add(pieceOriginal.get());
-					warmStartLifted.add(parameter.warmStartPiece(true, assumptionsFilteredByType).get());
-				}
-			}
-
-			if (warmStartLifted.isEmpty() && warmStartOriginal.isEmpty()) {
-				return null;
-			}
-
-			return ":: warm_start(\n\t\t"
-				+ warmStartLifted.stream().collect(Collectors.joining("\n\t\t\t++ "))
-				+ ",\n\t\t"
-				+ warmStartOriginal.stream().collect(Collectors.joining("\n\t\t\t++ "))
-				+ "\n\t)";
-		}).filter(Objects::nonNull).toList();
-
 		obj.append(": objective_lifted :: output_var = ");
 		obj.append(
 			maxParameters.stream()
@@ -164,7 +132,7 @@ public class Assumer implements Callable<String> {
 				.collect(Collectors.joining("\n\t+ ")))
 			.append("\n;\n")
 			.append("solve")
-			.append(warmStarts.stream().collect(Collectors.joining("\n", "\n\t", "")))
+			.append("\n\t::warm_start(assumed, [true | _ in index_set(assumed)])")
 			.append("\nminimize objective_lifted;\n\n");
 
 		return obj.toString();
@@ -182,7 +150,6 @@ public class Assumer implements Callable<String> {
 	 *
 	 * @param ofLifted      whether the generated array should be of lifted
 	 *                          parameters
-	 * @param revoked       the assumptions to revoke while generating the array
 	 * @param parameterType this is either a String or a Class object depending
 	 *                          if the parameter was a simple parameter or a
 	 *                          {@link MiniZincSetType}
@@ -192,7 +159,6 @@ public class Assumer implements Callable<String> {
 	 */
 	private String getParamsArray(
 		boolean ofLifted,
-		Set<RevokedAssumption> revoked,
 		Object parameterType,
 		List<LiftedParameter> parameters) {
 
@@ -223,10 +189,10 @@ public class Assumer implements Callable<String> {
 		result.append(" = ");
 
 		String ending = parameters.stream()
-			.map(p -> p.paramArrayPiece(ofLifted, revoked.stream().toList()))
+			.map(p -> p.paramArrayPiece(ofLifted))
 			.collect(Collectors.joining("\n\t ++ "));
 		result.append(ending);
-		result.append("\n;\n");
+		result.append(";\n");
 
 		return result.toString();
 	}
@@ -243,23 +209,27 @@ public class Assumer implements Callable<String> {
 		parameterTypeCollector.entrySet().stream().forEach(entry -> {
 			Object key = entry.getKey();
 			List<LiftedParameter> valueList = entry.getValue();
-			result.append(getParamsArray(false, assumptions, key, valueList))
+			result.append(getParamsArray(false, key, valueList))
 				.append("\n")
-				.append(getParamsArray(true, assumptions, key, valueList))
+				.append(getParamsArray(true, key, valueList))
 				.append("\n");
 		});
 
 		result.append("include \"huub.mzn\";\n\n");
 
-		result.append("constraint assume(assumed);\n\n");
-
-		result.append("array[int] of var bool: assumed = ");
+		result.append("array[int] of var bool: lifted_assumed = ");
 		result.append(IntStream.range(0, paramArrayIdentifiers.size())
 			.boxed()
 			.map(i -> "[" + paramArrayLiftedIdentifiers.get(i) + "[i] = " + paramArrayIdentifiers.get(i)
 				+ "[i] | i in index_set(" + paramArrayIdentifiers.get(i) + ")]")
 			.collect(Collectors.joining("\n\t++"))
 			+ ";\n\n");
+
+		result.append("array[int] of var bool: assumed = [if i in \n\t");
+		result.append(assumptions.stream().map(i -> i.toString()).collect(Collectors.joining(", ", "{", "}")));
+		result.append("\n\tthen true else lifted_assumed[i] endif | i in index_set(lifted_assumed)];\n\n");
+
+		result.append("constraint assume(assumed);\n\n");
 
 		IntStream.range(0, paramArrayIdentifiers.size())
 			.boxed()

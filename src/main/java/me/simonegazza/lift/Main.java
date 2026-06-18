@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.assumptions.Assumer;
-import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.expressions.MiniZincArray;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
@@ -24,8 +23,7 @@ import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ModelRunner;
 import me.simonegazza.lift.utils.ParameterGraph;
-import me.simonegazza.lift.visitors.flatzinc.QuickXPlain;
-import me.simonegazza.lift.visitors.flatzinc.UnsatCoreExtractor;
+import me.simonegazza.lift.utils.QuickXPlain;
 import me.simonegazza.lift.visitors.minizinc.Lifter;
 import me.simonegazza.lift.visitors.minizinc.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
@@ -290,6 +288,10 @@ public class Main implements Callable<Integer> {
 			String core = commandOutput.get(1);
 			core = core.substring(14, core.length() - 1);
 
+			if ("[]".equals(core)) {
+				return Optional.empty();
+			}
+
 			return Optional.of(Pattern.compile(", ").splitAsStream(core)
 				.map(s -> s.substring(8, s.length() - 1))
 				.map(Integer::valueOf)
@@ -431,7 +433,7 @@ public class Main implements Callable<Integer> {
 
 		stats.parameterCount(liftedParameters);
 
-		List<Set<RevokedAssumption>> assumptions = new ArrayList<>();
+		List<Integer> assumptions = new ArrayList<>();
 		for (int i = 1;; i++) {
 			stats.startIteration(i);
 			boolean usedQuickXPlain = false;
@@ -445,10 +447,7 @@ public class Main implements Callable<Integer> {
 				baseModel,
 				liftedParameters,
 				parameterToMaximize,
-				assumptions.stream()
-					.flatMap(Set::stream)
-					.sorted()
-					.collect(Collectors.toSet()));
+				assumptions.stream().sorted().toList());
 			String liftedModel = assumer.call();
 
 			// Write .mzn to file
@@ -461,21 +460,20 @@ public class Main implements Callable<Integer> {
 			// Compile the .mzn and get the .fzn
 			logger.info("Compiling the .mzn...");
 			ModelRunner.compile(ithBaseModelPath, "huub");
-			Path fznLiftedPath = Path.of(ithBaseModelPath.toString() + ".fzn.json");
+			Path.of(ithBaseModelPath.toString() + ".fzn.json");
 
 			// Run the .fzn
 			logger.info("Running the lifted model...");
 			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "huub");
 
-			Optional<List<Integer>> anyVariable = analyzeOutput(commandOutput);
-			UnsatCoreExtractor coreExtractor;
-			if (anyVariable.isEmpty()) {
-				stats.endIteration(Set.of(), solverUsed, false, null, 0);
+			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
+			if (coreAssumptionIndeces.isEmpty()) {
+				stats.endIteration(List.of(), solverUsed, false, null, 0);
 				stats.finish(finalStateFromOutput(commandOutput, false));
 				System.out.println(stats.toJson());
 				logger.info("Exiting");
 				return 0;
-			} else if (anyVariable.get().isEmpty()) {
+			} else if (coreAssumptionIndeces.get().isEmpty()) {
 				logger.info("A solution or an unsat core cannot be found, trying with another solver: "
 					+ recoverySolver);
 				solverUsed = recoverySolver;
@@ -487,7 +485,7 @@ public class Main implements Callable<Integer> {
 
 				Optional<List<Integer>> recoveryAssumptions = analyzeOutput(recoveryOuput);
 				if (recoveryAssumptions.isEmpty()) {
-					stats.endIteration(Set.of(), solverUsed, false, null, 0);
+					stats.endIteration(List.of(), solverUsed, false, null, 0);
 					stats.finish(finalStateFromOutput(recoveryOuput, true));
 					System.out.println(stats.toJson());
 					logger.info("Exiting");
@@ -499,17 +497,17 @@ public class Main implements Callable<Integer> {
 						""");
 					long qxStart = System.nanoTime();
 					quickXPlainSolverUsed = quickXPlainSolver;
-					Set<String> qxVariables = runQuickExplain(
+					runQuickExplain(
 						ithBaseModelPath,
 						liftedParameters);
 					quickXPlainDurationMs = (System.nanoTime() - qxStart) / 1_000_000L;
 					usedQuickXPlain = true;
-					coreExtractor = new UnsatCoreExtractor(
-						ithMznModelPath,
-						liftedParameters,
-						qxVariables);
+//					coreExtractor = new UnsatCoreExtractor(
+//						ithMznModelPath,
+//						liftedParameters,
+//						qxVariables);
 				} else {
-					stats.endIteration(Set.of(), solverUsed, false, null, 0);
+					stats.endIteration(List.of(), solverUsed, false, null, 0);
 					stats.finish(RunStatistics.FinalState.ABORTED);
 					System.out.println(stats.toJson());
 					logger.info("I've tried, sorry!");
@@ -518,25 +516,26 @@ public class Main implements Callable<Integer> {
 						but it was impossible to find a solution or get a core \
 						""");
 				}
-			} else {
-				// Visit the .fzn.json to extract the assumptions
-				coreExtractor = new UnsatCoreExtractor(
-					fznLiftedPath,
-					liftedParameters,
-					anyVariable.get());
 			}
+//			else {
+//				// Visit the .fzn.json to extract the assumptions
+//				coreExtractor = new UnsatCoreExtractor(
+//					fznLiftedPath,
+//					liftedParameters,
+//					coreAssumptionIndex.get());
+//			}
 
-			Set<RevokedAssumption> newNogoodAssumptions = coreExtractor.call();
+			List<Integer> newNogoodAssumptions = coreAssumptionIndeces.get();
 			stats.endIteration(
 				newNogoodAssumptions,
 				solverUsed,
 				usedQuickXPlain,
 				quickXPlainSolverUsed,
 				quickXPlainDurationMs);
-			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
-				.map(RevokedAssumption::toString)
-				.collect(Collectors.joining(", ")));
-			assumptions.add(newNogoodAssumptions);
+//			logger.info("Found new assumptions: " + newNogoodAssumptions.stream()
+//				.map(Integer::toString)
+//				.collect(Collectors.joining(", ")));
+			assumptions.addAll(newNogoodAssumptions);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package me.simonegazza.lift.visitors.flatzinc;
+package me.simonegazza.lift.utils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,8 +11,6 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.lift.parameters.LiftedParameter;
-import me.simonegazza.lift.utils.ApplicationLogger;
-import me.simonegazza.lift.utils.ModelRunner;
 import org.json.JSONObject;
 
 /**

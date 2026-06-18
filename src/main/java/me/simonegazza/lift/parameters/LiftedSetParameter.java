@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import me.simonegazza.lift.assumptions.RevokedAssumption;
 import me.simonegazza.lift.requests.LiftRequest;
 
 /**
@@ -45,40 +43,8 @@ public class LiftedSetParameter extends LiftedParameter {
 	}
 
 	@Override
-	public String paramArrayPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions) {
-		// Filter and keep only the appropriate assumptions
-		List<RevokedAssumption> assumptions = revokedAssumptions.stream()
-			.filter(a -> a.name().equals(getLiftedName()))
-			.toList();
-
-		StringBuilder result = new StringBuilder("[if ");
-
-		String coordinates;
-		if (assumptions.size() > 0) {
-			coordinates = "(" + assumptions.stream()
-				.map(a -> "e = " + a)
-				.collect(Collectors.joining(" \\/ ")) + ")";
-		} else {
-			coordinates = "false";
-		}
-
-		return result.append(coordinates)
-			.append(" then true else e endif | e in ")
-			.append(lifted ? getLiftedName() : getOriginalName())
-			.append("]")
-			.toString();
-	}
-
-	@Override
-	public Optional<String> warmStartPiece(boolean lifted, List<RevokedAssumption> revokedAssumptions) {
-		// Filter and keep only the appropriate assumptions
-		List<RevokedAssumption> assumptions = revokedAssumptions.stream()
-			.filter(a -> a.name().equals(getLiftedName()))
-			.toList();
-		if (assumptions.isEmpty()) {
-			return Optional.empty();
-		}
-		return Optional.of("[" + (lifted ? getLiftedName() : getOriginalName()) + "]");
+	public String paramArrayPiece(boolean lifted) {
+		return "[e | e in " + (lifted ? getLiftedName() : getOriginalName()) + "]";
 	}
 
 	@Override
