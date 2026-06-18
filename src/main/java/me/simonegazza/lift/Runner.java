@@ -91,9 +91,7 @@ public class Runner implements Callable<Integer> {
 			.filter(f -> f.toString().endsWith(".dzn"))
 			.toList();
 
-		logger.info("""
-			Runner will ask the satisfiability \
-			recovery process with the following files: """ + filesPath);
+		logger.info("Running satisfiability recovery with the following files: " + filesPath);
 
 		if (filesPath.size() == 0) {
 			throw new IllegalArgumentException("Data folder is empty!");
