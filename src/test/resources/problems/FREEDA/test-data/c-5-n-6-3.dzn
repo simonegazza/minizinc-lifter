@@ -1,0 +1,302 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Input data for app in infrastructure %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Comps = {component_0, component_1, component_2, component_3, component_4};
+mustComps = {component_0, component_1, component_3};
+Flavs = {flavour_0, flavour_1};
+Flav = [{flavour_0}, {flavour_0}, {flavour_0, flavour_1}, {flavour_0}, {flavour_0}];
+imp = array2d(Comps, Flavs, [
+	%flavour_0, flavour_1
+	1, 0, % component_0
+	1, 0, % component_1
+	1, 2, % component_2
+	1, 0, % component_3
+	1, 0, % component_4
+]);
+energy = [551, 795, 78, 78, 527, 590];
+energy_dependency = array3d(Comps, Flavs, Comps, [
+
+	% component_0
+	%component_0, component_1, component_2, component_3, component_4
+	0, 0, 16, 0, 0, % flavour_0
+	0, 0, 0, 0, 0, % flavour_1
+
+	% component_1
+	%component_0, component_1, component_2, component_3, component_4
+	0, 0, 42, 0, 0, % flavour_0
+	0, 0, 0, 0, 0, % flavour_1
+
+	% component_2
+	%component_0, component_1, component_2, component_3, component_4
+	0, 0, 0, 0, 10, % flavour_0
+	0, 0, 0, 0, 0, % flavour_1
+
+	% component_3
+	%component_0, component_1, component_2, component_3, component_4
+	0, 0, 0, 0, 10, % flavour_0
+	0, 0, 0, 0, 0, % flavour_1
+
+	% component_4
+	%component_0, component_1, component_2, component_3, component_4
+	0, 0, 0, 0, 0, % flavour_0
+	0, 0, 0, 0, 0, % flavour_1
+
+]);
+Uses = array2d(CompFlavs, CompFlavs, [
+	%component_0_flavour_0, component_1_flavour_0, component_2_flavour_0, component_2_flavour_1, component_3_flavour_0, component_4_flavour_0
+	0, 0, 1, 0, 0, 1, % component_0_flavour_0
+	0, 0, 0, 1, 1, 1, % component_1_flavour_0
+	0, 0, 0, 0, 0, 1, % component_2_flavour_0
+	0, 0, 0, 0, 0, 0, % component_2_flavour_1
+	0, 0, 0, 0, 0, 1, % component_3_flavour_0
+	0, 0, 0, 0, 0, 0, % component_4_flavour_0
+]);
+mayUse = array2d(Comps, CompFlavs, [
+	%component_0_flavour_0, component_1_flavour_0, component_2_flavour_0, component_2_flavour_1, component_3_flavour_0, component_4_flavour_0
+	0, 0, 0, 0, 0, 0, % component_0
+	0, 0, 0, 0, 0, 0, % component_1
+	1, 1, 0, 0, 0, 0, % component_2
+	0, 1, 0, 0, 0, 0, % component_3
+	1, 1, 1, 0, 1, 0, % component_4
+]);
+CRes = {res_conumable, resource_1, resource_2, resource_7};
+NRes = {res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3};
+MAX_RBOUNDS = 989;
+MIN_RBOUNDS = 0;
+worstBounds = [
+	MIN_RBOUNDS, % res_conumable
+	MIN_RBOUNDS, % resource_1
+	MIN_RBOUNDS, % resource_2
+	MIN_RBOUNDS, % resource_7
+	MIN_RBOUNDS, % res_non_conumable
+	MIN_RBOUNDS, % resource_0
+	MIN_RBOUNDS, % resource_3
+	MIN_RBOUNDS, % resource_4
+	MIN_RBOUNDS, % resource_5
+	MIN_RBOUNDS, % resource_6_resource_6_0
+	MIN_RBOUNDS, % resource_6_resource_6_1
+	MIN_RBOUNDS, % resource_6_resource_6_2
+	MIN_RBOUNDS, % resource_6_resource_6_3
+];
+bestBounds = [
+	MAX_RBOUNDS, % res_conumable
+	MAX_RBOUNDS, % resource_1
+	MAX_RBOUNDS, % resource_2
+	MAX_RBOUNDS, % resource_7
+	MAX_RBOUNDS, % res_non_conumable
+	MAX_RBOUNDS, % resource_0
+	MAX_RBOUNDS, % resource_3
+	MAX_RBOUNDS, % resource_4
+	MAX_RBOUNDS, % resource_5
+	MAX_RBOUNDS, % resource_6_resource_6_0
+	MAX_RBOUNDS, % resource_6_resource_6_1
+	MAX_RBOUNDS, % resource_6_resource_6_2
+	MAX_RBOUNDS, % resource_6_resource_6_3
+];
+
+comReq = array2d(CompFlavs, Res, [
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	104, 52, 17, 148, 42, 86, 75, 17, 42, MIN_RBOUNDS, 1, MIN_RBOUNDS, 1, % component_0_flavour_0
+	67, 45, 182, 84, 150, 140, 59, 100, 87, 1, 1, MIN_RBOUNDS, 1, % component_1_flavour_0
+	66, 144, 138, 209, 52, 32, 16, 74, 129, MIN_RBOUNDS, 1, MIN_RBOUNDS, 1, % component_2_flavour_0
+	41, 144, 109, 209, 32, 28, 16, 60, 63, MIN_RBOUNDS, 1, MIN_RBOUNDS, 1, % component_2_flavour_1
+	15, 144, 74, 67, 81, 70, 68, 50, 156, MIN_RBOUNDS, 1, 1, MIN_RBOUNDS, % component_3_flavour_0
+	35, 80, 90, 84, 75, 52, 38, 55, 120, MIN_RBOUNDS, MIN_RBOUNDS, 1, MIN_RBOUNDS, % component_4_flavour_0
+]);
+Nodes = {node_0, node_1, node_2, node_3, node_4, node_5};
+
+nodeCap = array2d(Nodes0, Res,
+	[bestBounds[r] | r in Res] ++ [ % No node
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	711, 394, 27, 811, 694, 932, 217, 490, 666, 1, 1, 1, 1, % node_0
+	640, 324, 586, 138, 752, 510, 549, 871, 762, 1, 1, 1, 1, % node_1
+	874, 667, 478, 861, 902, 782, 13, 825, 196, 1, 1, 1, 1, % node_2
+	758, 645, 224, 155, 561, 701, 85, 810, 368, 1, 1, 1, 1, % node_3
+	133, 537, 820, 148, 730, 101, 510, 247, 791, 1, 1, 1, 1, % node_4
+	123, 825, 293, 18, 382, 118, 337, 691, 903, 1, 1, 1, 1, % node_5
+]);
+depReq = array4d(Comps, Flavs, Comps, Res, [
+
+	% component_0
+
+	% flavour_0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 41, MIN_RBOUNDS, MIN_RBOUNDS, 45, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+	% flavour_1
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+
+	% component_1
+
+	% flavour_0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 66, MIN_RBOUNDS, MIN_RBOUNDS, 89, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+	% flavour_1
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+
+	% component_2
+
+	% flavour_0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 124, MIN_RBOUNDS, MIN_RBOUNDS, 18, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+	% flavour_1
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+
+	% component_3
+
+	% flavour_0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 87, MIN_RBOUNDS, MIN_RBOUNDS, 89, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+	% flavour_1
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+
+	% component_4
+
+	% flavour_0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+	% flavour_1
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % component_4
+
+
+]);
+linkCap = array3d(Nodes0, Nodes0, Res, [
+
+	% 0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % node_0
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % node_1
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % node_2
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % node_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % node_4
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % node_5
+
+	% node_0
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	711, 394, 27, 811, 694, 932, 217, 490, 666, 1, 1, 1, 1, % node_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 499, 97, 896, 532, 613, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 770, 760, 912, 382, 86, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 680, 521, 415, 446, 786, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 613, 873, 540, 693, 403, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_4
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 259, 689, 344, 257, 392, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_5
+
+	% node_1
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 499, 97, 896, 532, 613, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_0
+	640, 324, 586, 138, 752, 510, 549, 871, 762, 1, 1, 1, 1, % node_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 614, 475, 400, 582, 639, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 484, 571, 521, 290, 298, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 376, 593, 256, 873, 839, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_4
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 825, 591, 255, 738, 348, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_5
+
+	% node_2
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 770, 760, 912, 382, 86, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 614, 475, 400, 582, 639, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_1
+	874, 667, 478, 861, 902, 782, 13, 825, 196, 1, 1, 1, 1, % node_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 127, 838, 203, 267, 525, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 695, 551, 656, 344, 37, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_4
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 859, 747, 560, 209, 792, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_5
+
+	% node_3
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 680, 521, 415, 446, 786, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 484, 571, 521, 290, 298, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 127, 838, 203, 267, 525, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_2
+	758, 645, 224, 155, 561, 701, 85, 810, 368, 1, 1, 1, 1, % node_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 288, 580, 641, 507, 79, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_4
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 611, 338, 907, 427, 406, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_5
+
+	% node_4
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 613, 873, 540, 693, 403, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 376, 593, 256, 873, 839, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 695, 551, 656, 344, 37, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 288, 580, 641, 507, 79, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_3
+	133, 537, 820, 148, 730, 101, 510, 247, 791, 1, 1, 1, 1, % node_4
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 635, 298, 343, 813, 904, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_5
+
+	% node_5
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, MAX_RBOUNDS, % 0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 259, 689, 344, 257, 392, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_0
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 825, 591, 255, 738, 348, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_1
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 859, 747, 560, 209, 792, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_2
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 611, 338, 907, 427, 406, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_3
+	MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, 635, 298, 343, 813, 904, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, MIN_RBOUNDS, % node_4
+	123, 825, 293, 18, 382, 118, 337, 691, 903, 1, 1, 1, 1, % node_5
+
+]);
+cost = array2d(Nodes0, Res, [0 | r in Res] ++ [ % No node
+	%res_conumable, resource_1, resource_2, resource_7, res_non_conumable, resource_0, resource_3, resource_4, resource_5, resource_6_resource_6_0, resource_6_resource_6_1, resource_6_resource_6_2, resource_6_resource_6_3
+	0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, % node_0
+	0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, % node_1
+	0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, % node_2
+	0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, % node_3
+	0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, % node_4
+	0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, % node_5
+]);
+carb = array1d(Nodes0, [0] ++ [ % No node
+	6, 9, 1, 5, 6, 8
+]);
+costBudget = 1426;
+carbBudget = 3715;

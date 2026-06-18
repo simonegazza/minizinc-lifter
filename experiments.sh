@@ -7,7 +7,6 @@ sh ./mvnw clean package
 mkdir -p target/results
 
 for e in src/test/sh/*.sh; do
-    # GET THE BASE NAME FOR $e AND USE IT AS BELOW
     name=$(basename "$e")
     sh $e | tee "target/results/$name.txt"
 done
