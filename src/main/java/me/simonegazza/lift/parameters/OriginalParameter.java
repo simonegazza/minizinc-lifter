@@ -5,7 +5,7 @@ import java.util.Map;
 import me.simonegazza.lift.expressions.MiniZincArray;
 import me.simonegazza.lift.expressions.MiniZincSet;
 import me.simonegazza.lift.types.MiniZincType;
-import me.simonegazza.lift.visitors.minizinc.EvaluatorVisitor;
+import me.simonegazza.lift.visitors.EvaluatorVisitor;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 /**

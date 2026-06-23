@@ -119,7 +119,7 @@ public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 	protected final OriginalParameter parameter;
 
 	/**
-	 * The original parameter being lifted.
+	 * The list of lift request associated with this parameter.
 	 */
 	protected final List<LiftRequest> changes;
 

@@ -1,4 +1,4 @@
-package me.simonegazza.lift;
+package me.simonegazza.lift.recovery;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
+import me.simonegazza.lift.Main;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;

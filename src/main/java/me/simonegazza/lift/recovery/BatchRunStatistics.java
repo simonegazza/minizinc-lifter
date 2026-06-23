@@ -1,4 +1,4 @@
-package me.simonegazza.lift;
+package me.simonegazza.lift.recovery;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

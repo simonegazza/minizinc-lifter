@@ -1,10 +1,11 @@
-package me.simonegazza.lift;
+package me.simonegazza.lift.recovery;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import me.simonegazza.lift.Main;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import org.json.JSONArray;
 import org.json.JSONObject;

@@ -1,4 +1,4 @@
-package me.simonegazza.lift;
+package me.simonegazza.lift.recovery;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,8 +19,8 @@ import me.simonegazza.lift.expressions.MiniZincArray;
 import me.simonegazza.lift.expressions.MiniZincSet;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.utils.ParameterGraph;
-import me.simonegazza.lift.visitors.minizinc.Lifter;
-import me.simonegazza.lift.visitors.minizinc.ParameterExtractor;
+import me.simonegazza.lift.visitors.Lifter;
+import me.simonegazza.lift.visitors.ParameterExtractor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;

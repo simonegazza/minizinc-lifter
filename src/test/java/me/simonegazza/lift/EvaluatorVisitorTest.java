@@ -8,7 +8,7 @@ import java.util.Map;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.expressions.MiniZincArray;
-import me.simonegazza.lift.visitors.minizinc.EvaluatorVisitor;
+import me.simonegazza.lift.visitors.EvaluatorVisitor;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.junit.jupiter.api.Test;

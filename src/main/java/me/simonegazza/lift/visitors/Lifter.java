@@ -1,4 +1,4 @@
-package me.simonegazza.lift.visitors.minizinc;
+package me.simonegazza.lift.visitors;
 
 import java.util.HashMap;
 import java.util.List;
