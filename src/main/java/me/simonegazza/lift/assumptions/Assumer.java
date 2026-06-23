@@ -1,6 +1,7 @@
 package me.simonegazza.lift.assumptions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,21 +53,28 @@ public class Assumer implements Callable<String> {
 	 */
 	private final List<LiftedParameter> maxParameters;
 
-	public Assumer(
-		String baseModel,
-		List<LiftedParameter> lifted,
-		List<LiftedParameter> maxParameters,
-		List<Integer> revokedAssumption) {
+	/**
+	 * Groups lifted parameters by their effective parameter type.
+	 * <p>
+	 * The grouping key is derived from the parameter's declared type when
+	 * possible. For arrays, the element subtype is used. For expression-based
+	 * or identifier types whose concrete type cannot be determined statically,
+	 * the type is inferred from the parameter value. Set types are grouped
+	 * together under a common discriminator.
+	 *
+	 * @param lifted the lifted parameters to classify
+	 *
+	 * @return a map whose keys represent parameter type discriminators and
+	 *             whose values contain all parameters belonging to that type
+	 *
+	 * @throws IllegalStateException if the type of a parameter cannot be
+	 *                                   determined from either its declared
+	 *                                   type or value
+	 */
+	public static Map<Object, List<LiftedParameter>> collectParameterTypes(
+		Collection<LiftedParameter> lifted) {
 
-		this.baseModel = baseModel;
-		this.maxParameters = maxParameters;
-		assumptions = revokedAssumption;
-		paramArrayIdentifiers = new ArrayList<>();
-		paramArrayLiftedIdentifiers = new ArrayList<>();
-
-		// Create the map of parameters divided by basic type (try to do the
-		// best you can to separate them)
-		parameterTypeCollector = new HashMap<>();
+		Map<Object, List<LiftedParameter>> result = new HashMap<>();
 		for (LiftedParameter lp : lifted) {
 			Object mapDiscriminant = lp.getParameter().getType();
 			if (mapDiscriminant instanceof MiniZincArrayType mda) {
@@ -102,13 +110,29 @@ public class Assumer implements Callable<String> {
 						"Unable to discriminate the type for computing the parameter arrays");
 				}
 			}
-			List<LiftedParameter> specificTypeCollector = parameterTypeCollector.getOrDefault(
+			List<LiftedParameter> specificTypeCollector = result.getOrDefault(
 				mapDiscriminant,
 				new ArrayList<>());
 			specificTypeCollector.add(lp);
-			parameterTypeCollector.put(mapDiscriminant, specificTypeCollector);
+			result.put(mapDiscriminant, specificTypeCollector);
 		}
+		return result;
+	}
 
+	public Assumer(
+		String baseModel,
+		List<LiftedParameter> lifted,
+		List<LiftedParameter> maxParameters,
+		List<Integer> revokedAssumption) {
+
+		this.baseModel = baseModel;
+		this.maxParameters = maxParameters;
+		assumptions = revokedAssumption;
+		paramArrayIdentifiers = new ArrayList<>();
+		paramArrayLiftedIdentifiers = new ArrayList<>();
+
+		parameterTypeCollector = collectParameterTypes(
+			lifted.stream().collect(Collectors.toSet()));
 	}
 
 	/**
