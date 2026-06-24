@@ -298,6 +298,7 @@ public class Main implements Callable<Integer> {
 
 		outputPath = outputPath.toAbsolutePath().resolve(modelNamePrefix + ".mzn");
 		Files.writeString(outputPath, baseModel + "\n\n" + allAggregatedParameters);
+		logger.info("Running the model...");
 		Process p = new ProcessBuilder()
 			.command(
 				"minizinc",

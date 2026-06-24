@@ -16,6 +16,7 @@ import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincBasicType;
 import me.simonegazza.lift.types.MiniZincExpressionType;
 import me.simonegazza.lift.types.MiniZincSetType;
+import me.simonegazza.lift.utils.StringUtils;
 
 /**
  * Enriches a base MiniZinc model with assumption handling logic and applies
@@ -125,7 +126,8 @@ public class Assumer implements Callable<String> {
 		List<LiftedParameter> maxParameters,
 		List<Integer> revokedAssumption) {
 
-		this.baseModel = baseModel;
+		this.baseModel = StringUtils.delete(baseModel, "solve", ";");
+		;
 		this.maxParameters = maxParameters;
 		assumptions = revokedAssumption;
 		paramArrayIdentifiers = new ArrayList<>();
@@ -242,6 +244,7 @@ public class Assumer implements Callable<String> {
 		result.append("include \"experimental/assume.mzn\";\n\n");
 
 		result.append("array[int] of var bool: lifted_assumed = ");
+
 		result.append(IntStream.range(0, paramArrayIdentifiers.size())
 			.boxed()
 			.map(i -> "[" + paramArrayLiftedIdentifiers.get(i) + "[i] = " + paramArrayIdentifiers.get(i)

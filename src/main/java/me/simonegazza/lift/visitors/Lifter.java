@@ -19,7 +19,6 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.OutputItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.RangeExprContext;
-import me.simonegazza.antlr.minizinc.MiniZincParser.SolveItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
 import me.simonegazza.lift.parameters.LiftedParameter;
@@ -400,17 +399,6 @@ public class Lifter implements Callable<String> {
 					p.get().getLiftedName());
 			}
 
-			return null;
-		}
-
-		/**
-		 * Remove the solve statement with a generated one.
-		 *
-		 * @return null
-		 */
-		@Override
-		public Void visitSolveItem(SolveItemContext ctx) {
-			rewriter.delete(ctx.start, ctx.stop);
 			return null;
 		}
 
