@@ -214,7 +214,8 @@ public class Main implements Callable<Integer> {
 		String modelsNamePrefix) throws IOException {
 		// Fixing parameters
 		String lastModel = model.lines()
-			.filter(r -> !r.contains("include \"huub.mzn\";") && !r.contains("constraint assume(assumed)"))
+			.filter(r -> !r.contains("include \"experimental/assume\";")
+				&& !r.contains("constraint assume(assumed)"))
 			.collect(Collectors.joining("\n"));
 		lastModel += "\nconstraint forall(assumed);\n";
 
@@ -439,7 +440,7 @@ public class Main implements Callable<Integer> {
 			stats.startIteration(i);
 			boolean usedQuickXPlain = false;
 			long quickXPlainDurationMs = 0;
-			String solverUsed = "huub";
+			String solverUsed = "solutions.huub";
 			String quickXPlainSolverUsed = null;
 
 			// Customize the model
@@ -460,12 +461,12 @@ public class Main implements Callable<Integer> {
 
 			// Compile the .mzn and get the .fzn
 			logger.info("Compiling the .mzn...");
-			ModelRunner.compile(ithBaseModelPath, "huub");
+			ModelRunner.compile(ithBaseModelPath, "solutions.huub");
 			Path.of(ithBaseModelPath.toString() + ".fzn.json");
 
 			// Run the .fzn
 			logger.info("Running the lifted model...");
-			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "huub");
+			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "solutions.huub");
 
 			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
 			if (coreAssumptionIndeces.isEmpty()) {

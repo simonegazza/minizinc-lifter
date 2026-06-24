@@ -239,7 +239,7 @@ public class Assumer implements Callable<String> {
 				.append("\n");
 		});
 
-		result.append("include \"huub.mzn\";\n\n");
+		result.append("include \"experimental/assume.mzn\";\n\n");
 
 		result.append("array[int] of var bool: lifted_assumed = ");
 		result.append(IntStream.range(0, paramArrayIdentifiers.size())
