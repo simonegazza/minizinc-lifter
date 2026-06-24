@@ -709,6 +709,38 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 				// Since the model compiles, there should always be a value here
 				.get();
 		}
+		case "max" -> {
+			return visitGeneratorList(ctx.generatorList()).stream()
+				.map(generatorValues -> new EvaluatorVisitor(
+					augmentEnv(generatorValues)).visitExpr(ctx.expr()))
+				.reduce((a, b) -> {
+					if (a instanceof Integer ai && b instanceof Integer bi) {
+						return ai > bi ? ai : bi;
+					} else if (a instanceof Double ad && b instanceof Double bd) {
+						return ad > bd ? ad : bd;
+					} else {
+						throw new IllegalStateException("Non-homogenous type in the sum");
+					}
+				})
+				// Since the model compiles, there should always be a value here
+				.get();
+		}
+		case "min" -> {
+			return visitGeneratorList(ctx.generatorList()).stream()
+				.map(generatorValues -> new EvaluatorVisitor(
+					augmentEnv(generatorValues)).visitExpr(ctx.expr()))
+				.reduce((a, b) -> {
+					if (a instanceof Integer ai && b instanceof Integer bi) {
+						return ai < bi ? ai : bi;
+					} else if (a instanceof Double ad && b instanceof Double bd) {
+						return ad < bd ? ad : bd;
+					} else {
+						throw new IllegalStateException("Non-homogenous type in the sum");
+					}
+				})
+				// Since the model compiles, there should always be a value here
+				.get();
+		}
 		default -> throw new UnimplementedException("Unkown generator function name: " + ctx.getText());
 		}
 	}
