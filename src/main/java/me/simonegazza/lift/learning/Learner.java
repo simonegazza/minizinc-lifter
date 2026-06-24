@@ -43,7 +43,7 @@ public class Learner implements Callable<String> {
 	}
 
 	/**
-	 * A very unsafe way of getting the lifted parameter piece.
+	 * A hacky workaround for obtaining the lifted parameter piece.
 	 *
 	 * @param p        the parameter used for the piece
 	 * @param ofLifted whether it should be lifted or not
@@ -66,7 +66,7 @@ public class Learner implements Callable<String> {
 	}
 
 	/**
-	 * A very unsafe way of rewriting the solver piece
+	 * A hacky workaround for obtaining the solver piece.
 	 *
 	 * @param p the parameter used for the piece
 	 *
