@@ -1,4 +1,4 @@
-package me.simonegazza.lift.recovery;
+package me.simonegazza.recovery;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -1,4 +1,4 @@
-package me.simonegazza.lift.learning;
+package me.simonegazza.learning;
 
 import java.io.IOException;
 import java.nio.file.Files;

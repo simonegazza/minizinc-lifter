@@ -1,4 +1,4 @@
-package me.simonegazza.lift.recovery;
+package me.simonegazza.recovery;
 
 import java.io.IOException;
 import java.nio.file.Files;

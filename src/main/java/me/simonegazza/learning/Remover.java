@@ -1,4 +1,4 @@
-package me.simonegazza.lift.learning;
+package me.simonegazza.learning;
 
 import java.util.Collection;
 import java.util.Optional;
