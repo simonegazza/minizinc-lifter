@@ -47,12 +47,12 @@ import picocli.CommandLine.Option;
  * The CLI interface is implemented using Picocli.
  */
 @CommandLine.Command(name = "mzn-inter-instance-nogood-learning-runner", mixinStandardHelpOptions = true, version = "0.1", description = "Runs Inter-instance nogood learning benchmark")
-public class Main implements Callable<Integer> {
+public class Runner implements Callable<Integer> {
 
 	/**
 	 * Application logger.
 	 */
-	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Main.class.getSimpleName());
+	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Runner.class.getSimpleName());
 
 	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
@@ -116,7 +116,7 @@ public class Main implements Callable<Integer> {
 	 * @param args a {@link String} array from the command line as arguments
 	 */
 	public static void main(String[] args) {
-		new CommandLine(new Main()).execute(args);
+		new CommandLine(new Runner()).execute(args);
 	}
 
 	/**
