@@ -6,7 +6,7 @@ sh ./mvnw clean package
 
 mkdir -p target/results
 
-for e in src/test/sh/*.sh; do
+for e in src/test/sh/recovery/*.sh; do
     name=$(basename "$e")
     sh $e | tee "target/results/$name.txt"
 done

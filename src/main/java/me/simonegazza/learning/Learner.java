@@ -203,13 +203,15 @@ public class Learner implements Callable<String> {
 
 		sb.append(collector.values().stream()
 			.flatMap(List::stream)
-			.map(l -> "\\noriginal " + l.getOriginalName()
-				+ " = \\(" + l.getOriginalName() + "[fix(current_instance), .., ..])\\n"
+			.map(l -> "[\"\\noriginal " + l.getOriginalName()
+				+ " = \\(" + l.getOriginalName() + "[fix(current_instance), "
+				+ l.getDimensions().stream().map(_ -> "..").collect(Collectors.joining(", "))
+				+ "])\\n"
 				+ "lifted   " + l.getOriginalName()
 				+ " = \\(" + l.getLiftedName() + ")\\n\\n\"]")
 			.collect(Collectors.joining(
 				" ++ ",
-				"output [\"current_instance = \\(current_instance)",
+				"output [\"current_instance = \\(current_instance)\"] ++ ",
 				";\n")));
 
 		return sb.toString();

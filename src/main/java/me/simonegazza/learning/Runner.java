@@ -3,6 +3,7 @@ package me.simonegazza.learning;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -100,6 +101,49 @@ public class Runner implements Callable<Integer> {
 	@Option(names = { "-p",
 			"--parameters" }, arity = "1..*", description = "Parameter to lift the model with", required = true)
 	private Set<String> parameters;
+
+	public String run(Path modelPath, Optional<Path> dataPath) throws IOException {
+		List<String> command = new ArrayList<>(List.of(
+			"minizinc",
+			"--solver", "solutions.huub",
+			// "-a",
+			"-w", // suppress warnings
+			// 1 minute timeout expressed in milliseconds
+			"--time-limit", String.valueOf(1000 * 60 * 1),
+			// "--verbose",
+			"--statistics",
+			modelPath.toString()));
+
+		if (dataPath.isPresent()) {
+			command.add(dataPath.get().toString());
+		}
+
+		Process p = new ProcessBuilder()
+			.command(command)
+			.redirectErrorStream(true)
+			.directory(modelPath.getParent().toFile())
+			.start();
+
+		List<String> commandOutput = p.inputReader().lines()
+			.peek(System.out::println)
+			.toList();
+
+		try {
+			int exitCode = p.waitFor();
+
+			String output = commandOutput.stream().collect(Collectors.joining("\n"));
+
+			if (exitCode != 0) {
+				logger.error(output);
+				throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
+			}
+
+			return output;
+
+		} catch (InterruptedException e) {
+			throw new IllegalStateException("MiniZinc process was interrupted on your system");
+		}
+	}
 
 	/**
 	 * Application entry point.
@@ -298,41 +342,29 @@ public class Runner implements Callable<Integer> {
 
 			repetition = repetition.toAbsolutePath().resolve(modelNamePrefix + ".mzn");
 			Files.writeString(repetition, baseModel + "\n\n" + allAggregatedParameters);
-			logger.info("Running the model...");
-			Process p = new ProcessBuilder()
-				.command(
-					"minizinc",
-					"--solver", "solutions.huub",
-					// "-a",
-					"-w", // suppress warnings
-					// 1 minute timeout expressed in milliseconds
-					"--time-limit", String.valueOf(1000 * 60 * 1),
-					// "--verbose",
-					"--statistics",
-					repetition.toString())
-				.redirectErrorStream(true)
-				.directory(repetition.getParent().toFile())
-				.start();
+			logger.info("Running the chain model...");
+			Files.writeString(
+				repetition.getParent().resolve("chain.txt"),
+				run(repetition, Optional.empty()));
 
-			List<String> commandOutput = p.inputReader().lines()
-				.peek(System.out::println)
-				.toList();
+			logger.info("Running the data files one by one...");
 
-			try {
-				int exitCode = p.waitFor();
+			String oneByOneOutput = dataFiles.stream()
+				.map(d -> {
+					try {
+						return d.toString() + "\n" + run(modelPath, Optional.of(d));
+					} catch (IOException e) {
+						throw new IllegalStateException("Unable to run the model "
+							+ modelPath
+							+ " with data "
+							+ d + ": " + e);
+					}
+				})
+				.collect(Collectors.joining("\n"));
 
-				String output = commandOutput.stream().collect(Collectors.joining("\n"));
-				Files.writeString(repetition.getParent().resolve("solutions.txt"), output);
+			Files.writeString(repetition.getParent().resolve("one-by-one.txt"), oneByOneOutput);
 
-				if (exitCode != 0) {
-					logger.error(output);
-					throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
-				}
-
-			} catch (InterruptedException e) {
-				throw new IllegalStateException("MiniZinc process was interrupted on your system");
-			}
-
+			logger.info("Running the simple model...");
 		}
 
 		return 0;

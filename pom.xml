@@ -211,7 +211,7 @@
 			                </descriptorRefs>
 			            </configuration>
 			        </execution>
-			        <!-- generator -->
+			        <!-- iingl-generator -->
 			        <execution>
 			            <id>iingl-generator</id>
 			            <phase>package</phase>
@@ -222,6 +222,24 @@
 			                <archive>
 			                    <manifest>
 			                        <mainClass>me.simonegazza.learning.Generator</mainClass>
+			                    </manifest>
+			                </archive>
+			                <descriptorRefs>
+			                    <descriptorRef>jar-with-dependencies</descriptorRef>
+			                </descriptorRefs>
+			            </configuration>
+			        </execution>
+			        <!-- iingl-runner -->
+			        <execution>
+			            <id>iingl-runner</id>
+			            <phase>package</phase>
+			            <goals><goal>single</goal></goals>
+			            <configuration>
+			                <appendAssemblyId>false</appendAssemblyId>
+			                <finalName>iingl-runner</finalName>
+			                <archive>
+			                    <manifest>
+			                        <mainClass>me.simonegazza.learning.Runner</mainClass>
 			                    </manifest>
 			                </archive>
 			                <descriptorRefs>
