@@ -308,6 +308,7 @@ public class Runner implements Callable<Integer> {
 					// 1 minute timeout expressed in milliseconds
 					"--time-limit", String.valueOf(1000 * 60 * 1),
 					// "--verbose",
+					"--statistics",
 					repetition.toString())
 				.redirectErrorStream(true)
 				.directory(repetition.getParent().toFile())
@@ -321,7 +322,7 @@ public class Runner implements Callable<Integer> {
 				int exitCode = p.waitFor();
 
 				String output = commandOutput.stream().collect(Collectors.joining("\n"));
-				Files.writeString(repetition.getParent().resolve("output.txt"), output);
+				Files.writeString(repetition.getParent().resolve("solutions.txt"), output);
 
 				if (exitCode != 0) {
 					logger.error(output);

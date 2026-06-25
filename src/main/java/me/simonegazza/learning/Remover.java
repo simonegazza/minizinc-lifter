@@ -76,6 +76,8 @@ public class Remover extends MiniZincBaseVisitor<Void> implements Callable<Strin
 			if (p.isPresent()) {
 				rewriter.delete(ctx.getStart(), ctx.getStop());
 			}
+		} else if (ctx.outputItem() != null) {
+			rewriter.delete(ctx.getStart(), ctx.getStop());
 		}
 
 		return null;

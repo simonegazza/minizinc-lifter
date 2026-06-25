@@ -165,18 +165,6 @@ public class Learner implements Callable<String> {
 				.map(this::solvePiece)
 				.collect(Collectors.joining("\n\t+ ")));
 		obj.append("\n\t| i in instances\n];\n\n");
-//		obj.append("solve");
-//		obj.append("\n\t:: warm_start(");
-//		obj.append("\n\t\t\t[assumed[i0][i1] | i0 in index_set(assumed), i1 in index_set(assumed[i0])],");
-//		obj.append("\n\t\t\t[true | i0 in index_set(assumed), i1 in instances])");
-//		obj.append("\n\t:: seq_search([");
-//		obj.append("\n\t\tint_search([current_instance], input_order, indomain_min),");
-//		obj.append("\n\t\tbool_search(");
-//		obj.append("\n\t\t\t[assumed[i0][i1] | i0 in index_set(assumed), i1 in index_set(assumed[i0])],");
-//		obj.append("\n\t\t\tinput_order,");
-//		obj.append("\n\t\t\tindomain_max)");
-//		obj.append("\n\t\t])");
-//		obj.append("\nminimize objective_lifted[current_instance];");
 
 		return obj.toString();
 	}
@@ -212,6 +200,17 @@ public class Learner implements Callable<String> {
 		sb.append("\n\tlength(instances),\n\tcurrent_instance\n);\n\n");
 
 		sb.append(getSolve() + "\n\n");
+
+		sb.append(collector.values().stream()
+			.flatMap(List::stream)
+			.map(l -> "\\noriginal " + l.getOriginalName()
+				+ " = \\(" + l.getOriginalName() + "[fix(current_instance), .., ..])\\n"
+				+ "lifted   " + l.getOriginalName()
+				+ " = \\(" + l.getLiftedName() + ")\\n\\n\"]")
+			.collect(Collectors.joining(
+				" ++ ",
+				"output [\"current_instance = \\(current_instance)",
+				";\n")));
 
 		return sb.toString();
 	}
