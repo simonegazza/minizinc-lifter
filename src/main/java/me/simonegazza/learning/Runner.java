@@ -102,12 +102,6 @@ public class Runner implements Callable<Integer> {
 	private Set<String> parameters;
 
 	/**
-	 * Folder path where models will be saved.
-	 */
-	@Option(names = { "-o", "--output" }, description = "Output folder path", required = true)
-	private Path outputPath;
-
-	/**
 	 * Application entry point.
 	 * <p>
 	 * Delegates execution to Picocli which handles argument parsing and command
@@ -136,195 +130,208 @@ public class Runner implements Callable<Integer> {
 		int idx = modelNamePrefix.lastIndexOf(".");
 		modelNamePrefix = modelNamePrefix.substring(0, idx);
 
-		List<Path> dataFiles = Files.list(dataPath.toAbsolutePath())
-			.filter(Files::isRegularFile)
-			.filter(f -> f.toString().endsWith(".dzn"))
-			.map(Path::toAbsolutePath)
-			.toList();
-
-		if (dataFiles.size() == 0) {
-			throw new IllegalArgumentException("Data folder does not contain any .dzn files");
-		}
-
 		// Parse cli arguments
 		List<LiftRequest> cliParameters = parameters.stream()
 			.map(LiftRequest::parse).toList();
 
-		// Reading and appending files
-		StringBuilder primaryModelBuilder = new StringBuilder();
-		logger.info("Reading model file: " + modelPath.toString());
-		String originalModel = Files.readString(modelPath);
-
-		primaryModelBuilder.append(originalModel + "\n");
-		primaryModelBuilder.append(Files.readString(dataFiles.get(0)) + "\n");
-
-		// Creates output folder if it does not exists
-		Files.createDirectories(outputPath);
-
-		// Parse the original model
-		logger.info("Parsing the intial model...");
-		CharStream input = CharStreams.fromString(primaryModelBuilder.toString());
-		Lexer lexer = new MiniZincLexer(input);
-		TokenStream tokens = new CommonTokenStream(lexer);
-		MiniZincParser parser = new MiniZincParser(tokens);
-
-		// Get the dependency graph of the parameters and verify the existence
-		// of the parameters to be lifted
-		logger.info("Extracting parameters...");
-		ParameterExtractor pe = new ParameterExtractor(parser.model());
-		ParameterGraph graph = pe.call();
-
-		List<OriginalParameter> originalLifted = cliParameters.stream()
-			.map(r -> {
-				Optional<OriginalParameter> toLift = graph.getByName(r.getName());
-				if (toLift.isEmpty()) {
-					throw new IllegalArgumentException("Requested lift for "
-						+ r.getName()
-						+ " but it does not exists");
-				}
-
-				return toLift;
-			})
-			.map(Optional::get)
+		List<Path> repetitionPaths = Files.list(dataPath.toAbsolutePath())
+			.filter(Files::isDirectory)
+			.map(Path::toAbsolutePath)
+			.sorted()
 			.toList();
 
-		// Reset the token for the next pass
-		tokens.seek(0);
+		for (Path repetition : repetitionPaths) {
+			List<Path> dataFiles = Files.list(repetition)
+				.filter(Files::isRegularFile)
+				.filter(f -> f.toString().endsWith(".dzn"))
+				.map(Path::toAbsolutePath)
+				.sorted()
+				.toList();
 
-		// Resolve the dependencies of the parameters and create base model
-		logger.info("Lifting parameter representation...");
-		Lifter lifter = new Lifter(
-			tokens,
-			parser.model(),
-			cliParameters,
-			graph,
-			false);
-		String baseModel = lifter.call();
-
-		List<LiftedParameter> liftedParameters = lifter.getLifted();
-
-		// Remove all the parameter declaration
-		logger.info("Removing old definitions...");
-		Remover remover = new Remover(originalLifted, baseModel);
-		baseModel = remover.call();
-
-		// Add the boilerplate and other things for this model
-		logger.info("Adding the boilerplate...");
-		Learner learner = new Learner(dataFiles.size(), liftedParameters);
-		baseModel += learner.call();
-
-		// Add the new aggregated parameter definitions
-		logger.info("Aggregating parameters...");
-		String allAggregatedParameters = liftedParameters.stream()
-			.map(p -> {
-
-				// get the value string from each data file
-				List<String> parameterStrings = dataFiles.stream()
-					.map(f -> {
-						try {
-							return Files.lines(f);
-						} catch (IOException e) {
-							throw new IllegalStateException("Cannot read from file " + f);
-						}
-					})
-					.map(ls -> ls
-						// take only the lines in each data file that starts
-						// with the current parameter name
-						.filter(l -> l.startsWith(p.getOriginalName()))
-						.findAny()
-						// there is always one definition per data file so this
-						// should not return empty
-						.get())
-					// clean each definition: remove everything before the
-					// (first) equal sign and also the ';' at the end of the
-					// parameter, if any
-					.map(d -> {
-						List<String> split = Arrays.asList(d.split("="));
-						String values = split.subList(1, split.size()).stream().collect(Collectors.joining());
-						if (values.charAt(values.length() - 1) == ';') {
-							return values.substring(0, values.length() - 1);
-						} else {
-							return values;
-						}
-					})
-					.toList();
-
-				// try to get if these values are arrays. If they are arrays,
-				// just concatenate them with "++", otherwise join with ", " and
-				// use "[" and "]" to make it an array
-				char firstChar = parameterStrings.get(0).strip().charAt(0);
-				boolean wasArray;
-				Collector<CharSequence, ?, String> joiner;
-				if (firstChar == '[' || firstChar == 'a') {
-					// standard array definition or arrayXd(...) case
-					joiner = Collectors.joining(" ++ ");
-					wasArray = true;
-				} else {
-					// assume it is not an array
-					joiner = Collectors.joining(", ", "[", "]");
-					wasArray = false;
-				}
-
-				String aggregatedValues = parameterStrings.stream().collect(joiner);
-
-				StringBuilder builder = new StringBuilder("array");
-				if (wasArray) {
-					MiniZincType type = p.getParameter().getType();
-					type = ((MiniZincCompositeType) type).getSubtype();
-
-					builder.append("[instances, ");
-					String remainingDimensions = p.getDimensions().stream()
-						.map(d -> "1.." + d)
-						.collect(Collectors.joining(", ", "", ","));
-					builder.append(remainingDimensions);
-					builder.append("] of ");
-					builder.append(type);
-					builder.append(": ");
-					builder.append(p.getOriginalName());
-					builder.append(" = array");
-					builder.append(p.getDimensions().size() + 1);
-					builder.append("d(instances, ");
-					builder.append(remainingDimensions);
-				} else {
-					builder.append("[instances] of int: ");
-					builder.append(p.getOriginalName());
-					builder.append(" = ");
-				}
-				builder.append(aggregatedValues);
-				builder.append("\n);");
-
-				return builder.toString();
-			}).collect(Collectors.joining("\n\n"));
-
-		outputPath = outputPath.toAbsolutePath().resolve(modelNamePrefix + ".mzn");
-		Files.writeString(outputPath, baseModel + "\n\n" + allAggregatedParameters);
-		logger.info("Running the model...");
-		Process p = new ProcessBuilder()
-			.command(
-				"minizinc",
-				"--solver", "solutions.huub",
-				// "-a",
-				"-w", // suppress warnings
-				// 1 minute timeout expressed in milliseconds
-				"--time-limit", String.valueOf(1000 * 60 * 1),
-				// "--verbose",
-				outputPath.toString())
-			.redirectErrorStream(true)
-			.directory(outputPath.getParent().toFile())
-			.start();
-
-		List<String> commandOutput = p.inputReader().lines()
-			.peek(System.out::println)
-			.toList();
-
-		try {
-			int exitCode = p.waitFor();
-			if (exitCode != 0) {
-				logger.error(commandOutput.stream().collect(Collectors.joining("\n")));
-				throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
+			if (dataFiles.size() == 0) {
+				throw new IllegalArgumentException("Data folder does not contain any .dzn files");
 			}
-		} catch (InterruptedException e) {
-			throw new IllegalStateException("MiniZinc process was interrupted on your system");
+
+			// Reading and appending files
+			StringBuilder primaryModelBuilder = new StringBuilder();
+			logger.info("Reading and parsing model file: " + modelPath.toString());
+			String originalModel = Files.readString(modelPath);
+
+			primaryModelBuilder.append(originalModel + "\n");
+			primaryModelBuilder.append(Files.readString(dataFiles.get(0)) + "\n");
+
+			// Parse the original model
+			CharStream input = CharStreams.fromString(primaryModelBuilder.toString());
+			Lexer lexer = new MiniZincLexer(input);
+			TokenStream tokens = new CommonTokenStream(lexer);
+			MiniZincParser parser = new MiniZincParser(tokens);
+
+			// Get the dependency graph of the parameters and verify the
+			// existence
+			// of the parameters to be lifted
+			logger.info("Extracting parameters...");
+			ParameterExtractor pe = new ParameterExtractor(parser.model());
+			ParameterGraph graph = pe.call();
+
+			List<OriginalParameter> originalLifted = cliParameters.stream()
+				.map(r -> {
+					Optional<OriginalParameter> toLift = graph.getByName(r.getName());
+					if (toLift.isEmpty()) {
+						throw new IllegalArgumentException("Requested lift for "
+							+ r.getName()
+							+ " but it does not exists");
+					}
+
+					return toLift;
+				})
+				.map(Optional::get)
+				.toList();
+
+			// Reset the token for the next pass
+			tokens.seek(0);
+
+			// Resolve dependencies of the parameters and create base model
+			logger.info("Lifting parameter representation...");
+			Lifter lifter = new Lifter(
+				tokens,
+				parser.model(),
+				cliParameters,
+				graph,
+				false);
+			String baseModel = lifter.call();
+
+			List<LiftedParameter> liftedParameters = lifter.getLifted();
+
+			// Remove all the parameter declaration
+			logger.info("Removing old definitions...");
+			Remover remover = new Remover(originalLifted, baseModel);
+			baseModel = remover.call();
+
+			// Add the boilerplate and other things for this model
+			logger.info("Adding the boilerplate...");
+			Learner learner = new Learner(dataFiles.size(), liftedParameters);
+			baseModel += learner.call();
+
+			// Add the new aggregated parameter definitions
+			logger.info("Aggregating parameters...");
+			String allAggregatedParameters = liftedParameters.stream()
+				.map(p -> {
+
+					// get the value string from each data file
+					List<String> parameterStrings = dataFiles.stream()
+						.sorted()
+						.map(f -> {
+							try {
+								return Files.lines(f);
+							} catch (IOException e) {
+								throw new IllegalStateException("Cannot read from file " + f);
+							}
+						})
+						.map(ls -> ls
+							// take only the lines in each data file that
+							// starts with the current parameter name
+							.filter(l -> l.startsWith(p.getOriginalName()))
+							.findAny()
+							// there is always one definition per data file
+							// so this should not return empty
+							.get())
+						// clean each definition: remove everything before
+						// the (first) equal sign and also the ';' at the
+						// end of the parameter, if any
+						.map(d -> {
+							List<String> split = Arrays.asList(d.split("="));
+							String values = split.subList(1, split.size()).stream().collect(Collectors.joining());
+							if (values.charAt(values.length() - 1) == ';') {
+								return values.substring(0, values.length() - 1);
+							} else {
+								return values;
+							}
+						})
+						.toList();
+
+					// try to get if these values are arrays. If they are
+					// arrays, just concatenate them with "++", otherwise
+					// join with ", " and use "[" and "]" to make it an
+					// array
+					char firstChar = parameterStrings.get(0).strip().charAt(0);
+					boolean wasArray;
+					Collector<CharSequence, ?, String> joiner;
+					if (firstChar == '[' || firstChar == 'a') {
+						// standard array definition or arrayXd(...) case
+						joiner = Collectors.joining(" ++ ");
+						wasArray = true;
+					} else {
+						// assume it is not an array
+						joiner = Collectors.joining(", ", "[", "]");
+						wasArray = false;
+					}
+
+					String aggregatedValues = parameterStrings.stream().collect(joiner);
+
+					StringBuilder builder = new StringBuilder("array");
+					if (wasArray) {
+						MiniZincType type = p.getParameter().getType();
+						type = ((MiniZincCompositeType) type).getSubtype();
+
+						builder.append("[instances, ");
+						String remainingDimensions = p.getDimensions().stream()
+							.map(d -> "1.." + d)
+							.collect(Collectors.joining(", ", "", ","));
+						builder.append(remainingDimensions)
+							.append("] of ")
+							.append(type)
+							.append(": ")
+							.append(p.getOriginalName())
+							.append(" = array")
+							.append(p.getDimensions().size() + 1)
+							.append("d(instances, ")
+							.append(remainingDimensions);
+					} else {
+						builder.append("[instances] of int: ")
+							.append(p.getOriginalName())
+							.append(" = ");
+					}
+					builder.append(aggregatedValues).append("\n);");
+
+					return builder.toString();
+				}).collect(Collectors.joining("\n\n"));
+
+			repetition = repetition.toAbsolutePath().resolve(modelNamePrefix + ".mzn");
+			Files.writeString(repetition, baseModel + "\n\n" + allAggregatedParameters);
+			logger.info("Running the model...");
+			Process p = new ProcessBuilder()
+				.command(
+					"minizinc",
+					"--solver", "solutions.huub",
+					// "-a",
+					"-w", // suppress warnings
+					// 1 minute timeout expressed in milliseconds
+					"--time-limit", String.valueOf(1000 * 60 * 1),
+					// "--verbose",
+					repetition.toString())
+				.redirectErrorStream(true)
+				.directory(repetition.getParent().toFile())
+				.start();
+
+			List<String> commandOutput = p.inputReader().lines()
+				.peek(System.out::println)
+				.toList();
+
+			try {
+				int exitCode = p.waitFor();
+
+				String output = commandOutput.stream().collect(Collectors.joining("\n"));
+				Files.writeString(repetition.getParent().resolve("output.txt"), output);
+
+				if (exitCode != 0) {
+					logger.error(output);
+					throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
+				}
+
+			} catch (InterruptedException e) {
+				throw new IllegalStateException("MiniZinc process was interrupted on your system");
+			}
+
 		}
 
 		return 0;
