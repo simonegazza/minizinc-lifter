@@ -2,7 +2,7 @@
 
 set -e
 
-sh ./mvnw clean package
+sh ./mvnw package
 
 mkdir -p target/results
 

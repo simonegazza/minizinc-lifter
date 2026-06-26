@@ -90,6 +90,8 @@ public class Runner implements Callable<Integer> {
 		List<Path> filesPath = Files.list(dataPath)
 			.filter(Files::isRegularFile)
 			.filter(f -> f.toString().endsWith(".dzn"))
+			.map(Path::toAbsolutePath)
+			.sorted()
 			.toList();
 
 		logger.info("Running satisfiability recovery with the following files: " + filesPath);

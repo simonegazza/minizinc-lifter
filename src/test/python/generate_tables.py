@@ -1,8 +1,5 @@
-import argparse
-import json
-import statistics
+import argparse, json, statistics
 from collections import Counter
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -31,16 +28,19 @@ def main():
         core_variables_per_run = [
             sum(len(it["coreVariables"]) for it in r["statistics"]["iterations"])
             for r in runs]
-        
+
         iteration_per_run = list(len(r["statistics"]["iterations"]) for r in runs)
-        
+
         duration = list(r["statistics"]["totalDurationMs"] / 1000.0 for r in runs)
-        
-        solver_runtime = sum(
+
+        total_solver_runtime = sum(
             sum(it["durationMs"] for it in r["statistics"]["iterations"]) / 1000.0
             for r in runs
-        ) / len(runs)
-        
+        )
+
+        avg_solver_runtime = total_solver_runtime / len(list(1 for r in runs for _ in r["statistics"]["iterations"]))
+        avg_total_solver_runtime = total_solver_runtime / len(runs)
+
         final_state_counts = Counter(
             r["statistics"]["finalState"]
             for r in runs
@@ -49,26 +49,28 @@ def main():
         row = {
             "originalParameterModified": runs[0]["statistics"].get("originalParameterModified"),
             "liftedParameters": runs[0]["statistics"].get("liftedParameters"),
-            
+
             "medianCoreVariables": statistics.median(core_variables_per_run),
             "minCoreVariables": min(core_variables_per_run),
             "maxCoreVariables": max(core_variables_per_run),
-            
+
             "medianIterations": statistics.median(iteration_per_run),
             "minIterations": min(iteration_per_run),
             "maxIterations": max(iteration_per_run),
-            
+
             "avgTotalDuration": round(sum(duration) / len(runs), 2),
             "minTotalDuration": min(duration),
             "maxTotalDuration": max(duration),
-            
-            "avgSolverRuntime": round(solver_runtime, 2),
+
+            "totalSolverRuntime": round(total_solver_runtime, 2),
+            "avgTotalSolverRuntime": round(avg_total_solver_runtime, 2),
+            "avgSolverRuntimePerIteration": round(avg_solver_runtime, 2),
         }
 
         for state, count in sorted(final_state_counts.items()):
             row[f"count_{state}"] = count
 
-        rows.append((problem_name.replace(".sh.txt", ""), row))
+        rows.append({problem_name.replace(".sh.txt", "") : row})
 
     output = json.dumps(rows, indent=2)
 

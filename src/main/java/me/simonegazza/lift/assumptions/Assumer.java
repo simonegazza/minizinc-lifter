@@ -127,7 +127,6 @@ public class Assumer implements Callable<String> {
 		List<Integer> revokedAssumption) {
 
 		this.baseModel = StringUtils.delete(baseModel, "solve", ";");
-		;
 		this.maxParameters = maxParameters;
 		assumptions = revokedAssumption;
 		paramArrayIdentifiers = new ArrayList<>();

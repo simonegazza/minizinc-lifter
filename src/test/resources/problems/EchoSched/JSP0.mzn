@@ -41,14 +41,6 @@ var int: consumedEnergy = sum(m in MACHINES, j in JOBS) (energy[j,m,SpeedScaling
 
 var int: objective = makespan + consumedEnergy;
 
-% solve :: int_search(
-%      [makespan,consumedEnergy],
-%      input_order,
-%      indomain_min,
-%      complete
-%    )
-%    minimize objective;
-
 solve :: int_search(
   array1d(start_time) ++ array1d(SpeedScaling),
   first_fail,

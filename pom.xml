@@ -185,7 +185,7 @@
 			                <finalName>test-run</finalName>
 			                <archive>
 			                    <manifest>
-			                        <mainClass>me.simonegazza.lift.recovery.Runner</mainClass>
+			                        <mainClass>me.simonegazza.recovery.Runner</mainClass>
 			                    </manifest>
 			                </archive>
 			                <descriptorRefs>
@@ -203,7 +203,7 @@
 			                <finalName>test-randomizer</finalName>
 			                <archive>
 			                    <manifest>
-			                        <mainClass>me.simonegazza.lift.recovery.Randomizer</mainClass>
+			                        <mainClass>me.simonegazza.recovery.Randomizer</mainClass>
 			                    </manifest>
 			                </archive>
 			                <descriptorRefs>
