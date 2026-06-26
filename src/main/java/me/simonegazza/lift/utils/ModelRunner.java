@@ -82,7 +82,7 @@ public class ModelRunner {
 			p = new ProcessBuilder()
 				.command(
 					"minizinc",
-					"--keep-paths",
+					// "--keep-paths",
 					"--solver", solverName,
 					"-w", // suppress warnings
 					//// 1 minute timeout expressed in milliseconds

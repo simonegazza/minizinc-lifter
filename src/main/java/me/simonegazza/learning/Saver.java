@@ -3,7 +3,6 @@ package me.simonegazza.learning;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -47,13 +46,13 @@ import picocli.CommandLine.Option;
  * <p>
  * The CLI interface is implemented using Picocli.
  */
-@CommandLine.Command(name = "mzn-inter-instance-nogood-learning-runner", mixinStandardHelpOptions = true, version = "0.1", description = "Runs Inter-instance nogood learning benchmark")
-public class Runner implements Callable<Integer> {
+@CommandLine.Command(name = "mzn-inter-instance-nogood-learning-saver", mixinStandardHelpOptions = true, version = "0.1", description = "Runs Inter-instance nogood learning benchmark")
+public class Saver implements Callable<Integer> {
 
 	/**
 	 * Application logger.
 	 */
-	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Runner.class.getSimpleName());
+	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Saver.class.getSimpleName());
 
 	/**
 	 * Extracts the exact original source text corresponding to an ANTLR rule
@@ -102,55 +101,6 @@ public class Runner implements Callable<Integer> {
 			"--parameters" }, arity = "1..*", description = "Parameter to lift the model with", required = true)
 	private Set<String> parameters;
 
-	public String run(Path modelPath, Optional<Path> dataPath) throws IOException {
-		List<String> command = new ArrayList<>(List.of(
-			"minizinc",
-			"--solver", "solutions.huub",
-			// "-a",
-			"-w", // suppress warnings
-			// 1 minute timeout expressed in milliseconds
-			"--time-limit", String.valueOf(1000 * 60 * 1),
-			// "--verbose",
-			"--statistics",
-			"--json-stream",
-			"--output-time",
-			"--canonicalize",
-			"--output-objective",
-			"--output-output-item",
-			"--output-mode", "json",
-			modelPath.toString()));
-
-		if (dataPath.isPresent()) {
-			command.add(dataPath.get().toString());
-		}
-
-		Process p = new ProcessBuilder()
-			.command(command)
-			.redirectErrorStream(true)
-			.directory(modelPath.getParent().toFile())
-			.start();
-
-		List<String> commandOutput = p.inputReader().lines()
-			.peek(System.out::println)
-			.toList();
-
-		try {
-			int exitCode = p.waitFor();
-
-			String output = commandOutput.stream().collect(Collectors.joining("\n"));
-
-			if (exitCode != 0) {
-				logger.error(output);
-				throw new IllegalStateException("MiniZinc terminated with error code: " + exitCode);
-			}
-
-			return output;
-
-		} catch (InterruptedException e) {
-			throw new IllegalStateException("MiniZinc process was interrupted on your system");
-		}
-	}
-
 	/**
 	 * Application entry point.
 	 * <p>
@@ -160,7 +110,7 @@ public class Runner implements Callable<Integer> {
 	 * @param args a {@link String} array from the command line as arguments
 	 */
 	public static void main(String[] args) {
-		new CommandLine(new Runner()).execute(args);
+		new CommandLine(new Saver()).execute(args);
 	}
 
 	/**
@@ -346,31 +296,8 @@ public class Runner implements Callable<Integer> {
 					return builder.toString();
 				}).collect(Collectors.joining("\n\n"));
 
-			repetition = repetition.toAbsolutePath().resolve(modelNamePrefix + ".mzn");
+			repetition = repetition.toAbsolutePath().resolve("chain.mzn");
 			Files.writeString(repetition, baseModel + "\n\n" + allAggregatedParameters);
-			logger.info("Running the chain model...");
-			Files.writeString(
-				repetition.getParent().resolve("chain.txt"),
-				run(repetition, Optional.empty()));
-
-			logger.info("Running the data files one by one...");
-
-			String oneByOneOutput = dataFiles.stream()
-				.map(d -> {
-					try {
-						return d.toString() + "\n" + run(modelPath, Optional.of(d));
-					} catch (IOException e) {
-						throw new IllegalStateException("Unable to run the model "
-							+ modelPath
-							+ " with data "
-							+ d + ": " + e);
-					}
-				})
-				.collect(Collectors.joining("\n"));
-
-			Files.writeString(repetition.getParent().resolve("one-by-one.txt"), oneByOneOutput);
-
-			logger.info("Running the simple model...");
 		}
 
 		return 0;

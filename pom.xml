@@ -231,15 +231,15 @@
 			        </execution>
 			        <!-- iingl-runner -->
 			        <execution>
-			            <id>iingl-runner</id>
+			            <id>iingl-saver</id>
 			            <phase>package</phase>
 			            <goals><goal>single</goal></goals>
 			            <configuration>
 			                <appendAssemblyId>false</appendAssemblyId>
-			                <finalName>iingl-runner</finalName>
+			                <finalName>iingl-saver</finalName>
 			                <archive>
 			                    <manifest>
-			                        <mainClass>me.simonegazza.learning.Runner</mainClass>
+			                        <mainClass>me.simonegazza.learning.Saver</mainClass>
 			                    </manifest>
 			                </archive>
 			                <descriptorRefs>

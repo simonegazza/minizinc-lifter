@@ -4,7 +4,7 @@ set -e
 
 sh ./mvnw package
 
-java -jar target/iingl-generator.jar -o target/problems/ -a 3
+java -jar target/iingl-generator.jar -o target/problems/ -a 100
 
 for e in src/test/sh/iingl/*.sh; do
     name=$(basename "$e")
