@@ -112,6 +112,12 @@ public class Runner implements Callable<Integer> {
 			"--time-limit", String.valueOf(1000 * 60 * 1),
 			// "--verbose",
 			"--statistics",
+			"--json-stream",
+			"--output-time",
+			"--canonicalize",
+			"--output-objective",
+			"--output-output-item",
+			"--output-mode", "json",
 			modelPath.toString()));
 
 		if (dataPath.isPresent()) {

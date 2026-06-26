@@ -1,82 +1,130 @@
-import argparse, ast, json
+import argparse, json
+from itertools import chain
 from pathlib import Path
 
-def parse_stats_file(path):
-    blocks = []
-    current = None
-    #stat_end_count = 0
+def parse_chain(path):
+    initial = {}
+    complete = []
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
 
-            if line == "%%%mzn-stat-end":
-                #stat_end_count += 1
-                if current is not None:
-                    blocks.append(current)
-                    current = None
+            if not line.startswith("{"):
                 continue
 
-            if not line.startswith("%%%mzn-stat: "):
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
                 continue
 
-            # Ignore everything before the second stats-end
-            #if stat_end_count < 2:
-            #    continue
+            if obj.get("type") != "statistics":
+                continue
+
+            stats = obj["statistics"]
+
+            if "blockType" not in stats:
+                initial.update(stats)
+            elif stats["blockType"] == "init":
+                initial.update(stats)
+            elif stats["blockType"] == "complete":
+                complete.append(stats)
+
+    initial["path"] = str(path)
+
+    return {**initial, "chain": complete}
+
+def parse_one_by_one(path):
+    problems = []
+    current = None
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+
+            if not line:
+                continue
+
+            if line.endswith(".dzn"):
+                current = {
+                    "path": line,
+                }
+                continue
+
+            if not line.startswith("{"):
+                continue
+
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
 
             if current is None:
-                current = {}
+                continue
 
-            content = line.removeprefix("%%%mzn-stat: ")
-            key, value = content.split("=")
+            if obj["type"] == "statistics":
+                current.update(obj["statistics"])
 
-            current[key] = value = ast.literal_eval(value)
+            elif obj["type"] == "status":
+                current["status"] = obj["status"]
+                current["time"] = obj.get("time")
+                problems.append(current)
+                current = None
 
-    return blocks
+    return {"problems": problems}
+
 
 def main(folder):
-    statistics = {"chain": {}, "one-by-one": {}}
-    for path in Path(folder).rglob("chain.txt"):
-        problem = path.parent.parent.name
+    folder = Path(folder)
 
-        chain = parse_stats_file(path)
-        init = chain[0] | chain[1]
-        init["chain"] = chain[2:-1] # Last one should be "nSolutions" block
+    paths = sorted(
+        chain(folder.rglob("chain.txt"), folder.rglob("one-by-one.txt"))
+    )
 
-        problem = statistics["chain"].setdefault(problem, [])
-        problem.append(init)
-    
-    for path in Path(folder).rglob("one-by-one.txt"):
-        problem = path.parent.parent.name
+    results = {}
+    for path in paths:
+        rel = path.relative_to(folder)
 
-        chain = parse_stats_file(path)
-        init = chain[0]
-        init["chain"] = chain[1:]
+        # Assumes:
+        # folder/problem/method/repetition/{chain.txt|one-by-one.txt}
+        problem = rel.parts[0]
+        method = rel.parts[1]
+        repetition = rel.parts[2]
 
-        problem = statistics["one-by-one"].setdefault(problem, [])
-        problem.append(init)
+        if path.name == "chain.txt":
+            entry = parse_chain(path)
+        else:
+            entry = parse_one_by_one(path)
 
-    return statistics
+        (
+            results
+            .setdefault(problem, {})
+            .setdefault(method, {})
+            .setdefault(repetition, [])
+            .append(entry)
+        )
+
+    return results
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Process experiments for inter-instances no good learning."
+        description="Process MiniZinc experiment statistics."
     )
     parser.add_argument(
         "folder",
-        help="Path folder containing all the experiments",
+        help="Folder containing all experiments.",
     )
     parser.add_argument(
         "output_file",
         nargs="?",
-        help="Path to the output file (defaults to stdout)",
+        help="Output JSON file (defaults to stdout).",
     )
     args = parser.parse_args()
-    
+
     result = main(args.folder)
 
     if args.output_file is None:
         print(json.dumps(result, indent=2))
     else:
-        with open(args.output_file, "w") as f:
-            json.dump(result, f)
+        with open(args.output_file, "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=2)
