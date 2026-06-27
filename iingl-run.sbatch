@@ -1,58 +1,79 @@
 #!/bin/bash
-#SBATCH --job-name=test_array
-#SBATCH --array=1-100%10
+#SBATCH --job-name=mzn_lifting_iingl
+#SBATCH --array=0-99%4
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=00:20:00
-#SBATCH --output=logs/%x_%A_%a.out
-#SBATCH --error=logs/%x_%A_%a.err
+#SBATCH --output=target/logs/%x_%A_%a.out
+#SBATCH --error=target/logs/%x_%A_%a.err
 #SBATCH --requeue
-#SBATCH --chdir=~/minizinc-lifter/
-#SBATCH --mail-type=FAIL
-#SBATCH --mail-user=simone.gazza@monash.edu
-#SBATCH --mail-type=ARRAY_TASKS
 #SBATCH --nodelist=critical001
 
 set -euo pipefail
-
 shopt -s nullglob
 
+# ------------------------------------------------------------------
+# INPUT
+# ------------------------------------------------------------------
 TARGET="target/problems/$1/$SLURM_ARRAY_TASK_ID"
 
-for model in $TARGET/*.mzn; do
-	echo $model >> chain.txt
-	minizinc --solver solutions.huub \
-		--disable-warnings \
-		--statistics \
-		--compiler-statistics \
-		--disable-warnings \
-		--time-limit 60000 \
-		--json-stream \
-		--output-mode json \
-		--output-detailed-timing \
-		--output-time \
-		--output-objective \
-		--output-output-item \
-		--verbose \
-		--canonicalize \
-		model >> chain.txt 2>&1
-done
+CHAIN_MODEL="/minizinc-lifter/$TARGET/chain.mzn"
+ONE_BY_ONE_MODEL="/minizinc-lifter/$2"
 
-for data in $TARGET/*.dzn; do
-	echo $data >> one-by-one.txt
-	minzinc --solver solutions.huub \
-		--disable-warnings \
-		--statistics \
-		--compiler-statistics \
-		--disable-warnings \
-		--time-limit 60000 \
-		--json-stream \
-		--output-mode json \
-		--output-detailed-timing \
-		--output-time \
-		--output-objective \
-		--output-output-item \
-		--verbose \
-		--canonicalize \
-		$1 -d $data >> one-by-one.txt 2>&1
+echo "Running $CHAIN_MODEL"
+
+# ------------------------------------------------------------------
+# CHAIN RUN
+# ------------------------------------------------------------------
+echo "$CHAIN_MODEL" > "$TARGET/chain.txt"
+
+podman run --rm \
+    -v ../huub:/huub \
+    -v ../huub/share/minizinc/huub/huub.msc:/usr/share/minizinc/solvers/huub.msc \
+    -v ./:/minizinc-lifter \
+    docker.io/minizinc/minizinc:edge-noble \
+    minizinc \
+    --solver solutions.huub \
+    --disable-warnings \
+    --statistics \
+    --compiler-statistics \
+    --time-limit 60000 \
+    --json-stream \
+    --output-mode json \
+    --output-time \
+    --output-objective \
+    --output-output-item \
+    --canonicalize \
+    "$CHAIN_MODEL" >> "$TARGET/chain.txt" 2>&1
+
+echo "Done for $CHAIN_MODEL"
+
+# ------------------------------------------------------------------
+# ONE-BY-ONE RUN
+# ------------------------------------------------------------------
+for data in "$TARGET"/*.dzn; do
+    echo "Running $data"
+    echo "$data" >> "$TARGET/one-by-one.txt"
+
+    podman run --rm \
+        -v ../huub:/huub \
+        -v ../huub/share/minizinc/huub/huub.msc:/usr/share/minizinc/solvers/huub.msc \
+        -v ./:/minizinc-lifter \
+        docker.io/minizinc/minizinc:edge-noble \
+        minizinc \
+        --solver solutions.huub \
+        --disable-warnings \
+        --statistics \
+        --compiler-statistics \
+        --time-limit 60000 \
+        --json-stream \
+        --output-mode json \
+        --output-time \
+        --output-objective \
+        --output-output-item \
+        --canonicalize \
+        "$ONE_BY_ONE_MODEL" -d "/minizinc-lifter/$data" \
+        >> "$TARGET/one-by-one.txt" 2>&1
+
+    echo "Done for $data"
 done
