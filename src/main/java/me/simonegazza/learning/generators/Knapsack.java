@@ -22,7 +22,8 @@ public class Knapsack extends Problem<Integer> {
 		List<List<Integer>> sizes = generator.generate(length, percentages);
 		List<List<Integer>> values = generator.generate(length, percentages);
 
-		return IntStream.range(0, percentages.size()).boxed()
+		// + 1 because there is always the 0% of change instance
+		return IntStream.range(0, percentages.size() + 1).boxed()
 			.map(i -> new StringBuilder(getPreable())
 				.append("size = " + sizes.get(i).toString() + ";\n")
 				.append("value = " + values.get(i).toString() + ";")

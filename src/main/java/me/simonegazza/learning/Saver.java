@@ -25,9 +25,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
-import org.antlr.v4.runtime.misc.Interval;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -53,30 +51,6 @@ public class Saver implements Callable<Integer> {
 	 * Application logger.
 	 */
 	private static final ApplicationLogger logger = ApplicationLogger.getLogger(Saver.class.getSimpleName());
-
-	/**
-	 * Extracts the exact original source text corresponding to an ANTLR rule
-	 * context.
-	 * <p>
-	 * ANTLR contexts normally expose structured information (tokens, children,
-	 * etc.) but not the full original text segment (with, e.g., spaces). This
-	 * helper reconstructs the precise substring from the underlying
-	 * {@link CharStream}.
-	 * <p>
-	 * This is particularly useful when rewriting the model because it allows
-	 * the transformation logic to preserve the original formatting and
-	 * whitespace.
-	 *
-	 * @param ctx the parser rule context
-	 *
-	 * @return the exact text fragment from the original source
-	 */
-	public static String getFullText(ParserRuleContext ctx) {
-		CharStream stream = ctx.start.getInputStream();
-		return stream.getText(new Interval(
-			ctx.getStart().getStartIndex(),
-			ctx.getStop().getStopIndex()));
-	}
 
 	/**
 	 * Input MiniZinc model file path.
@@ -150,6 +124,8 @@ public class Saver implements Callable<Integer> {
 
 			if (dataFiles.size() == 0) {
 				throw new IllegalArgumentException("Data folder does not contain any .dzn files");
+			} else if (dataFiles.size() != Generator.percentages.size() + 1) {
+				throw new IllegalStateException("Not enough data files for " + repetition);
 			}
 
 			// Reading and appending files
@@ -167,8 +143,7 @@ public class Saver implements Callable<Integer> {
 			MiniZincParser parser = new MiniZincParser(tokens);
 
 			// Get the dependency graph of the parameters and verify the
-			// existence
-			// of the parameters to be lifted
+			// existence of the parameters to be lifted
 			logger.info("Extracting parameters...");
 			ParameterExtractor pe = new ParameterExtractor(parser.model());
 			ParameterGraph graph = pe.call();
