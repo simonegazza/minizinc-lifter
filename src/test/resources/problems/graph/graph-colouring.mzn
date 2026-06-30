@@ -10,7 +10,7 @@ array[Nodes,Nodes] of bool: graph; % adjacency matrix of graph
 array[Nodes] of var Colours: x;                  % colour of node
 var Colours: colours;               % number of colours required
 
-constraint forall (i, j in Nodes where graph[i,j]) (x[i] != x[j]);
+constraint forall (i, j in Nodes where graph[i,j] /\ i != j) (x[i] != x[j]);
 
 constraint forall (i in Nodes) (colours >= x[i]);
 
