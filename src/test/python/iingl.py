@@ -4,8 +4,7 @@ from pathlib import Path
 
 def parse_chain(path):
     initial = {}
-    complete = []
-
+    iterations = {}
     with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -23,16 +22,20 @@ def parse_chain(path):
 
             stats = obj["statistics"]
 
+            # Global statistics
             if "blockType" not in stats:
                 initial.update(stats)
+
+            # Init statistics
             elif stats["blockType"] == "init":
                 initial.update(stats)
+            # Keep only the last statistics for each iteration
             elif stats["blockType"] == "complete":
-                complete.append(stats)
+                iterations[int(stats["iteration"])] = stats
 
     initial["path"] = str(path)
 
-    return {**initial, "chain": complete}
+    return {**initial, "chain": [iterations[i] for i in sorted(iterations)]}
 
 def parse_one_by_one(path):
     problems = []
@@ -45,9 +48,7 @@ def parse_one_by_one(path):
                 continue
 
             if line.endswith(".dzn"):
-                current = {
-                    "path": line,
-                }
+                current = {"path": line}
                 continue
 
             if not line.startswith("{"):
@@ -61,16 +62,29 @@ def parse_one_by_one(path):
             if current is None:
                 continue
 
-            if obj["type"] == "statistics":
-                current.update(obj["statistics"])
+            t = obj["type"]
 
-            elif obj["type"] == "status":
+            if t == "statistics":
+                stats = obj["statistics"]
+                current.update(stats)
+
+                # Se non arriverà mai uno status, almeno salva quello
+                if "status" in stats:
+                    current["status"] = stats["status"]
+
+                # Fine istanza
+                if "nSolutions" in stats:
+                    problems.append(current)
+                    current = None
+
+            elif t == "status":
                 current["status"] = obj["status"]
                 current["time"] = obj.get("time")
-                problems.append(current)
-                current = None
 
-    return {"problems": problems}
+            elif t == "time":
+                current["time"] = obj["time"]
+
+    return problems
 
 
 def main(folder):
@@ -95,13 +109,8 @@ def main(folder):
         else:
             entry = parse_one_by_one(path)
 
-        (
-            results
-            .setdefault(problem, {})
-            .setdefault(method, {})
-            .setdefault(repetition, [])
-            .append(entry)
-        )
+        repetition_dict = results.setdefault(problem, {}).setdefault(method, {})
+        repetition_dict[repetition] = entry
 
     return results
 

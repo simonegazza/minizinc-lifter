@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=mzn_lifting_iingl
-#SBATCH --array=0-99%4
+#SBATCH --array=0-99%16
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=00:20:00
@@ -37,13 +37,13 @@ podman run --rm \
     --disable-warnings \
     --statistics \
     --compiler-statistics \
-    --time-limit 60000 \
     --json-stream \
     --output-mode json \
     --output-time \
     --output-objective \
     --output-output-item \
     --canonicalize \
+    --fzn-flag "-t 60s" \
     "$CHAIN_MODEL" >> "$TARGET/chain.txt" 2>&1
 
 echo "Done for $CHAIN_MODEL"
