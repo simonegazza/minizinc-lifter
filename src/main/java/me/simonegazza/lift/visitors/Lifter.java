@@ -103,6 +103,8 @@ public class Lifter implements Callable<String> {
 	 * Computes the value of the given parameter by recursively evaluating all
 	 * of its dependencies.
 	 * <p>
+	 * THIS METHOD IS ONLY USED FOR STATISTICS AND
+	 * <p>
 	 * This method traverses the dependency graph starting from the specified
 	 * parameter, ensuring that each dependent parameter is evaluated before
 	 * evaluating the parameter itself. Computed values are stored in the
@@ -212,6 +214,11 @@ public class Lifter implements Callable<String> {
 			// was just a dependency and was not requested for an
 			// actual lift)
 			.map(original -> {
+
+				// THE FOLLOWING LINE IS NECESSARY ONLY TO COMPUTE VALUES FOR
+				// THE "originalParameterModified" KEY IN THE EXPERIMETS AND TO
+				// GENERATE A SET OF INSTANCES FOR AN ORIGINAL ONE. IF YOU ARE
+				// NOT COLLECTING DATA, YOU CAN REMOVE THIS LINE.
 				computeValue(original, graph, env);
 
 				return LiftedParameter.create(
@@ -230,6 +237,8 @@ public class Lifter implements Callable<String> {
 	}
 
 	/**
+	 * Get the lifted parameters.
+	 *
 	 * @return the lifted parameters
 	 */
 	public List<LiftedParameter> getLifted() {

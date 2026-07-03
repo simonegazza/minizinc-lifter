@@ -8,8 +8,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
+import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincBasicType;
+import me.simonegazza.lift.types.MiniZincExpressionType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
@@ -85,7 +88,43 @@ public class LiftedArrayParameter extends LiftedParameter {
 			declaration = " = " + rewriter.getText();
 		}
 
-		return parameter.getType().lift(bound)
+		if (!(parameter.getType() instanceof MiniZincArrayType type)) {
+			throw new IllegalStateException("Lifted array type is not a MiniZincArray");
+		}
+
+		StringBuilder typeLifted = new StringBuilder("array[");
+		List<MiniZincType> dimensions = type.getDimensions();
+		for (int i = 0; i < dimensions.size(); i++) {
+			MiniZincType d = dimensions.get(i);
+			if (d instanceof MiniZincIdentifier id)
+				typeLifted.append(id.getName());
+			else if (d instanceof MiniZincExpressionType et)
+				typeLifted.append(et.toString());
+			else if (d instanceof MiniZincBasicType) {
+				if (dimensions.size() > 1) {
+					typeLifted.append(
+						"index_set_"
+							+ i
+							+ "of"
+							+ dimensions.size() + "(" + getOriginalName() + ")");
+				} else {
+					typeLifted.append("index_set(" + getOriginalName() + ")");
+				}
+			} else
+				// Should not be possible to use a MiniZincSetType as a
+				// dimension
+				throw new IllegalStateException();
+
+			if (i != dimensions.size() - 1) {
+				typeLifted.append(", ");
+			} else {
+				typeLifted.append("] of ");
+			}
+
+		}
+		typeLifted.append(type.getSubtype().lift(bound));
+
+		return typeLifted.toString()
 			+ ": "
 			+ getLiftedName()
 			+ declaration

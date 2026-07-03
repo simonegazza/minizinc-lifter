@@ -290,6 +290,7 @@ public class Randomizer implements Callable<Integer> {
 
 				OriginalParameter toRandomize = randomizable.get();
 
+				// EVALUATING THE EXPRESSION IS NECESSARY TO GENERATE INSTANCES
 				// Compute its value
 				Object value = Lifter.computeValue(toRandomize, graph, env);
 
