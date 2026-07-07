@@ -105,7 +105,7 @@ public class ModelRunner {
 	 * Executes a MiniZinc model using the specified solver.
 	 * <p>
 	 * For most solvers, the model is executed directly through the MiniZinc
-	 * command-line interface. Note that this behaviour wil fail with Chuffed.
+	 * command-line interface. Note that this behaviour wil fail with Huub.
 	 * <p>
 	 * A solver time limit of one minute is applied to all executions.
 	 *
@@ -120,8 +120,8 @@ public class ModelRunner {
 	 * @throws IllegalStateException    if MiniZinc cannot be located, a
 	 *                                      required process cannot be started,
 	 *                                      or execution fails
-	 * @throws IllegalArgumentException if the Chuffed execution pipeline cannot
-	 *                                      be created
+	 * @throws IllegalArgumentException if the Huub execution pipeline cannot be
+	 *                                      created
 	 */
 	public static List<String> run(Path modelBasePath, String solverName) {
 		try {

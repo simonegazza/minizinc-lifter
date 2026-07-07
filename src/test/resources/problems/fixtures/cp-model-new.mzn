@@ -118,7 +118,7 @@ output [
   "}\n"
 ];
 
-% % Coffee table con Chuffed:
+% % Coffee table with Chuffed:
 % {
 % "x": [206, 206, 206, 551, 551, 551, 881, 899, 899],
 % "y": [30, 275, 520, 0, 245, 554, 562, 72, 317],
