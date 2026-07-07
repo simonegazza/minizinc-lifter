@@ -153,6 +153,10 @@ public class MiniZincArray {
 			for (Object item : objList) {
 				result.addAll(flatten(item));
 			}
+		} else if (obj instanceof MiniZincArray objArray) {
+			for (Object item : objArray.data) {
+				result.addAll(flatten(item));
+			}
 		} else {
 			result.add(obj);
 		}
