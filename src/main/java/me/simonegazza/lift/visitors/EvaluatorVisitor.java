@@ -536,6 +536,54 @@ public class EvaluatorVisitor extends MiniZincBaseVisitor<Object> {
 					return array.stream().mapToDouble(Double.class::cast).sum();
 				}
 			}
+			case "min" -> {
+				if (cfctx.expr().size() > 2) {
+					throw new IllegalStateException("Unkown function call min with more than 2 arguments");
+				} else if (cfctx.expr().size() == 2) {
+					Object first = visitExpr(cfctx.expr(0));
+					Object second = visitExpr(cfctx.expr(1));
+
+					if (first instanceof Integer fi && second instanceof Integer si) {
+						return Math.min(fi, si);
+					} else {
+						Double fd = (Double) first;
+						Double sd = (Double) second;
+						return Math.min(fd, sd);
+					}
+				} else {
+					List<Object> array = MiniZincArray.flatten(visitExpr(cfctx.expr(0)));
+
+					if (array.get(0) instanceof Integer) {
+						return array.stream().mapToInt(Integer.class::cast).min();
+					} else {
+						return array.stream().mapToDouble(Double.class::cast).min();
+					}
+				}
+			}
+			case "max" -> {
+				if (cfctx.expr().size() > 2) {
+					throw new IllegalStateException("Unkown function call max with more than 2 arguments");
+				} else if (cfctx.expr().size() == 2) {
+					Object first = visitExpr(cfctx.expr(0));
+					Object second = visitExpr(cfctx.expr(1));
+
+					if (first instanceof Integer fi && second instanceof Integer si) {
+						return Math.max(fi, si);
+					} else {
+						Double fd = (Double) first;
+						Double sd = (Double) second;
+						return Math.max(fd, sd);
+					}
+				} else {
+					List<Object> array = MiniZincArray.flatten(visitExpr(cfctx.expr(0)));
+
+					if (array.get(0) instanceof Integer) {
+						return array.stream().mapToInt(Integer.class::cast).max();
+					} else {
+						return array.stream().mapToDouble(Double.class::cast).max();
+					}
+				}
+			}
 			case "length" -> {
 				if (cfctx.expr().size() > 1) {
 					throw new IllegalStateException("Unkown function call length with multiple arguments");
