@@ -52,16 +52,16 @@ Random benchmark instances are generated using the `test-randomizer` tool.
 
 ```bash
 java -jar target/test-randomizer.jar \
-    -o target/test-classes/random-fixtures \
+    -o target/recover/results/random-fixtures \
     -m src/test/resources/problems/fixtures/cp-model-new.mzn \
-    src/test/resources/problems/fixtures/coffee_table.dzn \
+    -m src/test/resources/problems/fixtures/coffee_table.dzn \
     -p WMin \
     -p HMin
 ```
 
 The generated instances are stored as `.dzn` files under:
 ```text
-target/test-classes/random-<problem>/<repetition>.dzn
+target/recover/results/<problem>/<repetition>.dzn
 ```
 
 Each `.dzn` file corresponds to one independent randomized repetition of the experiment.
@@ -72,8 +72,8 @@ The recovery procedure is executed using `test-run.jar`.
 For the fixture benchmark:
 ```bash
 java -jar target/test-run.jar \
-    -d target/test-classes/random-fixtures \
-    -o target/test-classes/random-fixtures \
+    -d target/recover/results/fixtures \
+    -o target/recover/results/fixtures \
     -m src/test/resources/problems/fixtures/cp-model-new.mzn \
     -p WMin:100..2200 \
     -p HMin:100..2200 \
@@ -87,23 +87,16 @@ The recovery procedure processes every generated instance independently.
 
 For each repetition, all generated recovery models are stored under:
 ```text
-target/test-classes/random-<problem>/<repetition>/
+target/recover/results/<problem>/<repetition>/
 ```
 
 ### Step 3 - Collecting statistics
 After all experiments have completed, the raw output is aggregated into a single JSON file:
 
 ```bash
-python3 ./src/test/python/parse.py \
-    ./target/results \
-    ./target/results/result.json
-```
-
-Then, the paper statistics are obtained by running:
-```bash
-python3 ./src/test/python/generate_tables.py \
-    ./target/results/result.json \
-    ./target/results/tables.json
+python3 ./src/test/python/recover.py target/recover/results/ target/recover/run.json
+python3 ./src/test/python/compute_metrics.py target/recover/run.json target/recover/metrics.json
+python3 ./src/test/python/generate_table.py target/recover/metrics.json target/recover/table.tex
 ```
 
 ## Directory structure
@@ -152,11 +145,7 @@ The experiments require:
 
 All commands below assume that they are executed from the **root directory of this repository**.
 
-The repository root is mounted inside the container as:
-
-```text
-/workspace
-```
+The repository root is mounted inside the container as `/workspace`
 
 ## Step 1 - Build the project
 
@@ -170,11 +159,7 @@ podman run \
     /workspace/mvnw clean package
 ```
 
-This produces the executable JAR files under:
-
-```text
-target/
-```
+This produces the executable JAR files under `target/`.
 
 ## Step 2 - Generate the instances
 
@@ -186,14 +171,8 @@ podman run \
     -w /workspace \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-generator.jar \
-        -o target/problems/ \
+        -o target/iingl/problems/ \
         -a 100
-```
-
-The generated instances are stored under:
-
-```text
-target/problems/
 ```
 
 The `-a 100` option generates 100 instances for each benchmark family.
@@ -213,7 +192,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/graph/graph-colouring.mzn \
-        -d target/problems/colouring \
+        -d target/iingl/problems/colouring \
         -p graph
 ```
 
@@ -233,7 +212,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/knapsack/k.mzn \
-        -d target/problems/knapsack \
+        -d target/iingl/problems/knapsack \
         -p 'size:min(size)..max(size)' \
         -p 'value:min(value)..max(value)'
 ```
@@ -256,7 +235,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/radiation/radiation.mzn \
-        -d target/problems/radiation \
+        -d target/iingl/problems/radiation \
         -p 'Intensity:min(Intensity)..max(Intensity)'
 ```
 
@@ -277,7 +256,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/mosp/mosp.mzn \
-        -d target/problems/mosp \
+        -d target/iingl/problems/mosp \
         -p graph
 ```
 
@@ -288,7 +267,7 @@ sbatch iingl-run.sbatch \
     src/test/resources/problems/mosp/mosp.mzn
 ```
 
-# Directory structure
+## Directory structure
 
 The experiments will be saved with following structure:
 
@@ -297,6 +276,7 @@ target/
 ├─ ...
 ├─ iingl-generator.jar
 ├─ iingl-saver.jar
+├─ iingl/
 └─ problems/
     └─ <problem>
       └─ <repetition>
@@ -308,11 +288,14 @@ target/
           └─ one-by-one.txt
 ```
 
-## Step 4 - Statistics
-To collect the statistics, simpli run:
+## Step 4 - Statistics and Table genetation
+To collect the statistics, simply run:
 ```python
-python3 src/test/python/iingl.py target/problems
+python3 src/test/python/iingl/iingl.py target/iingl/problems/ target/iingl/run.json
+python3 src/test/python/iingl/compute_metrics.py target/iingl/run.json target/iingl/metrics.json
+python3 src/test/python/iingl/generate_tables.py target/iingl/metrics.json -o target/iingl/tables
 ```
+Tables are then stored in the `target/iingl/tables` folder.
 
 # Notes
 * All commands are intended to be executed from the repository root.

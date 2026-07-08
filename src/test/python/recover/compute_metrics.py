@@ -14,14 +14,12 @@ def main():
         nargs="?",
         help="Path to the output file (defaults to stdout)",
     )
-
     args = parser.parse_args()
 
     with open(args.input_file, "r") as f:
         data = json.load(f)
 
-    rows = []
-
+    rows = {}
     for problem_name, problem_data in data.items():
         runs = problem_data["runs"]
 
@@ -70,7 +68,7 @@ def main():
         for state, count in sorted(final_state_counts.items()):
             row[f"count_{state}"] = count
 
-        rows.append({problem_name.replace(".sh.txt", "") : row})
+        rows.update({problem_name.replace(".sh.txt", "") : row})
 
     output = json.dumps(rows, indent=2)
 

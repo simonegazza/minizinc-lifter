@@ -69,6 +69,7 @@ def aggregate_series(chain, one_by_one, aggregator):
             "1by1": [ERROR_VALUE] * len(perturbations),
         }
 
+
 def main(file):
     with open(file) as f:
         data = json.load(f)
@@ -162,8 +163,32 @@ def main(file):
                 metric["aggregator"],
             )
 
+        results[problem_name]["speedup"] = [
+            o / c if o != 0 else ERROR_VALUE
+            for c, o in zip(
+                results[problem_name]["solveTime"]["chain"],
+                results[problem_name]["solveTime"]["1by1"]
+            )
+        ]
+        results[problem_name]["speedupCumulative"] = [
+            o / c if o != 0 else ERROR_VALUE
+            for c, o in zip(
+                results[problem_name]["solveTimeCumulative"]["chain"],
+                results[problem_name]["solveTimeCumulative"]["1by1"]
+            )
+        ]
+
     return results
 
+def round_floats(obj, digits=3):
+    if isinstance(obj, float):
+        return f"{obj:.{digits}f}" #round(obj, digits)
+    if isinstance(obj, dict):
+        return {key: round_floats(value, digits) for key, value in obj.items()}
+    if isinstance(obj, list):
+        return [round_floats(item, digits) for item in obj]
+
+    return obj
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -181,6 +206,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     result = main(args.file)
+    result = round_floats(result)
 
     if args.output_file:
         with open(args.output_file, "w", encoding="utf-8") as f:
