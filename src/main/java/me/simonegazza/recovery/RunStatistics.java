@@ -59,35 +59,20 @@ public class RunStatistics {
 	 * core, the solver used, and whether a recovery step based on QuickXPlain
 	 * was required.
 	 *
-	 * @param iteration             one-based index of the iteration, matching
-	 *                                  the loop counter used by the lifting
-	 *                                  procedure
-	 * @param durationMs            wall-clock duration of the iteration in
-	 *                                  milliseconds
-	 * @param coreVariables         indexes of the lifted variables that belong
-	 *                                  to the extracted UNSAT core; empty when
-	 *                                  no core was produced
-	 * @param solverUsed            name of the solver used for the main model
-	 *                                  execution during this iteration
-	 * @param quickXPlainUsed       {@code true} if QuickXPlain was invoked to
-	 *                                  recover a conflicting set of
-	 *                                  constraints, {@code false} otherwise
-	 * @param quickXPlainSolver     name of the solver used internally by
-	 *                                  QuickXPlain, or {@code null} when
-	 *                                  QuickXPlain was not used
-	 * @param quickXPlainDurationMs wall-clock duration of the QuickXPlain
-	 *                                  execution in milliseconds; meaningful
-	 *                                  only when {@code quickXPlainUsed} is
-	 *                                  {@code true}
+	 * @param iteration     one-based index of the iteration, matching the loop
+	 *                          counter used by the lifting procedure
+	 * @param durationMs    wall-clock duration of the iteration in milliseconds
+	 * @param coreVariables indexes of the lifted variables that belong to the
+	 *                          extracted UNSAT core; empty when no core was
+	 *                          produced
+	 * @param solverUsed    name of the solver used for the main model execution
+	 *                          during this iteration
 	 */
 	public record IterationRecord(
 		int iteration,
 		long durationMs,
 		List<Integer> coreVariables,
-		String solverUsed,
-		boolean quickXPlainUsed,
-		String quickXPlainSolver,
-		long quickXPlainDurationMs) {
+		String solverUsed) {
 
 		/**
 		 * The json iteration record.
@@ -101,15 +86,6 @@ public class RunStatistics {
 			json.put("durationMs", durationMs);
 			json.put("coreVariables", new JSONArray(coreVariables));
 			json.put("solverUsed", solverUsed);
-			json.put("quickXPlainUsed", quickXPlainUsed);
-
-			json.put(
-				"quickXPlainSolver",
-				quickXPlainUsed ? quickXPlainSolver : JSONObject.NULL);
-
-			json.put(
-				"quickXPlainDurationMs",
-				quickXPlainUsed ? quickXPlainDurationMs : JSONObject.NULL);
 
 			return json;
 		}
@@ -220,34 +196,18 @@ public class RunStatistics {
 	 * Callers that terminate the procedure without extracting a core (e.g. when
 	 * a solution is found) should pass an empty set for {@code coreVariables}.
 	 *
-	 * @param coreVariables         UNSAT core variables found in this
-	 *                                  iteration; pass an empty set when no
-	 *                                  core was produced
-	 * @param solverUsed            the main solver used during this iteration
-	 * @param quickXPlainUsed       {@code true} when QuickXPlain was invoked
-	 *                                  during this iteration
-	 * @param quickXPlainSolver     the solver used by QuickXPlain, or
-	 *                                  {@code null} if not used
-	 * @param quickXPlainDurationMs wall-clock duration of the QuickXPlain run
-	 *                                  in milliseconds; ignored when
-	 *                                  {@code quickXPlainUsed} is {@code false}
+	 * @param coreVariables UNSAT core variables found in this iteration; pass
+	 *                          an empty set when no core was produced
+	 * @param solverUsed    the main solver used during this iteration
 	 */
-	public void endIteration(
-		List<Integer> coreVariables,
-		String solverUsed,
-		boolean quickXPlainUsed,
-		String quickXPlainSolver,
-		long quickXPlainDurationMs) {
+	public void endIteration(List<Integer> coreVariables, String solverUsed) {
 
 		long durationMs = (System.nanoTime() - currentIterationStartNano) / 1_000_000L;
 		iterations.add(new IterationRecord(
 			currentIteration,
 			durationMs,
 			coreVariables,
-			solverUsed,
-			quickXPlainUsed,
-			quickXPlainSolver,
-			quickXPlainDurationMs));
+			solverUsed));
 	}
 
 	/**

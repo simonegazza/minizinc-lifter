@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.assumptions.Assumer;
-import me.simonegazza.lift.expressions.MiniZincArray;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
@@ -23,7 +21,6 @@ import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ModelRunner;
 import me.simonegazza.lift.utils.ParameterGraph;
-import me.simonegazza.lift.utils.QuickXPlain;
 import me.simonegazza.lift.visitors.Lifter;
 import me.simonegazza.lift.visitors.ParameterExtractor;
 import me.simonegazza.recovery.RunStatistics;
@@ -231,42 +228,6 @@ public class Main implements Callable<Integer> {
 	}
 
 	/**
-	 * Runs the QuickXPlain algorithm.
-	 * <p>
-	 * The conflicting constraints returned by {@link QuickXPlain} are converted
-	 * into a FlatZinc model and traversed to collect all variable names
-	 * referenced by the failing constraints.
-	 *
-	 * @param baseModelPath path to the base model used by QuickXPlain
-	 * @param lifted        lifted parameters used to initialize the QuickXPlain
-	 *                          search
-	 *
-	 * @return the set of variable names appearing in the conflicting
-	 *             constraints identified by QuickXPlain
-	 */
-	private Set<String> runQuickExplain(Path baseModelPath, List<LiftedParameter> lifted) {
-		QuickXPlain qx = new QuickXPlain(baseModelPath, lifted, quickXPlainSolver);
-
-		return qx.call().stream()
-			// Each Object is actually a map
-			.map(Map.class::cast)
-			// that has an "args" that contains our variables
-			.map(cObj -> cObj.get("args"))
-			// that are multi-lists that needs flattening
-			.map(MiniZincArray::flatten)
-			// put everything in a list
-			.flatMap(List::stream)
-			// avoid duplicates
-			.distinct()
-			// take only variables names (and not integers, floats, ...)
-			.filter(String.class::isInstance)
-			.map(String.class::cast)
-			// sorted to reduce randomizations
-			.collect(Collectors.toSet());
-
-	}
-
-	/**
 	 * Interprets the output produced by a MiniZinc execution and determines
 	 * whether a solution, an unsatisfiable core, or no useful core was
 	 * obtained.
@@ -285,6 +246,10 @@ public class Main implements Callable<Integer> {
 		} else {
 			if (commandOutput.size() == 1) {
 				throw new IllegalStateException("A core wasn't return");
+			}
+
+			if (commandOutput.get(0).contains("UNKNOWN")) {
+				return Optional.of(List.of());
 			}
 
 			String core = commandOutput.get(1);
@@ -438,10 +403,7 @@ public class Main implements Callable<Integer> {
 		List<Integer> assumptions = new ArrayList<>();
 		for (int i = 1;; i++) {
 			stats.startIteration(i);
-			boolean usedQuickXPlain = false;
-			long quickXPlainDurationMs = 0;
 			String solverUsed = "solutions.huub";
-			String quickXPlainSolverUsed = null;
 
 			// Customize the model
 			logger.info("Adding assumptions...");
@@ -459,25 +421,22 @@ public class Main implements Callable<Integer> {
 			Path ithMznModelPath = Path.of(ithBaseModelPath.toString() + ".mzn");
 			Files.writeString(ithMznModelPath, liftedModel);
 
-			// Compile the .mzn and get the .fzn
-			logger.info("Compiling the .mzn...");
-			ModelRunner.compile(ithBaseModelPath, "solutions.huub");
-			Path.of(ithBaseModelPath.toString() + ".fzn.json");
-
 			// Run the .fzn
 			logger.info("Running the lifted model...");
 			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "solutions.huub");
 
 			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
 			if (coreAssumptionIndeces.isEmpty()) {
-				stats.endIteration(List.of(), solverUsed, false, null, 0);
+				stats.endIteration(List.of(), solverUsed);
 				stats.finish(finalStateFromOutput(commandOutput, false));
 				System.out.println(stats);
 				logger.info("Exiting");
 				return 0;
 			} else if (coreAssumptionIndeces.get().isEmpty()) {
-				logger.info("A solution or an unsat core cannot be found, trying with another solver: "
-					+ recoverySolver);
+				logger.info("""
+					A solution or an unsat core cannot be found, \
+					trying by fixing parameters with another solver:
+					""" + recoverySolver);
 				solverUsed = recoverySolver;
 
 				List<String> recoveryOuput = runWithFixedParameters(
@@ -487,25 +446,15 @@ public class Main implements Callable<Integer> {
 
 				Optional<List<Integer>> recoveryAssumptions = analyzeOutput(recoveryOuput);
 				if (recoveryAssumptions.isEmpty()) {
-					stats.endIteration(List.of(), solverUsed, false, null, 0);
+					stats.endIteration(List.of(), solverUsed);
 					stats.finish(finalStateFromOutput(recoveryOuput, true));
 					System.out.println(stats);
 					logger.info("Exiting");
 					return 0;
 				} else if (recoveryAssumptions.get().isEmpty()) {
-					logger.info("""
-						I'll run QuickXPlain trying to find a solution, but be aware that the process \
-						might get in a loop if the solver answered with UNKNOWN \
-						""");
-					long qxStart = System.nanoTime();
-					quickXPlainSolverUsed = quickXPlainSolver;
-					runQuickExplain(
-						ithBaseModelPath,
-						liftedParameters);
-					quickXPlainDurationMs = (System.nanoTime() - qxStart) / 1_000_000L;
-					usedQuickXPlain = true;
+					logger.info("Unable to find a recovery given the time limit");
 				} else {
-					stats.endIteration(List.of(), solverUsed, false, null, 0);
+					stats.endIteration(List.of(), solverUsed);
 					stats.finish(RunStatistics.FinalState.ABORTED);
 					System.out.println(stats);
 					logger.info("I've tried, sorry!");
@@ -517,12 +466,7 @@ public class Main implements Callable<Integer> {
 			}
 
 			List<Integer> newNogoodAssumptions = coreAssumptionIndeces.get();
-			stats.endIteration(
-				newNogoodAssumptions,
-				solverUsed,
-				usedQuickXPlain,
-				quickXPlainSolverUsed,
-				quickXPlainDurationMs);
+			stats.endIteration(newNogoodAssumptions, solverUsed);
 			assumptions.addAll(newNogoodAssumptions);
 		}
 	}
