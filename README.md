@@ -10,39 +10,22 @@ This tool relies on an ANTLR4-generated parser to analyze and rewrite the MiniZi
 ## Building
 This project utilizes Maven for dependency management, test execution, and building.
 
-To compile the code, run test and generate the jars:
+To compile the code, run any of the tests (both the code tests and the following tests) and generate the jars, it is necessary to build the project first with:
 
 ```bash
 ./mvnw package
 ```
 
 # Automatic Satisfiability Recovery
-This repository also contains the implementation and experimental artifacts for the **Automatic Satisfiability Recovery** evaluation presented in our paper.
-
-The complete experimental pipeline is automated by the `recovery.sh` script, which:
-
-1. builds the project,
-2. generates randomized benchmark instances,
-3. executes the satisfiability recovery procedure,
-4. collects the experimental results, and
-5. produces the tables used in the paper.
+This repository also contains the implementation and experimental artifacts for the **Automatic Satisfiability Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script, which:
 
 ## Prerequisites
 The experiments require:
 * Java 25
 * Maven
-* Python 3
+* Python >= 3.11
 
 All commands are executed from the **root directory of the repository**.
-
-## Running the complete experiment
-The satisfiability recovery experimental pipeline can be reproduced by executing:
-
-```bash
-sh recovery.sh
-```
-
-The script performs all required steps automatically on your local machine.
 
 ## Experimental pipeline
 We will use the fixture problem as running example for this experimentation. The other model are available in `src/test/sh/recovery`
@@ -141,27 +124,16 @@ The experiments require:
 * Maven (used through the Maven Docker image)
 * Podman (or Docker, with equivalent commands)
 * Slurm workload manager (`sbatch`) for executing the experiments on a computing cluster
-* Python (>=3.14) to collect statistics
+* Python (>=3.11) to collect statistics
 
 All commands below assume that they are executed from the **root directory of this repository**.
 
 The repository root is mounted inside the container as `/workspace`
 
-## Step 1 - Build the project
+## Script
+A convenience script is placed in `src/test/sh/recovery/iingl-run.sbactch` and it takes the problem name as an argument.
 
-Compile the project and generate the required JAR files.
-
-```bash
-podman run \
-    -v ./:/workspace \
-    -w /workspace \
-    docker.io/library/maven:3.9-eclipse-temurin-25 \
-    /workspace/mvnw clean package
-```
-
-This produces the executable JAR files under `target/`.
-
-## Step 2 - Generate the instances
+## Step 1 - Generate the instances
 
 Generate the collection of problem instances used during the experiments.
 
@@ -178,7 +150,7 @@ podman run \
 The `-a 100` option generates 100 instances for each benchmark family.
 
 
-## Step 3 - Run
+## Step 2 - Run
 For each benchmark, the experiment consists of two phases:
 1. **Preprocessing**, where the information required by the IINGL framework is generated.
 2. **Execution**, submitted through Slurm using the provided `iingl-run.sbatch` script.
@@ -288,7 +260,7 @@ target/
           └─ one-by-one.txt
 ```
 
-## Step 4 - Statistics and Table genetation
+## Step 3 - Statistics and Table genetation
 To collect the statistics, simply run:
 ```python
 python3 src/test/python/iingl/iingl.py target/iingl/problems/ target/iingl/run.json
@@ -297,9 +269,73 @@ python3 src/test/python/iingl/generate_tables.py target/iingl/metrics.json -o ta
 ```
 Tables are then stored in the `target/iingl/tables` folder.
 
-# Notes
-* All commands are intended to be executed from the repository root.
+## Notes
+* **All commands are intended to be executed from the repository root**.
 * The repository root is mounted into the container as `/workspace`.
 * The preprocessing step must be executed before submitting the corresponding Slurm job.
-* The Slurm script `iingl-run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
-* You will need the forked version of huub, as presented in the paper.
+* The Slurm script `src/test/sh/recovery/iingl-run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
+* **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
+
+# Comparison
+This repository also contains the implementation and experimental artifacts used to reproduce the **comparison** experiments presented in our paper.
+
+The experiments compare the proposed approach against the baseline models on four benchmark families:
+* latin
+* TAP
+* RSBP
+* RCPSP
+
+## Prerequisites
+
+The experiments require:
+* Java 25
+* Maven
+* Podman (or Docker, with equivalent commands)
+* Slurm workload manager (`sbatch`) for executing the experiments on a computing cluster
+* Python (>=3.11) to collect statistics and generate the final tables
+* `xz` (or `unxz`) to extract the benchmark archive
+
+All commands below assume that they are executed from the **root directory of this repository**.
+
+## Step 1 - Extract the benchmark data
+
+Create the output directory and extract the benchmark models and data files:
+
+```bash
+mkdir -p target/comparison
+unxz -c src/test/resources/comparison/data.xz | tar -xvf - -C target/comparison
+```
+
+After extraction, the benchmark instances are available under the `target/comparison/` folder.
+
+## Step 2 - Run the experiments
+
+The scripts accept a single argument specifying the benchmark to execute. The supported values are:
+* `latin`
+* `TAP`
+* `RSBP`
+* `RCPSP`
+
+For example:
+```bash
+sbatch src/test/sh/recovery/run-lifted.sbatch TAP
+```
+runs the benchmark for the TAP problem with our approach, while
+```bash
+sbatch src/test/sh/recovery/run-soft.sbatch TAP
+```
+runs the benchmark for the TAP problem with the soft approach.
+
+## Step 3 - Collect the statistics
+
+After all Slurm jobs have completed, aggregate the raw results into a single dataset:
+```bash
+python3 src/test/python/comparison/process_all.py target/comparison/results
+```
+
+## Step 4 - Generate the LaTeX table
+
+Generate the LaTeX table reported in the paper:
+```bash
+python3 src/test/python/comparison/generate_table.py target/comparison/results
+```

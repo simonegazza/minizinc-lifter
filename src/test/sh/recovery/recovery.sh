@@ -2,11 +2,9 @@
 
 set -e
 
-sh ./mvnw package
-
 mkdir -p target/recover/results/
 
-for e in src/test/sh/recovery/*.sh; do
+for e in src/test/sh/recovery/problems/*.sh; do
     name=$(basename "$e")
     sh $e | tee "target/recover/results/$name.txt"
 done
