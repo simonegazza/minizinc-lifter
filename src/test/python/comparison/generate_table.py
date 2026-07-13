@@ -109,14 +109,10 @@ def generate_table(results):
     # ------------------------------------------------------------
     # Body
     # ------------------------------------------------------------
-
     for problem, pdata in results.items():
 
         # Soft
-        row = [
-            rf"\multirow{{2}}{{*}}{{{problem}}}",
-            "Soft",
-        ]
+        row = [rf"\multirow{{2}}{{*}}{{{problem}}}", "CMPCS",]
 
         metrics = pdata["soft"]
         for key, _ in METHOD_COLUMNS["soft"]:
@@ -143,8 +139,6 @@ def generate_table(results):
         lines.append(r"\hline")
 
     lines.append(r"\end{tabular}")
-    lines.append(r"\caption{TODO}")
-    lines.append(r"\end{table*}")
 
     return "\n".join(lines)
 

@@ -285,6 +285,8 @@ The experiments compare the proposed approach against the baseline models on fou
 * RSBP
 * RCPSP
 
+Instances can be found in `src/test/resources/comparison/data.tar.xz`.
+
 ## Prerequisites
 
 The experiments require:
@@ -303,7 +305,7 @@ Create the output directory and extract the benchmark models and data files:
 
 ```bash
 mkdir -p target/comparison
-unxz -c src/test/resources/comparison/data.xz | tar -xvf - -C target/comparison
+unxz -c results/comparison/results.tar.xz | tar -xvf - -C target/comparison
 ```
 
 After extraction, the benchmark instances are available under the `target/comparison/` folder.
