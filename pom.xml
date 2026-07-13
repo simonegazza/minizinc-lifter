@@ -141,7 +141,7 @@
 		            <id>antlr-minizinc</id>
 		            <goals><goal>antlr4</goal></goals>
 		            <configuration>
-		                <sourceDirectory>${project.basedir}/grammars</sourceDirectory>
+		                <sourceDirectory>${project.basedir}/src/main/resources/grammars</sourceDirectory>
 		                <includes><include>MiniZinc.g4</include></includes>
 		                <outputDirectory>${project.basedir}/src/main/java/me/simonegazza/antlr/minizinc</outputDirectory>
 		                <visitor>true</visitor>
