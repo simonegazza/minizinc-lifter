@@ -6,17 +6,17 @@ from process_all import main as process
 # Metrics to include for each method (JSON key -> LaTeX column title)
 METHOD_COLUMNS = {
     "soft": [
-        ("flatTimeMean", "Flat Time"),
+        #("flatTimeMean", "Flat Time"),
         ("solveTimeMean", "Solve Time"),
         ("failures", "Failures"),
-        ("cpPropagatorCalls", "CP Calls"),
+        #("cpPropagatorCalls", "CP Calls"),
         ("unknowns", "UNK"),
     ],
     "lifted": [
-        ("gMean(iterationSumFlatTime)", "Flat Time"),
+        #("gMean(iterationSumFlatTime)", "Flat Time"),
         ("gMean(iterationSumSolveTime)", "Solve Time"),
         ("failures", "Failures"),
-        ("cpPropagatorCalls", "CP Calls"),
+        #("cpPropagatorCalls", "CP Calls"),
         ("unknowns", "UNK"),
     ],
 }
@@ -24,18 +24,12 @@ METHOD_COLUMNS = {
 # Which status groups to include and in what order.
 # Modify this to change the table layout.
 STATUS_GROUPS = {
-    "soft": [
+    "status": [
         ("better", "Better"),
         ("worse", "Worse"),
         ("MUSes", "MUSes"),
-        ("discordant", "Disc."),
-    ],
-    "hard": [
-        ("better", "Better"),
-        ("worse", "Worse"),
-        ("MUSes", "MUSes"),
-        ("discordant", "Disc."),
-    ],
+        #("discordant", "Disc."),
+    ]
 }
 
 # ---------------------------------------------------------------------
@@ -76,22 +70,13 @@ def generate_table(results):
     # ------------------------------------------------------------
 
     lines.append(
-        r"\multirow{3}{*}{Problem} & "
-        r"\multirow{3}{*}{Method} & "
+        r"\multirow{2}{*}{Problem} & "
+        r"\multirow{2}{*}{Method} & "
         + " & ".join(
-            rf"\multirow{{3}}{{*}}{{{title}}}"
+            rf"\multirow{{2}}{{*}}{{{title}}}"
             for _, title in METHOD_COLUMNS["soft"]
         )
-        + rf" & \multicolumn{{{n_status_cols}}}{{c}}{{Statuses}} \\"
-    )
-
-    lines.append(
-        " & " * (2 + len(METHOD_COLUMNS["soft"]))
-        + " & ".join(
-            rf"\multicolumn{{{len(cols)}}}{{c}}{{{group.capitalize()}}}"
-            for group, cols in STATUS_GROUPS.items()
-        )
-        + r" \\"
+        + rf" & \multicolumn{{{n_status_cols}}}{{c}}{{Status}} \\"
     )
 
     status_headers = []
@@ -109,34 +94,32 @@ def generate_table(results):
     # ------------------------------------------------------------
     # Body
     # ------------------------------------------------------------
-    for problem, pdata in results.items():
-
+    for i, (problem, pdata) in enumerate(results.items()):
         # Soft
-        row = [rf"\multirow{{2}}{{*}}{{{problem}}}", "CMPCS",]
-
+        row = [rf"\multirow{{2}}{{*}}{{{problem}}}", "CMPCS"]
         metrics = pdata["soft"]
         for key, _ in METHOD_COLUMNS["soft"]:
             row.append(fmt(metrics[key]))
 
-        for group, cols in STATUS_GROUPS.items():
+        for _, cols in STATUS_GROUPS.items():
             for key, _ in cols:
-                row.append(str(pdata["better"][group][key]))
+                row.append(str(pdata["better"]["soft"][key]))
 
         lines.append(" & ".join(row) + r" \\")
 
         # Lifted
-        row = ["", "Lifted",]
-
+        row = ["", "Lifted"]
         metrics = pdata["lifted"]
         for key, _ in METHOD_COLUMNS["lifted"]:
             row.append(fmt(metrics[key]))
 
-        for group, cols in STATUS_GROUPS.items():
-            for key, _ in cols:
-                row.append(str(pdata["better"][group][key]))
+        for key, _ in STATUS_GROUPS["status"]:
+            row.append(str(pdata["better"]["soft"][key]))
 
         lines.append(" & ".join(row) + r" \\")
-        lines.append(r"\hline")
+
+        if i != len(results.items()) - 1:
+            lines.append(r"\hline")
 
     lines.append(r"\end{tabular}")
 

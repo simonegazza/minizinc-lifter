@@ -38,15 +38,15 @@ def generate_table(data):
         r"\hhline{~|~~|~~~|~~~|~~~}",
         r"\multirow{2}{*}{\centering Problem} &"
         r"\multicolumn{2}{c|}{Parameters} &"
-        r"\multicolumn{3}{c|}{Core Variables} &"
+        r"\multicolumn{3}{c|}{Core Parameters} &"
         r"\multicolumn{3}{c|}{Iterations} &"
         r"\multicolumn{3}{c}{Process Duration}\\",
         r"\hhline{~|~~|~~~|~~~|~~~}",
         r"&"
         r"Modified & Lifted &"
-        r"Min & Med & Max &"
-        r"Min & Med & Max &"
-        r"Min & Mean & Max\\",
+        r"Min & Avg & Max & "
+        r"Min & Avg & Max & "
+        r"Min & Avg & Max\\",
         r"\hhline{-|--|---|---|---}",
     ]
 
@@ -67,10 +67,10 @@ def generate_table(data):
             f' & {fmt_int(modified)}'
             f' & {d["liftedParameters"]}'
             f' & {d["minCoreVariables"]}'
-            f' & {d["medianCoreVariables"]}'
+            f' & {d["meanCoreVariables"]}'
             f' & {d["maxCoreVariables"]}'
             f' & {d["minIterations"]}'
-            f' & {d["medianIterations"]}'
+            f' & {d["meanIterations"]}'
             f' & {d["maxIterations"]}'
             f' & {fmt_float(d["minTotalDuration"])}'
             f' & {fmt_float(d["avgTotalDuration"])}'
@@ -81,7 +81,7 @@ def generate_table(data):
         [
             r"\hhline{~|~~|~~~|~~~|~~~}",
             r"\end{tabular}",
-            r"\caption{Summary of feasibility-restoration experiments}",
+            r"\caption{Summary of feasibility restoration experiments}",
             r"\label{tab:recovery}",
             r"\end{table*}",
         ]

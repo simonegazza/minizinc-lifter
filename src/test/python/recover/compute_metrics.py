@@ -48,15 +48,15 @@ def main():
             "originalParameterModified": runs[0]["statistics"].get("originalParameterModified"),
             "liftedParameters": runs[0]["statistics"].get("liftedParameters"),
 
-            "medianCoreVariables": statistics.median(core_variables_per_run),
+            "meanCoreVariables": round(statistics.mean(core_variables_per_run), 2),
             "minCoreVariables": min(core_variables_per_run),
             "maxCoreVariables": max(core_variables_per_run),
 
-            "medianIterations": statistics.median(iteration_per_run),
+            "meanIterations": round(statistics.mean(iteration_per_run), 2),
             "minIterations": min(iteration_per_run),
             "maxIterations": max(iteration_per_run),
 
-            "avgTotalDuration": round(sum(duration) / len(runs), 2),
+            "avgTotalDuration": round(statistics.geometric_mean(duration), 2),
             "minTotalDuration": min(duration),
             "maxTotalDuration": max(duration),
 
