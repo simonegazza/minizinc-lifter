@@ -97,8 +97,8 @@ array[instances] of var int: objective_lifted :: output_var = [
 output ["current_instance = \(current_instance)"] ++ ["\noriginal size = \(size_instances[fix(current_instance), ..])\nlifted   size = \(size_lifted)\n\n"] ++ ["\noriginal value = \(value_instances[fix(current_instance), ..])\nlifted   value = \(value_lifted)\n\n"];
 
 
-array[1..99] of int: size;
-array[instances, 1..99] of int: size_instances = array2d(instances, 1..99, size);
+array[1..n] of int: size;
+array[instances, 1..n] of int: size_instances = array2d(instances, 1..n, size);
 
-array[1..99] of int: value;
-array[instances, 1..99] of int: value_instances = array2d(instances, 1..99, size);
+array[1..n] of int: value;
+array[instances, 1..n] of int: value_instances = array2d(instances, 1..n, size);

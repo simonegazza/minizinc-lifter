@@ -53,7 +53,7 @@ array[Nodes, Nodes] of var bool: graph_lifted :: doc_comment("graph_lifted"); % 
 array[Nodes] of var Colours: x;                  % colour of node
 var Colours: colours;               % number of colours required
 
-constraint forall (i, j in Nodes where graph_lifted[i,j]) (x[i] != x[j]);
+constraint forall (i, j in Nodes where graph_lifted[i,j] /\ i != j) (x[i] != x[j]);
 
 constraint forall (i in Nodes) (colours >= x[i]);
 
