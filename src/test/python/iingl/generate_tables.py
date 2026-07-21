@@ -39,78 +39,77 @@ DIFFS = ["0\\%", "1\\%", "2\\%", "5\\%", "10\\%", "20\\%", "50\\%"]
 
 def latex_header(cumulative=False):
     if not cumulative:
-        tabular = "c|" + "|".join(["cc"] * len(MAIN_TABLE_KEYS))
+        tabular = "c|" + "|".join(["ccc"] * len(MAIN_TABLE_KEYS))
 
         if INCLUDE_SPEEDUP:
-            tabular += "|c"
+            tabular += "|cc"
 
         header = r"""
 \begin{table*}[t]
 \centering
 """
         header += rf"\begin{{tabular}}{{{tabular}}}" + "\n"
-        header += r"\hhline{~|" + "~" * (len(MAIN_TABLE_KEYS)*2) + ("|~" if INCLUDE_SPEEDUP else "") + "}" + "\n"
-        header += r"\multirow{2}{*}{\centering Diff} & "
+        header += r"\hhline{~|" + "~" * (len(MAIN_TABLE_KEYS) * 3) + ("|~~" if INCLUDE_SPEEDUP else "") + "}" + "\n"
+        header += r"\multirow{3}{*}{\centering Diff} & "
 
         groups = []
         for _, name in MAIN_TABLE_KEYS:
-            groups.append(rf"\multicolumn{{2}}{{c|}}{{{name}}}")
+            groups.append(rf"\multicolumn{{3}}{{c|}}{{{name}}}")
 
         if INCLUDE_SPEEDUP:
-            groups.append(r"\multirow{2}{*}{\centering Speedup}")
+            groups.append(r"\multicolumn{{2}}{{c|}}{Speedup}")
 
         header += " & ".join(groups) + r"\\" + "\n"
-        header += r"\hhline{~|" + "~" * (len(MAIN_TABLE_KEYS)*2) + ("|~" if INCLUDE_SPEEDUP else "") + "}" + "\n"
+        header += r"\hhline{~|" + "~" * (len(MAIN_TABLE_KEYS) * 3) + ("|~" if INCLUDE_SPEEDUP else "") + "}" + "\n"
         header += "& "
 
         subheaders = []
         for _ in MAIN_TABLE_KEYS:
-            subheaders.extend(["Chain", "One-by-One"])
+            subheaders.extend(["Chain", "Assumptions", "Individual"])
         if INCLUDE_SPEEDUP:
-            subheaders.append("")
+            subheaders.extend(["Over assumptions", "Over individual"])
 
         header += " & ".join(subheaders) + r"\\" + "\n"
         header += r"\hhline{-|" + "--|" * len(MAIN_TABLE_KEYS)
         if INCLUDE_SPEEDUP:
-            header += "-"
+            header += "--"
         header += "}"
         header += "\n"
 
         return header
 
-
     else:
         groups = []
         for _, name in CUMULATIVE_TABLE_KEYS:
-            groups.append(rf"\multicolumn{{2}}{{c|}}{{{name}}}")
+            groups.append(rf"\multicolumn{{3}}{{c|}}{{{name}}}")
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            groups.append(r"\multirow{2}{*}{\centering Speedup Cumulative}")
+            groups.append(r"\multicolumn{2}{c}{Speedup Cumulative}")
 
-        tabular = "c|" + "|".join(["cc"] * len(CUMULATIVE_TABLE_KEYS))
+        tabular = "c|" + "|".join(["ccc"] * len(CUMULATIVE_TABLE_KEYS))
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            tabular += "|c"
+            tabular += "|cc"
 
         header = r"""
 \begin{table*}[t]
 \centering
 """
         header += rf"\begin{{tabular}}{{{tabular}}}" + "\n"
-        header += r"\hhline{~|" + "~"*(len(CUMULATIVE_TABLE_KEYS)*2) + ("|~" if INCLUDE_CUMULATIVE_SPEEDUP else "") + "}" + "\n"
+        header += r"\hhline{~|" + "~"*(len(CUMULATIVE_TABLE_KEYS) * 3) + ("|~" if INCLUDE_CUMULATIVE_SPEEDUP else "") + "}" + "\n"
         header += r"\multirow{2}{*}{\centering Diff} & "
         header += " & ".join(groups) + r"\\" + "\n"
-        header += r"\hhline{~|" + "~"*(len(CUMULATIVE_TABLE_KEYS)*2) + ("|~" if INCLUDE_CUMULATIVE_SPEEDUP else "") + "}" + "\n"
+        header += r"\hhline{~|" + "~"*(len(CUMULATIVE_TABLE_KEYS) * 3) + ("|~" if INCLUDE_CUMULATIVE_SPEEDUP else "") + "}" + "\n"
         header += "& "
 
         subs = []
         for _ in CUMULATIVE_TABLE_KEYS:
-            subs.extend(["Chain", "One-by-One"])
+            subs.extend(["Chain", "Assumptions", "Individual"])
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            subs.append("")
+            subs.extend(["Over baseline", "Over individual"])
 
         header += " & ".join(subs) + r"\\" + "\n"
-        header += r"\hhline{-|" + "--|"*len(CUMULATIVE_TABLE_KEYS)
+        header += r"\hhline{-|" + "---|" * len(CUMULATIVE_TABLE_KEYS)
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            header += "-"
+            header += "--"
         header += "}"
         header += "\n"
 
@@ -146,9 +145,11 @@ def generate_main_table(problem, data):
         values = [diff]
         for key, _ in MAIN_TABLE_KEYS:
             values.append(data[key]["chain"][i])
+            values.append(data[key]["assumptions"][i])
             values.append(data[key]["1by1"][i])
         if INCLUDE_SPEEDUP:
-            values.append(data["speedup"][i])
+            values.append(data["speedupOverAssumptions"][i])
+            values.append(data["speedupOver1by1"][i])
         lines.append(row(values))
 
     lines.append(latex_footer(problem, False))
@@ -162,9 +163,11 @@ def generate_cumulative_table(problem, data):
         values = [diff]
         for key, _ in CUMULATIVE_TABLE_KEYS:
             values.append(data[key]["chain"][i])
+            values.append(data[key]["assumptions"][i])
             values.append(data[key]["1by1"][i])
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            values.append(data["speedupCumulative"][i])
+            values.append(data["speedupOverAssumptionsCumulative"][i])
+            values.append(data["speedupOver1by1Cumulative"][i])
         lines.append(row(values))
 
     lines.append(latex_footer(problem, True))
@@ -184,13 +187,14 @@ def generate_cumulative_table(problem, data):
 #         r"\multirow{2}{*}{\centering Problem} & "
 #         r"\multicolumn{2}{c|}{Flat Time} & "
 #         r"\multicolumn{4}{c|}{Status Chain} & "
-#         r"\multicolumn{4}{c}{Status One-by-one}\\"
+#         r"\multicolumn{4}{c|}{Status Baseline} & "
+#         r"\multicolumn{4}{c}{Status Individual}\\"
 #     )
 
 #     lines.append(r"\hhline{~|~~|~~~~|~~~~}")
 
 #     lines.append(
-#         r"& Chain & One-by-one & "
+#         r"& Chain & Baseline & Individual & "
 #         r"SAT & OPT & UNSAT & UNK & "
 #         r"SAT & OPT & UNSAT & UNK\\"
 #     )
@@ -203,6 +207,7 @@ def generate_cumulative_table(problem, data):
 #         row = [
 #             problem,
 #             problem_data["flatTime"]["chain"],
+#             problem_data["flatTime"]["assumptions"],
 #             problem_data["flatTime"]["1by1"]
 #         ]
 
@@ -217,6 +222,15 @@ def generate_cumulative_table(problem, data):
 #             chain_status.get("UNKNOWN", 0),
 #         ])
 
+#         # Status assumptions
+#         onebyone_status = problem_data["statuses"].get("assumptions", {})
+
+#         row.extend([
+#             onebyone_status.get("SATISFIABLE", 0),
+#             onebyone_status.get("OPTIMAL_SOLUTION", 0),
+#             onebyone_status.get("UNSATISFIABLE", 0),
+#             onebyone_status.get("UNKNOWN", 0),
+#         ])
 
 #         # Status One-by-one
 #         onebyone_status = problem_data["statuses"].get("1by1", {})

@@ -91,7 +91,10 @@ def main(folder):
     folder = Path(folder)
 
     paths = sorted(
-        chain(folder.rglob("chain.txt"), folder.rglob("one-by-one.txt"))
+        chain(
+            folder.rglob("chain.txt"),
+            folder.rglob("assumptions.txt"),
+            folder.rglob("one-by-one.txt"))
     )
 
     results = {}
@@ -99,13 +102,15 @@ def main(folder):
         rel = path.relative_to(folder)
 
         # Assumes:
-        # folder/problem/method/repetition/{chain.txt|one-by-one.txt}
+        # folder/problem/method/repetition/{chain.txt|assumptions.txt|one-by-one.txt}
         problem = rel.parts[0]
         method = rel.parts[1]
         repetition = rel.parts[2]
 
         if path.name == "chain.txt":
             entry = parse_chain(path)
+        elif path.name == "assumptions.txt":
+            entry = parse_one_by_one(path)
         else:
             entry = parse_one_by_one(path)
 

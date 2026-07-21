@@ -170,8 +170,9 @@ podman run \
 
 #### Execute
 ```bash
-sbatch iingl-run.sbatch \
+sbatch src/test/sh/iingl/iingl-run.sbatch \
     colouring \
+    src/test/resources/iingl/graph-colouring.mzn \
     src/test/resources/problems/graph/graph-colouring.mzn
 ```
 
@@ -191,8 +192,9 @@ podman run \
 
 ### Execute
 ```bash
-sbatch iingl-run.sbatch \
+sbatch src/test/sh/iingl/iingl-run.sbatch \
     knapsack \
+    src/test/resources/iingl/knapsack.mzn \
     src/test/resources/problems/knapsack/k.mzn
 ```
 
@@ -214,8 +216,9 @@ podman run \
 ### Execute
 
 ```bash
-sbatch iingl-run.sbatch \
+sbatch src/test/sh/iingl/iingl-run.sbatch \
     radiation \
+    src/test/resources/iingl/radiation.mzn \
     src/test/resources/problems/radiation/radiation.mzn
 ```
 
@@ -234,8 +237,9 @@ podman run \
 
 #### Execute
 ```bash
-sbatch iingl-run.sbatch \
+sbatch src/test/sh/iingl/iingl-run.sbatch \
     mosp \
+    src/test/resources/iingl/mosp.mzn \
     src/test/resources/problems/mosp/mosp.mzn
 ```
 
@@ -248,16 +252,17 @@ target/
 ├─ ...
 ├─ iingl-generator.jar
 ├─ iingl-saver.jar
-├─ iingl/
-└─ problems/
-    └─ <problem>
-      └─ <repetition>
-          ├─ 0-0.dzn
-          ├─ ...
-          ├─ 7-50.dzn
-          ├─ chain.mzn
-          ├─ chain.txt
-          └─ one-by-one.txt
+└─ iingl/
+    └─ problems/
+        └─ <problem>
+            └─ <repetition>
+                ├─ 0-0.dzn
+                ├─ ...
+                ├─ 7-50.dzn
+                ├─ chain.mzn
+                ├─ chain.txt
+                ├─ assumptions.txt
+                └─ one-by-one.txt
 ```
 
 ## Step 3 - Statistics and Table genetation
@@ -276,7 +281,7 @@ Tables are then stored in the `target/iingl/tables` folder.
 * The Slurm script `src/test/sh/recovery/iingl-run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
 * **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
 
-# Comparison
+# Comparison with CMPCS
 This repository also contains the implementation and experimental artifacts used to reproduce the **comparison** experiments presented in our paper.
 
 The experiments compare the proposed approach against the baseline models on four benchmark families:

@@ -15,7 +15,7 @@ shopt -s nullglob
 # ------------------------------------------------------------------
 # INPUT
 # ------------------------------------------------------------------
-TARGET="target/problems/$1/$SLURM_ARRAY_TASK_ID"
+TARGET="target/iingl/problems/$1/$SLURM_ARRAY_TASK_ID"
 
 CHAIN_MODEL="/minizinc-lifter/$TARGET/chain.mzn"
 ASSUMPTIONS_MODEL="/minizinc-lifter/$2"
