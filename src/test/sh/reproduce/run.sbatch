@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=mzn_lifting_reproduce
-#SBATCH --array=0-99%2
+#SBATCH --array=1-100%2
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=00:05:00
@@ -21,7 +21,7 @@ percentage=$2
 TARGET="target/reproduce/problems/$problem/$percentage/$SLURM_ARRAY_TASK_ID"
 
 CHAIN_MODEL="/minizinc-lifter/$TARGET/chain.mzn"
-ONE_BY_ONE_MODEL="/minizinc-lifter/$2"
+ONE_BY_ONE_MODEL="/minizinc-lifter/$3"
 
 # ------------------------------------------------------------------
 # REPRODUCIBILITY RUN
@@ -63,13 +63,13 @@ for data in "$TARGET"/*.dzn; do
         --disable-warnings \
         --statistics \
         --compiler-statistics \
-        --time-limit 60000 \
         --json-stream \
         --output-mode json \
         --output-time \
         --output-objective \
         --output-output-item \
         --canonicalize \
+        --fzn-flag "-t 60s" \
         "$ONE_BY_ONE_MODEL" -d "/minizinc-lifter/$data" \
         >> "$TARGET/one-by-one.txt" 2>&1
 
