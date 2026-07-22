@@ -124,9 +124,10 @@ public class Saver implements Callable<Integer> {
 
 			if (dataFiles.size() == 0) {
 				throw new IllegalArgumentException("Data folder does not contain any .dzn files");
-			} else if (dataFiles.size() != Generator.percentages.size() + 1) {
-				throw new IllegalStateException("Not enough data files for " + repetition);
 			}
+//			else if (dataFiles.size() != Generator.percentages.size() + 1) {
+//				throw new IllegalStateException("Not enough data files for " + repetition);
+//			}
 
 			// Reading and appending files
 			StringBuilder primaryModelBuilder = new StringBuilder();

@@ -190,7 +190,7 @@ podman run \
         -p 'value:min(value)..max(value)'
 ```
 
-### Execute
+#### Execute
 ```bash
 sbatch src/test/sh/iingl/iingl-run.sbatch \
     knapsack \
@@ -198,9 +198,9 @@ sbatch src/test/sh/iingl/iingl-run.sbatch \
     src/test/resources/problems/knapsack/k.mzn
 ```
 
-## Radiation
+### Radiation
 
-### Preprocessing
+#### Preprocessing
 
 ```bash
 podman run \
@@ -213,7 +213,7 @@ podman run \
         -p 'Intensity:min(Intensity)..max(Intensity)'
 ```
 
-### Execute
+#### Execute
 
 ```bash
 sbatch src/test/sh/iingl/iingl-run.sbatch \
@@ -346,3 +346,129 @@ Generate the LaTeX table reported in the paper:
 ```bash
 python3 src/test/python/comparison/generate_table.py target/comparison/results
 ```
+
+# Reproducibility of [IINGL](https://doi.org/10.1007/978-3-642-33558-7_19) paper
+
+## Prerequisites
+
+The experiments require:
+* Java 25
+* Maven
+* Podman (or Docker, with equivalent commands)
+* Slurm workload manager (`sbatch`) for executing the experiments on a computing cluster
+* Python (>=3.11) to collect statistics and generate the final tables
+* `xz` (or `unxz`) to extract the benchmark archive
+
+All commands below assume that they are executed from the **root directory of this repository**.
+
+This repository also contains the procedure to reproduce the experiments found [here](https://people.eng.unimelb.edu.au/pstuckey/interprob/).
+
+```bash
+wget https://people.eng.unimelb.edu.au/pstuckey/interprob/benchmarks.zip -O target/reproduce/benchmarks.zip
+unzip target/reproduce/benchmarks.zip -d target/reproduce/
+```
+
+Note that a processed benchmark up until [Step 4](#step-3---generate-the-no-good-learning-instances) can be found in `results/resources/reproduce/problems.tar.xz`
+
+## Step 1 - Fix the old dataset
+This dataset requires an old version of MiniZinc. In order to make it work, you need to run the scripts that fix the dataset. There are 2 scritps:
+- `src/test/python/fix_radiation.py`: python script **to be run inside the radiation folder**. It fixes a parameter called `Bt_max = 10` in every instance. This originally was a structural parameter derived from a variable, that is now prohibited by MiniZinc.
+- `target/reproduce/benchmarks/knapsack/fix.py`: python script **to be run inside the knapsack folder**. Arrays are declared to have length of 100 but actual length is sometimes shorter/longer than declared. There wasn't a check in MiniZinc at the time of writing the old paper so probably it slipped through.
+
+You can directly run these commands:
+```bash
+cd target/reproduce/benchmarks/radiation/
+python3 ../../../../src/test/python/reproduce/fix_radiation.py
+cd ../knapsack/
+python3 ../../../../src/test/python/reproduce/fix_knapsack.py
+cd ../../../../
+```
+
+## Step 2 - Re-organize file and folder
+To avoid name clashing, we reorganize the dataset using this bash script:
+```bash
+bash src/test/sh/reproduce/organize.bash
+```
+
+## Step 3 - Generate the no-good learning instances
+You can run
+```bash
+bash src/test/sh/reproduce/chainer.bash
+```
+
+Note that this script uses java directly. If you need podman (or other containerization tool), you will need to modify the script. Refer to [the preprocessing section here](#step-2---run-1) and the script too.
+
+## Step 4 - Run the experiments
+The experiments execution in once again done through `sbatch`, submitted through Slurm using the provided `src/run.sbatch` script.
+
+### Graph Coloring
+```bash
+for p in 1 2 5 10 20; do
+    sbatch src/test/sh/reproduce/run.sbatch \
+        gc \
+        src/test/resources/problems/graph/graph-colouring.mzn
+done
+```
+
+### Knapsack
+```bash
+for p in 1 2 5 10 20; do
+    sbatch src/test/sh/reproduce/run.sbatch \
+        knapsack \
+        src/test/resources/problems/knapsack/k.mzn
+done
+```
+
+### Radiation
+```bash
+for p in 1 2 5 10 20; do
+    sbatch src/test/sh/reproduce/run.sbatch \
+        radiation \
+        src/test/resources/problems/radiation/radiation.mzn
+done
+```
+
+### MOSP
+```bash
+for p in 1 2 5 10 20; do
+    sbatch src/test/sh/reproduce/run.sbatch \
+        mosp \
+        src/test/resources/problems/mosp/mosp.mzn
+done
+```
+
+## Directory structure
+
+The experiments will be saved with following structure:
+
+```text
+target/
+├─ ...
+└─ reproduce/
+    ├─ benchmarks.zip
+    └─ problems/
+        └─ <problem>
+            └─ <percentage>
+                └─ <repetition>
+                    ├─ <problem>-<percentage>-<repetition>-1.dzn
+                    ├─ <problem>-<percentage>-<repetition>-2.dzn
+                    ├─ chain.mzn
+                    ├─ chain.txt
+                    └─ one-by-one.txt
+```
+
+## Step 3 - Statistics and Table genetation
+To collect the statistics, simply run:
+```python
+python3 src/test/python/reproduce/analyze.py target/reproduce/problems/ target/reproduce/run.json
+python3 src/test/python/reproduce/compute_metrics.py target/reproduce/run.json target/reproduce/metrics.json
+python3 src/test/python/reproduce/generate_tables.py target/reproduce/metrics.json -o target/reproduce/tables
+```
+Tables are then stored in the `target/reproduce/tables` folder.
+
+## Notes
+* **All commands are intended to be executed from the repository root**.
+* The repository root is mounted into the container as `/workspace`.
+* The preprocessing step must be executed before submitting the corresponding Slurm job.
+* The Slurm script `src/test/sh/reproduce/run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
+* **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
