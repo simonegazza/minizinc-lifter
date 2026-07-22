@@ -131,7 +131,7 @@ All commands below assume that they are executed from the **root directory of th
 The repository root is mounted inside the container as `/workspace`
 
 ## Script
-A convenience script is placed in `src/test/sh/recovery/iingl-run.sbactch` and it takes the problem name as an argument.
+A convenience script is placed in `src/test/sh/recovery/iingl-run.sbatch` and it takes the problem name as an argument.
 
 ## Step 1 - Generate the instances
 
@@ -364,6 +364,7 @@ All commands below assume that they are executed from the **root directory of th
 This repository also contains the procedure to reproduce the experiments found [here](https://people.eng.unimelb.edu.au/pstuckey/interprob/).
 
 ```bash
+mkdir target/reproduce
 wget https://people.eng.unimelb.edu.au/pstuckey/interprob/benchmarks.zip -O target/reproduce/benchmarks.zip
 unzip target/reproduce/benchmarks.zip -d target/reproduce/
 ```
@@ -406,6 +407,7 @@ The experiments execution in once again done through `sbatch`, submitted through
 for p in 1 2 5 10 20; do
     sbatch src/test/sh/reproduce/run.sbatch \
         gc \
+        $p \
         src/test/resources/problems/graph/graph-colouring.mzn
 done
 ```
@@ -415,6 +417,7 @@ done
 for p in 1 2 5 10 20; do
     sbatch src/test/sh/reproduce/run.sbatch \
         knapsack \
+        $p \
         src/test/resources/problems/knapsack/k.mzn
 done
 ```
@@ -424,6 +427,7 @@ done
 for p in 1 2 5 10 20; do
     sbatch src/test/sh/reproduce/run.sbatch \
         radiation \
+        $p \
         src/test/resources/problems/radiation/radiation.mzn
 done
 ```
@@ -433,6 +437,7 @@ done
 for p in 1 2 5 10 20; do
     sbatch src/test/sh/reproduce/run.sbatch \
         mosp \
+        $p \
         src/test/resources/problems/mosp/mosp.mzn
 done
 ```
