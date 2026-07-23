@@ -123,6 +123,12 @@ def main(file):
                     f"chain has {len(chain['chain'])} instances but "
                     f"one-by-one has {len(one_by_one)}"
                 )
+            if len(assumptions) != len(one_by_one):
+                print(
+                    f"[{problem_name}, {repetition_index}] "
+                    f"assumptions has {len(assumptions)} instances but "
+                    f"one-by-one has {len(one_by_one)}"
+                )
 
             flat_time_chain.append(chain["flatTime"])
             flat_time_assumptions.extend(p["flatTime"] for p in assumptions)

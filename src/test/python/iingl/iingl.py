@@ -68,11 +68,9 @@ def parse_one_by_one(path):
                 stats = obj["statistics"]
                 current.update(stats)
 
-                # Se non arriverà mai uno status, almeno salva quello
                 if "status" in stats:
                     current["status"] = stats["status"]
 
-                # Fine istanza
                 if "nSolutions" in stats:
                     problems.append(current)
                     current = None

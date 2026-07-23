@@ -104,7 +104,7 @@ def latex_header(cumulative=False):
         for _ in CUMULATIVE_TABLE_KEYS:
             subs.extend(["Chain", "Assumptions", "Individual"])
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            subs.extend(["Over baseline", "Over individual"])
+            subs.extend(["Over Assumptions", "Over Individual"])
 
         header += " & ".join(subs) + r"\\" + "\n"
         header += r"\hhline{-|" + "---|" * len(CUMULATIVE_TABLE_KEYS)
