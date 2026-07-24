@@ -1,0 +1,643 @@
+{
+  "gc": {
+    "1": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.6719938506673993,
+        "1by1": 0.3215540470888701
+      },
+      "solveTime": {
+        "chain": 0.1310909314016988,
+        "1by1": 0.10266327257555105
+      },
+      "failures": {
+        "chain": 7618.33,
+        "1by1": 7209.75
+      },
+      "peakDepth": {
+        "chain": 3094.63,
+        "1by1": 109.17
+      },
+      "cpPropagatorCalls": {
+        "chain": 1172458.92,
+        "1by1": 487443.93
+      },
+      "speedupOver1by1": 0.7831454966244953
+    },
+    "10": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.6426826016358871,
+        "1by1": 0.33617896855334944
+      },
+      "solveTime": {
+        "chain": 0.06243007004838058,
+        "1by1": 0.0394386279097521
+      },
+      "failures": {
+        "chain": 1026.05,
+        "1by1": 1568.18
+      },
+      "peakDepth": {
+        "chain": 2852.74,
+        "1by1": 98.55
+      },
+      "cpPropagatorCalls": {
+        "chain": 183238.41,
+        "1by1": 113888.71
+      },
+      "speedupOver1by1": 0.631724870390004
+    },
+    "2": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.6404265802050587,
+        "1by1": 0.31958311737262074
+      },
+      "solveTime": {
+        "chain": 0.0578109449710278,
+        "1by1": 0.043943530235412157
+      },
+      "failures": {
+        "chain": 875.37,
+        "1by1": 1750.13
+      },
+      "peakDepth": {
+        "chain": 2831.29,
+        "1by1": 98.78
+      },
+      "cpPropagatorCalls": {
+        "chain": 149785.09,
+        "1by1": 120520.14
+      },
+      "speedupOver1by1": 0.7601247524570761
+    },
+    "20": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.6722061054457484,
+        "1by1": 0.3457577559137218
+      },
+      "solveTime": {
+        "chain": 0.09360860759936887,
+        "1by1": 0.050557520768274834
+      },
+      "failures": {
+        "chain": 2656.3,
+        "1by1": 2644.91
+      },
+      "peakDepth": {
+        "chain": 2843.15,
+        "1by1": 95.67
+      },
+      "cpPropagatorCalls": {
+        "chain": 411916.87,
+        "1by1": 185493.67
+      },
+      "speedupOver1by1": 0.5400947847088338
+    },
+    "5": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.6408563407766715,
+        "1by1": 0.32769389701615503
+      },
+      "solveTime": {
+        "chain": 0.06246438120777121,
+        "1by1": 0.043380629596208774
+      },
+      "failures": {
+        "chain": 951.23,
+        "1by1": 1746.66
+      },
+      "peakDepth": {
+        "chain": 2833.98,
+        "1by1": 100.64
+      },
+      "cpPropagatorCalls": {
+        "chain": 165674.71,
+        "1by1": 120870.03
+      },
+      "speedupOver1by1": 0.6944858615010466
+    }
+  },
+  "knapsack": {
+    "1": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 100
+        },
+        "1by1": {
+          "SATISFIABLE": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.20079384285902124,
+        "1by1": 0.17407591281591567
+      },
+      "solveTime": {
+        "chain": 60.01751900953747,
+        "1by1": 60.01640676259147
+      },
+      "failures": {
+        "chain": 63939.61,
+        "1by1": 88583.67
+      },
+      "peakDepth": {
+        "chain": 347.96,
+        "1by1": 31.81
+      },
+      "cpPropagatorCalls": {
+        "chain": 2302458,
+        "1by1": 383502.74
+      },
+      "speedupOver1by1": 0.9999814679619492
+    },
+    "10": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 3,
+          "SATISFIABLE": 97
+        },
+        "1by1": {
+          "SATISFIABLE": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.2002530821479612,
+        "1by1": 0.18175029092585931
+      },
+      "solveTime": {
+        "chain": 58.02425546656909,
+        "1by1": 60.015237834505115
+      },
+      "failures": {
+        "chain": 57259.43,
+        "1by1": 85218.92
+      },
+      "peakDepth": {
+        "chain": 300.18,
+        "1by1": 31.72
+      },
+      "cpPropagatorCalls": {
+        "chain": 2010973.24,
+        "1by1": 369657.75
+      },
+      "speedupOver1by1": 1.0343129326163114
+    },
+    "2": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 99,
+          "OPTIMAL_SOLUTION": 1
+        },
+        "1by1": {
+          "SATISFIABLE": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.2053478821035439,
+        "1by1": 0.17381455301514828
+      },
+      "solveTime": {
+        "chain": 59.61392515787515,
+        "1by1": 60.01396934152302
+      },
+      "failures": {
+        "chain": 67741.5,
+        "1by1": 89505.4
+      },
+      "peakDepth": {
+        "chain": 329.85,
+        "1by1": 31.84
+      },
+      "cpPropagatorCalls": {
+        "chain": 2405655.19,
+        "1by1": 387487.22
+      },
+      "speedupOver1by1": 1.0067105828476892
+    },
+    "20": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 97,
+          "OPTIMAL_SOLUTION": 3
+        },
+        "1by1": {
+          "SATISFIABLE": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.19552997637317213,
+        "1by1": 0.173137199753212
+      },
+      "solveTime": {
+        "chain": 57.71890738142787,
+        "1by1": 60.0137935853623
+      },
+      "failures": {
+        "chain": 55003.75,
+        "1by1": 84856.44
+      },
+      "peakDepth": {
+        "chain": 291.25,
+        "1by1": 32.03
+      },
+      "cpPropagatorCalls": {
+        "chain": 1945337.78,
+        "1by1": 368388.41
+      },
+      "speedupOver1by1": 1.0397596958786655
+    },
+    "5": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 100
+        },
+        "1by1": {
+          "SATISFIABLE": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.20135215150859043,
+        "1by1": 0.17563308016351184
+      },
+      "solveTime": {
+        "chain": 60.01426690901283,
+        "1by1": 60.01894934182773
+      },
+      "failures": {
+        "chain": 59003.07,
+        "1by1": 86451.69
+      },
+      "peakDepth": {
+        "chain": 305.7,
+        "1by1": 31.84
+      },
+      "cpPropagatorCalls": {
+        "chain": 2095901.7,
+        "1by1": 375992.96
+      },
+      "speedupOver1by1": 1.0000780219947032
+    }
+  },
+  "mosp": {
+    "1": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 47,
+          "SATISFIABLE": 53
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 28,
+          "SATISFIABLE": 72
+        }
+      },
+      "flatTime": {
+        "chain": 0.5483864591152121,
+        "1by1": 0.3946953103919978
+      },
+      "solveTime": {
+        "chain": 16.608104182027347,
+        "1by1": 46.72396871660437
+      },
+      "failures": {
+        "chain": 90743.4,
+        "1by1": 154015.75
+      },
+      "peakDepth": {
+        "chain": 1324.74,
+        "1by1": 90.18
+      },
+      "cpPropagatorCalls": {
+        "chain": 1920569.93,
+        "1by1": 1437689.28
+      },
+      "speedupOver1by1": 2.8133234356253167
+    },
+    "10": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 73,
+          "OPTIMAL_SOLUTION": 27
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 43,
+          "SATISFIABLE": 57
+        }
+      },
+      "flatTime": {
+        "chain": 0.5459122660200885,
+        "1by1": 0.39544018703045314
+      },
+      "solveTime": {
+        "chain": 39.24161807916997,
+        "1by1": 43.4760782846563
+      },
+      "failures": {
+        "chain": 107801.27,
+        "1by1": 154637.25
+      },
+      "peakDepth": {
+        "chain": 1320.39,
+        "1by1": 87.56
+      },
+      "cpPropagatorCalls": {
+        "chain": 2690380.71,
+        "1by1": 1443058.65
+      },
+      "speedupOver1by1": 1.1079073802956676
+    },
+    "2": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 32,
+          "SATISFIABLE": 68
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 30,
+          "SATISFIABLE": 70
+        }
+      },
+      "flatTime": {
+        "chain": 0.5493416106733353,
+        "1by1": 0.3935034165606165
+      },
+      "solveTime": {
+        "chain": 21.67912681902303,
+        "1by1": 46.63817278592887
+      },
+      "failures": {
+        "chain": 96979.38,
+        "1by1": 155435.4
+      },
+      "peakDepth": {
+        "chain": 1323.79,
+        "1by1": 89.69
+      },
+      "cpPropagatorCalls": {
+        "chain": 2169277.57,
+        "1by1": 1463684.88
+      },
+      "speedupOver1by1": 2.15129387706726
+    },
+    "20": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 71,
+          "OPTIMAL_SOLUTION": 29
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 52,
+          "SATISFIABLE": 48
+        }
+      },
+      "flatTime": {
+        "chain": 0.5460035851465895,
+        "1by1": 0.3963831494821291
+      },
+      "solveTime": {
+        "chain": 44.11226198030764,
+        "1by1": 41.22934332832377
+      },
+      "failures": {
+        "chain": 109869.28,
+        "1by1": 151212.72
+      },
+      "peakDepth": {
+        "chain": 1319.16,
+        "1by1": 85.12
+      },
+      "cpPropagatorCalls": {
+        "chain": 2813673.54,
+        "1by1": 1423010.16
+      },
+      "speedupOver1by1": 0.9346458666465381
+    },
+    "5": {
+      "statuses": {
+        "chain": {
+          "SATISFIABLE": 70,
+          "OPTIMAL_SOLUTION": 30
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 39,
+          "SATISFIABLE": 61
+        }
+      },
+      "flatTime": {
+        "chain": 0.5467050903606063,
+        "1by1": 0.39321959525246136
+      },
+      "solveTime": {
+        "chain": 27.162727463636628,
+        "1by1": 44.9873994874576
+      },
+      "failures": {
+        "chain": 100682.66,
+        "1by1": 153851.01
+      },
+      "peakDepth": {
+        "chain": 1322.99,
+        "1by1": 88.89
+      },
+      "cpPropagatorCalls": {
+        "chain": 2470901.19,
+        "1by1": 1448299.47
+      },
+      "speedupOver1by1": 1.6562180490778504
+    }
+  },
+  "radiation": {
+    "1": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.3276404138520755,
+        "1by1": 0.30892357575932167
+      },
+      "solveTime": {
+        "chain": 0.24535267477111655,
+        "1by1": 1.4811264534301773
+      },
+      "failures": {
+        "chain": 5851.2,
+        "1by1": 30845.26
+      },
+      "peakDepth": {
+        "chain": 487.43,
+        "1by1": 311.82
+      },
+      "cpPropagatorCalls": {
+        "chain": 582330.65,
+        "1by1": 2348787.32
+      },
+      "speedupOver1by1": 6.0367242982448985
+    },
+    "10": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.3301105829958975,
+        "1by1": 0.3078980549646455
+      },
+      "solveTime": {
+        "chain": 0.9548807705946034,
+        "1by1": 1.49803083033604
+      },
+      "failures": {
+        "chain": 15778.09,
+        "1by1": 30885.42
+      },
+      "peakDepth": {
+        "chain": 481.93,
+        "1by1": 308.06
+      },
+      "cpPropagatorCalls": {
+        "chain": 1582519.14,
+        "1by1": 2333820.7
+      },
+      "speedupOver1by1": 1.5688145331518377
+    },
+    "2": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.3266211100386967,
+        "1by1": 0.307218107757288
+      },
+      "solveTime": {
+        "chain": 0.4448483513193415,
+        "1by1": 1.4886826768774468
+      },
+      "failures": {
+        "chain": 9072.86,
+        "1by1": 30341.48
+      },
+      "peakDepth": {
+        "chain": 487.71,
+        "1by1": 312.65
+      },
+      "cpPropagatorCalls": {
+        "chain": 941042.36,
+        "1by1": 2332016.76
+      },
+      "speedupOver1by1": 3.3464947604330275
+    },
+    "20": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.33065089459032376,
+        "1by1": 0.31018514691408966
+      },
+      "solveTime": {
+        "chain": 1.141427602945943,
+        "1by1": 1.535174958326845
+      },
+      "failures": {
+        "chain": 20873.8,
+        "1by1": 33741.61
+      },
+      "peakDepth": {
+        "chain": 478.3,
+        "1by1": 304.39
+      },
+      "cpPropagatorCalls": {
+        "chain": 1991130.4,
+        "1by1": 2456034.16
+      },
+      "speedupOver1by1": 1.3449604288214763
+    },
+    "5": {
+      "statuses": {
+        "chain": {
+          "OPTIMAL_SOLUTION": 100
+        },
+        "1by1": {
+          "OPTIMAL_SOLUTION": 100
+        }
+      },
+      "flatTime": {
+        "chain": 0.32683972903590447,
+        "1by1": 0.3060892966208829
+      },
+      "solveTime": {
+        "chain": 0.6889534683411179,
+        "1by1": 1.4188969563825276
+      },
+      "failures": {
+        "chain": 12072.69,
+        "1by1": 29476.75
+      },
+      "peakDepth": {
+        "chain": 485.82,
+        "1by1": 311.66
+      },
+      "cpPropagatorCalls": {
+        "chain": 1235326.86,
+        "1by1": 2277925.12
+      },
+      "speedupOver1by1": 2.0594960640796085
+    }
+  }
+}

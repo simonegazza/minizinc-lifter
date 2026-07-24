@@ -22,8 +22,11 @@ for dzn_file in Path(".").glob("*.dzn"):
         if len(value) != n:
             print(f"Instance {dzn_file} has {len(value)} elements in {label} while declaring {n}")
 
-            value.extend(int(sum(value) / n) for _ in range(n - len(value)))
             modified = True
+            if len(value) < n:
+                value.extend(int(sum(value) / n) for _ in range(n - len(value)))
+            elif len(value) > n:
+                minizinc_vars[label] = value[:100]
 
     if modified:
         new_text = ""

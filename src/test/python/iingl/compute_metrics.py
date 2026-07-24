@@ -235,15 +235,6 @@ def main(file):
 
     return results
 
-def round_floats(obj, digits=3):
-    if isinstance(obj, float):
-        return f"{obj:.{digits}f}" #round(obj, digits)
-    if isinstance(obj, dict):
-        return {key: round_floats(value, digits) for key, value in obj.items()}
-    if isinstance(obj, list):
-        return [round_floats(item, digits) for item in obj]
-
-    return obj
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -261,7 +252,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     result = main(args.file)
-    result = round_floats(result)
 
     if args.output_file:
         with open(args.output_file, "w", encoding="utf-8") as f:

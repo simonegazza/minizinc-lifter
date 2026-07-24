@@ -14,9 +14,9 @@ models[radiation]="radiation.mzn"
 
 declare -A parameters
 parameters[graph]="-p graph"
-parameters[knapsack]="-p size -p value"
+parameters[knapsack]="-p 'size:min(size)..max(size)' -p 'value:min(value)..max(value)'"
 parameters[mosp]="-p graph"
-parameters[radiation]="-p Intensity"
+parameters[radiation]="-p 'Intensity:min(Intensity)..max(Intensity)'"
 
 declare -A name
 name[graph]="gc"

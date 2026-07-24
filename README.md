@@ -369,7 +369,7 @@ wget https://people.eng.unimelb.edu.au/pstuckey/interprob/benchmarks.zip -O targ
 unzip target/reproduce/benchmarks.zip -d target/reproduce/
 ```
 
-Note that a processed benchmark up until [Step 4](#step-3---generate-the-no-good-learning-instances) can be found in `results/resources/reproduce/problems.tar.xz`
+Note that a processed benchmark(#step-3---generate-the-no-good-learning-instances) can be found in `results/resources/reproduce/results.tar.xz`
 
 ## Step 1 - Fix the old dataset
 This dataset requires an old version of MiniZinc. In order to make it work, you need to run the scripts that fix the dataset. There are 2 scritps:
