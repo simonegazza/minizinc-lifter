@@ -37,13 +37,14 @@ def aggregate(values, aggregator):
 
 def solve_time(instance):
     if "solveTime" in instance:
-        return instance["solveTime"]
+        return instance["solveTime"] if instance["solveTime"] < 60 else 60.0
 
     time = instance.get("time")
     flat_time = instance.get("flatTime")
 
     if isinstance(time, (int, float)) and isinstance(flat_time, (int, float)):
-        return time - flat_time
+        t = time - flat_time
+        return t if t < 60.0 else 60.0
 
     return ERROR_VALUE
 

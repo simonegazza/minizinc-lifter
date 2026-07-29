@@ -3,7 +3,7 @@ from pathlib import Path
 from statistics import StatisticsError, geometric_mean
 
 TABLE_METRICS = [
-    ("solveTime", "Solve Time (s)"),
+    ("solveTime", "Solve Time"),
     ("failures", "Failures"),
 ]
 
@@ -35,10 +35,11 @@ def latex_header():
         rf"\begin{{tabular}}{{{column_spec}}}",
         rf"\hhline{{~|{'~' * metric_columns}|~}}",
         r"\multirow{2}{*}{\centering Diff} & "
-        + " & ".join(groups + [r"Speedup over Individual"])
+        + " & ".join(groups)
+        + r" & \multirow{2}{*}{\centering Speedup}"
         + r"\\",
         rf"\hhline{{~|{'~' * metric_columns}|~}}",
-        r"& " + " & ".join(subheaders + [r"Individual / Chain"]) + r"\\",
+        r"& " + " & ".join(subheaders) + r"\\",
         rf"\hhline{{-|{'--|' * len(TABLE_METRICS)}-}}",
     ])
 
@@ -60,7 +61,7 @@ def format_value(value, digits=3):
 
     if number >= 10000:
         return f"{round(number / 1000)}k"
-    return str(round(number, digits))
+    return f"{round(number, digits):.{digits}f}"
 
 def compute_problem_metrics(percentage_data):
     rows = []
@@ -133,7 +134,7 @@ def generate_flat_status_table(metrics_by_problem):
         r"\begin{tabular}{c|cc|cccc|cccc}",
         r"\hhline{~|~~|~~~~|~~~~}",
         r"\multirow{2}{*}{\centering Problem} & "
-        r"\multicolumn{2}{c|}{Flat Time (s)} & "
+        r"\multicolumn{2}{c|}{Flat Time} & "
         r"\multicolumn{4}{c|}{Status Chain} & "
         r"\multicolumn{4}{c}{Status Individual}\\",
         r"\hhline{~|~~|~~~~|~~~~}",
@@ -155,10 +156,10 @@ def generate_flat_status_table(metrics_by_problem):
         lines.append(" & ".join(format_value(value) for value in row) + r"\\")
 
     lines.extend([
-            r"\end{tabular}",
-            r"\caption{Flat solving time and status distribution for all benchmark problems.}",
-            r"\label{tab:flat-status-results}",
-            r"\end{table*}",
+        r"\end{tabular}",
+        r"\caption{Flat solving time and status distribution for all benchmark problems.}",
+        r"\label{tab:flat-status-results}",
+        r"\end{table*}",
     ])
 
     return "\n".join(lines)
