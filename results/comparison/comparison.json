@@ -1,0 +1,138 @@
+{
+  "latin": {
+    "soft": {
+      "flatTimeMean": 0.1944791401084111,
+      "solveTimeMean": 24.835160905056874,
+      "failures": 121743.9328464476,
+      "cpPropagatorCalls": 14373902.381135084,
+      "unknowns": 0
+    },
+    "lifted": {
+      "gMean(iterationSumFlatTime)": 0.17921321170120805,
+      "gMean(iterationSumSolveTime)": 0.07215644652619693,
+      "failures": 140.2138812173948,
+      "minIterations": 7,
+      "medianIterations": 18,
+      "maxIterations": 28,
+      "cpPropagatorCalls": 53498.433828645044,
+      "unknowns": 0
+    },
+    "better": {
+      "total": 50,
+      "soft": {
+        "better": 50,
+        "worse": 0,
+        "MUSes": 0,
+        "discordant": 0
+      },
+      "hard": {
+        "better": 32,
+        "worse": 18,
+        "MUSes": 0,
+        "discordant": 0
+      }
+    }
+  },
+  "TAP": {
+    "soft": {
+      "flatTimeMean": 0.4204624488361254,
+      "solveTimeMean": 60.01488451953365,
+      "failures": 35830.74243861029,
+      "cpPropagatorCalls": 9230202.074933654,
+      "unknowns": 0
+    },
+    "lifted": {
+      "gMean(iterationSumFlatTime)": 0.5967012495003226,
+      "gMean(iterationSumSolveTime)": 0.8641769059372687,
+      "failures": 9843.877886487331,
+      "minIterations": 1,
+      "medianIterations": 2,
+      "maxIterations": 6,
+      "cpPropagatorCalls": 314087.9211580042,
+      "unknowns": 4
+    },
+    "better": {
+      "total": 50,
+      "soft": {
+        "better": 46,
+        "worse": 4,
+        "MUSes": 0,
+        "discordant": 0
+      },
+      "hard": {
+        "better": 40,
+        "worse": 10,
+        "MUSes": 0,
+        "discordant": 0
+      }
+    }
+  },
+  "RSBP": {
+    "soft": {
+      "flatTimeMean": 0.2525383410639774,
+      "solveTimeMean": 60.00621126480711,
+      "failures": 38983.34185032576,
+      "cpPropagatorCalls": 44963466.03234522,
+      "unknowns": 0
+    },
+    "lifted": {
+      "gMean(iterationSumFlatTime)": 0.25546941700814674,
+      "gMean(iterationSumSolveTime)": 11.277471639736929,
+      "failures": 104707.14571324894,
+      "minIterations": 1,
+      "medianIterations": 4,
+      "maxIterations": 57,
+      "cpPropagatorCalls": 14212797.224209197,
+      "unknowns": 16
+    },
+    "better": {
+      "total": 50,
+      "soft": {
+        "better": 32,
+        "worse": 16,
+        "MUSes": 2,
+        "discordant": 0
+      },
+      "hard": {
+        "better": 29,
+        "worse": 19,
+        "MUSes": 2,
+        "discordant": 0
+      }
+    }
+  },
+  "RCPSP": {
+    "soft": {
+      "flatTimeMean": 0.19001460486359487,
+      "solveTimeMean": 3.5352371629454704,
+      "failures": 11103.939489368491,
+      "cpPropagatorCalls": 1957394.6773826375,
+      "unknowns": 0
+    },
+    "lifted": {
+      "gMean(iterationSumFlatTime)": 1.6569864087958661,
+      "gMean(iterationSumSolveTime)": 66.15198191822928,
+      "failures": 2271.3916377468286,
+      "minIterations": 12,
+      "medianIterations": 41,
+      "maxIterations": 55,
+      "cpPropagatorCalls": 295850313.0993074,
+      "unknowns": 0
+    },
+    "better": {
+      "total": 50,
+      "soft": {
+        "better": 10,
+        "worse": 0,
+        "MUSes": 40,
+        "discordant": 0
+      },
+      "hard": {
+        "better": 0,
+        "worse": 10,
+        "MUSes": 40,
+        "discordant": 0
+      }
+    }
+  }
+}
