@@ -16,8 +16,8 @@ To compile the code, run any of the tests (both the code tests and the following
 ./mvnw package
 ```
 
-# Automatic Satisfiability Recovery
-This repository also contains the implementation and experimental artifacts for the **Automatic Satisfiability Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script, which:
+# Automatic Feasibility Recovery
+This repository also contains the implementation and experimental artifacts for the **Automatic Feasibility Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script, which:
 
 ## Prerequisites
 The experiments require:
@@ -105,6 +105,72 @@ target/
     ├─ *.txt
     ├─ result.json
     └─ tables.json
+```
+
+# Comparison with CMPCS
+This repository also contains the implementation and experimental artifacts used to reproduce the **comparison** experiments presented in our paper.
+
+The experiments compare the proposed approach against the baseline models on four benchmark families:
+* latin
+* TAP
+* RSBP
+* RCPSP
+
+Instances can be found in `src/test/resources/comparison/data.tar.xz`.
+
+## Prerequisites
+
+The experiments require:
+* Java 25
+* Maven
+* Podman (or Docker, with equivalent commands)
+* Slurm workload manager (`sbatch`) for executing the experiments on a computing cluster
+* Python (>=3.11) to collect statistics and generate the final tables
+* `xz` (or `unxz`) to extract the benchmark archive
+
+All commands below assume that they are executed from the **root directory of this repository**.
+
+## Step 1 - Extract the benchmark data
+
+Create the output directory and extract the benchmark models and data files:
+
+```bash
+mkdir -p target/comparison
+unxz -c results/comparison/results.tar.xz | tar -xvf - -C target/comparison
+```
+
+After extraction, the benchmark instances are available under the `target/comparison/` folder.
+
+## Step 2 - Run the experiments
+
+The scripts accept a single argument specifying the benchmark to execute. The supported values are:
+* `latin`
+* `TAP`
+* `RSBP`
+* `RCPSP`
+
+For example:
+```bash
+sbatch src/test/sh/recovery/run-lifted.sbatch TAP
+```
+runs the benchmark for the TAP problem with our approach, while
+```bash
+sbatch src/test/sh/recovery/run-soft.sbatch TAP
+```
+runs the benchmark for the TAP problem with the soft approach.
+
+## Step 3 - Collect the statistics
+
+After all Slurm jobs have completed, aggregate the raw results into a single dataset:
+```bash
+python3 src/test/python/comparison/process_all.py target/comparison/results
+```
+
+## Step 4 - Generate the LaTeX table
+
+Generate the LaTeX table reported in the paper:
+```bash
+python3 src/test/python/comparison/generate_table.py target/comparison/results
 ```
 
 # Inter-Instances Nogood Learning (IINGL)
@@ -280,72 +346,6 @@ Tables are then stored in the `target/iingl/tables` folder.
 * The preprocessing step must be executed before submitting the corresponding Slurm job.
 * The Slurm script `src/test/sh/recovery/iingl-run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
 * **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
-
-# Comparison with CMPCS
-This repository also contains the implementation and experimental artifacts used to reproduce the **comparison** experiments presented in our paper.
-
-The experiments compare the proposed approach against the baseline models on four benchmark families:
-* latin
-* TAP
-* RSBP
-* RCPSP
-
-Instances can be found in `src/test/resources/comparison/data.tar.xz`.
-
-## Prerequisites
-
-The experiments require:
-* Java 25
-* Maven
-* Podman (or Docker, with equivalent commands)
-* Slurm workload manager (`sbatch`) for executing the experiments on a computing cluster
-* Python (>=3.11) to collect statistics and generate the final tables
-* `xz` (or `unxz`) to extract the benchmark archive
-
-All commands below assume that they are executed from the **root directory of this repository**.
-
-## Step 1 - Extract the benchmark data
-
-Create the output directory and extract the benchmark models and data files:
-
-```bash
-mkdir -p target/comparison
-unxz -c results/comparison/results.tar.xz | tar -xvf - -C target/comparison
-```
-
-After extraction, the benchmark instances are available under the `target/comparison/` folder.
-
-## Step 2 - Run the experiments
-
-The scripts accept a single argument specifying the benchmark to execute. The supported values are:
-* `latin`
-* `TAP`
-* `RSBP`
-* `RCPSP`
-
-For example:
-```bash
-sbatch src/test/sh/recovery/run-lifted.sbatch TAP
-```
-runs the benchmark for the TAP problem with our approach, while
-```bash
-sbatch src/test/sh/recovery/run-soft.sbatch TAP
-```
-runs the benchmark for the TAP problem with the soft approach.
-
-## Step 3 - Collect the statistics
-
-After all Slurm jobs have completed, aggregate the raw results into a single dataset:
-```bash
-python3 src/test/python/comparison/process_all.py target/comparison/results
-```
-
-## Step 4 - Generate the LaTeX table
-
-Generate the LaTeX table reported in the paper:
-```bash
-python3 src/test/python/comparison/generate_table.py target/comparison/results
-```
 
 # Reproducibility of [IINGL](https://doi.org/10.1007/978-3-642-33558-7_19) paper
 
