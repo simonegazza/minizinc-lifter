@@ -17,7 +17,7 @@ To compile the code, run any of the tests (both the code tests and the following
 ```
 
 # Automatic Feasibility Recovery
-This repository also contains the implementation and experimental artifacts for the **Automatic Feasibility Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script, which:
+This repository also contains the implementation and experimental artifacts for the **Automatic Feasibility Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script.
 
 ## Prerequisites
 The experiments require:
@@ -28,7 +28,7 @@ The experiments require:
 All commands are executed from the **root directory of the repository**.
 
 ## Experimental pipeline
-We will use the fixture problem as running example for this experimentation. The other model are available in `src/test/sh/recovery`
+We will use the fixture problem as running example for this experimentation. The other scripts are available in `src/test/sh/recovery/problems`.
 
 ### Step 1 - Generate randomized benchmark
 Random benchmark instances are generated using the `test-randomizer` tool.
@@ -173,7 +173,7 @@ Generate the LaTeX table reported in the paper:
 python3 src/test/python/comparison/generate_table.py target/comparison/results
 ```
 
-# Inter-Instances Nogood Learning (IINGL)
+# Coarse and increasing change Inter-Instances Nogood Learning (IINGL)
 
 This repository contains also the implementation and the experimental artifacts used to reproduce the **Inter-Instances Nogood Learning (IINGL)** experiments presented in our paper.
 
@@ -219,7 +219,7 @@ The `-a 100` option generates 100 instances for each benchmark family.
 ## Step 2 - Run
 For each benchmark, the experiment consists of two phases:
 1. **Preprocessing**, where the information required by the IINGL framework is generated.
-2. **Execution**, submitted through Slurm using the provided `iingl-run.sbatch` script.
+2. **Execution**, submitted through Slurm using the provided `sc/test/sh/iingl-run.sbatch` script.
 
 ### Graph Coloring
 #### Preprocessing
@@ -265,7 +265,6 @@ sbatch src/test/sh/iingl/iingl-run.sbatch \
 ```
 
 ### Radiation
-
 #### Preprocessing
 
 ```bash
@@ -280,7 +279,6 @@ podman run \
 ```
 
 #### Execute
-
 ```bash
 sbatch src/test/sh/iingl/iingl-run.sbatch \
     radiation \
@@ -310,7 +308,6 @@ sbatch src/test/sh/iingl/iingl-run.sbatch \
 ```
 
 ## Directory structure
-
 The experiments will be saved with following structure:
 
 ```text
@@ -369,7 +366,7 @@ wget https://people.eng.unimelb.edu.au/pstuckey/interprob/benchmarks.zip -O targ
 unzip target/reproduce/benchmarks.zip -d target/reproduce/
 ```
 
-Note that a processed benchmark(#step-3---generate-the-no-good-learning-instances) can be found in `results/resources/reproduce/results.tar.xz`
+Note that a processed benchmark can be found in `results/reproduce/results.tar.xz`
 
 ## Step 1 - Fix the old dataset
 This dataset requires an old version of MiniZinc. In order to make it work, you need to run the scripts that fix the dataset. There are 2 scritps:
@@ -400,7 +397,7 @@ bash src/test/sh/reproduce/chainer.bash
 Note that this script uses java directly. If you need podman (or other containerization tool), you will need to modify the script. Refer to [the preprocessing section here](#step-2---run-1) and the script too.
 
 ## Step 4 - Run the experiments
-The experiments execution in once again done through `sbatch`, submitted through Slurm using the provided `src/run.sbatch` script.
+The experiments execution in once again done through `sbatch`, submitted through Slurm using the provided `src/sh/reproduce/run.sbatch` script.
 
 ### Graph Coloring
 ```bash
@@ -477,3 +474,132 @@ Tables are then stored in the `target/reproduce/tables` folder.
 * The preprocessing step must be executed before submitting the corresponding Slurm job.
 * The Slurm script `src/test/sh/reproduce/run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
 * **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
+
+# Finer IINGL
+
+Note that a processed benchmark can be found in `results/100/results.tar.xz`
+
+## Prerequisites
+The experiments require:
+* Java 25
+* Maven
+* Podman (or Docker, with equivalent commands)
+* Slurm workload manager (`sbatch`) for executing the experiments on a computing cluster
+* Python (>=3.11) to collect statistics and generate the final tables
+* `xz` (or `unxz`) to extract the benchmark archive
+
+All commands below assume that they are executed from the **root directory of this repository**.
+
+## Generate the dataset from scratch
+You can re-generate the dataset from scratch by running these commands:
+```bash
+python3 src/test/python/100/generate_colouring.py target/100/problems
+python3 src/test/python/100/generate_knapsack.py target/100/problems
+python3 src/test/python/100/generate_mosp.py target/100/problems
+python3 src/test/python/100/generate_radiation.py target/100/problems
+```
+
+## Preprocessing
+Generated instances needs to be saved into model, just like in the [coarse verion](#coarse-and-increasing-change-inter-instances-nogood-learning-iingl).
+
+### Graph Coloring
+```bash
+podman run \
+    -v ./:/workspace \
+    -w /workspace \
+    docker.io/library/maven:3.9-eclipse-temurin-25 \
+    java -jar target/iingl-saver.jar \
+        -m src/test/resources/problems/graph/gc-simplified.mzn \
+        -d target/100/problems/colouring \
+        -p graph
+```
+
+### Knapsack
+```bash
+podman run \
+    -v ./:/workspace \
+    -w /workspace \
+    docker.io/library/maven:3.9-eclipse-temurin-25 \
+    java -jar target/iingl-saver.jar \
+        -m src/test/resources/problems/knapsack/k.mzn \
+        -d target/100/problems/knapsack \
+        -p 'size:min(size)..max(size)' \
+        -p 'value:min(value)..max(value)'
+```
+
+### MOSP
+```bash
+podman run \
+    -v ./:/workspace \
+    -w /workspace \
+    docker.io/library/maven:3.9-eclipse-temurin-25 \
+    java -jar target/iingl-saver.jar \
+        -m src/test/resources/problems/mosp/mosp.mzn \
+        -d target/100/problems/mosp \
+        -p graph
+```
+
+### Radiation
+```bash
+podman run \
+    -v ./:/workspace \
+    -w /workspace \
+    docker.io/library/maven:3.9-eclipse-temurin-25 \
+    java -jar target/iingl-saver.jar \
+        -m src/test/resources/problems/radiation/radiation.mzn \
+        -d target/100/problems/radiation \
+        -p 'Intensity:min(Intensity)..max(Intensity)'
+```
+
+## Execution
+### Graph Coloring
+```bash
+sbatch src/test/sh/100/100-run.sbatch \
+    colouring \
+    src/test/resources/100/gc-simplified.mzn \
+    src/test/resources/problems/graph/gc-simplified.mzn
+```
+
+### Knapsack
+```bash
+sbatch src/test/sh/100/100-run.sbatch \
+    knapsack \
+    src/test/resources/100/knapsack.mzn \
+    src/test/resources/problems/knapsack/k.mzn
+```
+
+### Radiation
+```bash
+sbatch src/test/sh/100/100-run.sbatch \
+    radiation \
+    src/test/resources/100/radiation.mzn \
+    src/test/resources/problems/radiation/radiation.mzn
+```
+
+### MOSP
+```bash
+sbatch src/test/sh/100/100-run.sbatch \
+    mosp \
+    src/test/resources/100/mosp.mzn \
+    src/test/resources/problems/mosp/mosp.mzn
+```
+
+## Directory structure
+The experiments will be saved with following structure:
+```text
+target/
+├─ ...
+├─ iingl-generator.jar
+├─ iingl-saver.jar
+└─ 100/
+    └─ problems/
+        └─ <problem>
+            └─ <percentage>
+                ├─ 00.dzn
+                ├─ ...
+                ├─ 99.dzn
+                ├─ chain.mzn
+                ├─ chain.txt
+                ├─ assumptions.txt
+                └─ one-by-one.txt
+```
