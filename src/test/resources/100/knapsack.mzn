@@ -44,9 +44,9 @@ predicate cumulative(
 int: n;                          % The number of items.
 int: k;                          % The size of the knapsack.
 
-array[1..n] of var int: size_lifted :: doc_comment("size_lifted");       % size[i] is the size of item i.
+array[1..n] of var 0..10: size_lifted :: doc_comment("size_lifted");       % size[i] is the size of item i.
 
-array[1..n] of var int: value_lifted :: doc_comment("value_lifted");      % value[i] is the value of item i.
+array[1..n] of var 0..10: value_lifted :: doc_comment("value_lifted");      % value[i] is the value of item i.
 
 array [1..n] of var 0..1: x;
                                 % x[i] = 1 iff item i is included.

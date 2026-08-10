@@ -1,8 +1,8 @@
 
 int: n;                          % The number of items.
 int: k;                          % The size of the knapsack.
-array [1..n] of int: size;       % size[i] is the size of item i.
-array [1..n] of int: value;      % value[i] is the value of item i.
+array [1..n] of 1..10: size;       % size[i] is the size of item i.
+array [1..n] of 1..10: value;      % value[i] is the value of item i.
 
 array [1..n] of var 0..1: x;
                                 % x[i] = 1 iff item i is included.

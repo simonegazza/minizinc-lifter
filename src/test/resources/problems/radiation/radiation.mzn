@@ -5,7 +5,7 @@ set of int: Rows    = 1..m;
 set of int: Columns = 1..n;
 
 	% Intensity matrix
-array[Rows, Columns] of int: Intensity;
+array[Rows, Columns] of 1..10: Intensity;
 
 set of int: BTimes = 1..Bt_max;
 
