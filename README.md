@@ -500,7 +500,7 @@ python3 src/test/python/100/generate_radiation.py target/100/problems
 ```
 
 ## Preprocessing
-Generated instances needs to be saved into model, just like in the [coarse verion](#coarse-and-increasing-change-inter-instances-nogood-learning-iingl).
+Generated instances needs to be saved into model, just like in the [coarse version](#coarse-and-increasing-change-inter-instances-nogood-learning-iingl).
 
 ### Graph Coloring
 ```bash

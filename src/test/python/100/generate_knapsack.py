@@ -3,7 +3,7 @@
 import argparse, random
 from pathlib import Path
 
-NUM_ITEMS = 35
+NUM_ITEMS = 33
 MIN_VALUE = 1
 MAX_VALUE = 10
 PERCENTAGES = [1, 2, 5, 10, 20, 50]
@@ -40,7 +40,7 @@ def apply_changes(size, value, percentage):
 def write_dzn(path, size, value):
     content = (
         f"n = {NUM_ITEMS};\n"
-        f"k = 125;\n\n"
+        f"k = 100;\n\n"
         f"size = {size};\n"
         f"value = {value};\n"
     )

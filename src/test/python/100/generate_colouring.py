@@ -4,7 +4,7 @@ import argparse, random
 from collections import deque
 from pathlib import Path
 
-N = 60
+N = 51
 PERCENTAGES = [1, 2, 5, 10, 20, 50]
 NUM_INSTANCES = 100
 EDGE_PROBABILITY = 0.72
