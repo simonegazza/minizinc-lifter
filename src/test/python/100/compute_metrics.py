@@ -139,14 +139,12 @@ def main(file):
                     for p in chain["chain"]
                 ))
             )
-
             results[problem_name]["statuses"]["assumptions"].append(
                 dict(Counter(
                     p.get("status", ERROR_VALUE)
                     for p in assumptions
                 ))
             )
-
             results[problem_name]["statuses"]["1by1"].append(
                 dict(Counter(
                     p.get("status", ERROR_VALUE)
@@ -171,7 +169,6 @@ def main(file):
             )
 
             solve_chain, solve_assumptions, solve_1by1 = get_solve_time(experiment)
-            print(problem_name, percentage, solve_chain)
             results[problem_name]["solveTime"]["chain"].append(
                 aggregate_values(solve_chain, geometric_mean)
             )
