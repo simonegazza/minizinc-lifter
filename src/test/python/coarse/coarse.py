@@ -84,37 +84,36 @@ def parse_one_by_one(path):
 
     return problems
 
-def main(folder: Path):
+
+def main(folder):
+    folder = Path(folder)
+
     paths = sorted(
         chain(
             folder.rglob("chain.txt"),
-            #folder.rglob("assumptions.txt"),
-            folder.rglob("one-by-one.txt"),
-        )
+            folder.rglob("assumptions.txt"),
+            folder.rglob("one-by-one.txt"))
     )
 
     results = {}
     for path in paths:
         rel = path.relative_to(folder)
 
-
-        # Structure:
-        # folder/problems/<problem>/<percentage>/{chain.txt|assumptions.txt|one-by-one.txt}
+        # Assumes:
+        # folder/problem/method/repetition/{chain.txt|assumptions.txt|one-by-one.txt}
         problem = rel.parts[0]
-        results.setdefault(problem, {})
-
-        percentage = rel.parts[1]
-        results[problem].setdefault(percentage, {})
+        method = rel.parts[1]
+        repetition = rel.parts[2]
 
         if path.name == "chain.txt":
             entry = parse_chain(path)
-            results[problem][percentage]["chain.txt"] = entry
-        #elif path.name == "assumptions.txt":
-        #    entry = parse_one_by_one(path)
-        #    results[problem][percentage]["assumptions.txt"] = entry
+        elif path.name == "assumptions.txt":
+            entry = parse_one_by_one(path)
         else:
             entry = parse_one_by_one(path)
-            results[problem][percentage]["one-by-one.txt"] = entry
+
+        repetition_dict = results.setdefault(problem, {}).setdefault(method, {})
+        repetition_dict[repetition] = entry
 
     return results
 
@@ -125,7 +124,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "folder",
-        type=Path,
         help="Folder containing all experiments.",
     )
     parser.add_argument(

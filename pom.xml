@@ -211,14 +211,14 @@
 			                </descriptorRefs>
 			            </configuration>
 			        </execution>
-			        <!-- iingl-generator -->
+			        <!-- coarse-generator -->
 			        <execution>
-			            <id>iingl-generator</id>
+			            <id>coarse-generator</id>
 			            <phase>package</phase>
 			            <goals><goal>single</goal></goals>
 			            <configuration>
 			                <appendAssemblyId>false</appendAssemblyId>
-			                <finalName>iingl-generator</finalName>
+			                <finalName>coarse-generator</finalName>
 			                <archive>
 			                    <manifest>
 			                        <mainClass>me.simonegazza.learning.Generator</mainClass>
@@ -229,7 +229,7 @@
 			                </descriptorRefs>
 			            </configuration>
 			        </execution>
-			        <!-- iingl-runner -->
+			        <!-- coarse-saver -->
 			        <execution>
 			            <id>iingl-saver</id>
 			            <phase>package</phase>

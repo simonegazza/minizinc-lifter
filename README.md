@@ -197,7 +197,7 @@ All commands below assume that they are executed from the **root directory of th
 The repository root is mounted inside the container as `/workspace`
 
 ## Script
-A convenience script is placed in `src/test/sh/recovery/iingl-run.sbatch` and it takes the problem name as an argument.
+A convenience script is placed in `src/test/sh/recovery/coarse-run.sbatch` and it takes the problem name as an argument.
 
 ## Step 1 - Generate the instances
 
@@ -208,8 +208,8 @@ podman run \
     -v ./:/workspace \
     -w /workspace \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
-    java -jar target/iingl-generator.jar \
-        -o target/iingl/problems/ \
+    java -jar target/coarse-generator.jar \
+        -o target/coarse/problems/ \
         -a 100
 ```
 
@@ -218,8 +218,8 @@ The `-a 100` option generates 100 instances for each benchmark family.
 
 ## Step 2 - Run
 For each benchmark, the experiment consists of two phases:
-1. **Preprocessing**, where the information required by the IINGL framework is generated.
-2. **Execution**, submitted through Slurm using the provided `sc/test/sh/iingl-run.sbatch` script.
+1. **Preprocessing**, that generates the chain model.
+2. **Execution**, submitted through Slurm using the provided `sc/test/sh/run.sbatch` script.
 
 ### Graph Coloring
 #### Preprocessing
@@ -230,15 +230,15 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/graph/graph-colouring.mzn \
-        -d target/iingl/problems/colouring \
+        -d target/coarse/problems/colouring \
         -p graph
 ```
 
 #### Execute
 ```bash
-sbatch src/test/sh/iingl/iingl-run.sbatch \
+sbatch src/test/sh/coarse/run.sbatch \
     colouring \
-    src/test/resources/iingl/graph-colouring.mzn \
+    src/test/resources/coarse/graph-colouring.mzn \
     src/test/resources/problems/graph/graph-colouring.mzn
 ```
 
@@ -251,16 +251,16 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/knapsack/k.mzn \
-        -d target/iingl/problems/knapsack \
+        -d target/coarse/problems/knapsack \
         -p 'size:min(size)..max(size)' \
         -p 'value:min(value)..max(value)'
 ```
 
 #### Execute
 ```bash
-sbatch src/test/sh/iingl/iingl-run.sbatch \
+sbatch src/test/sh/coarse/coarse-run.sbatch \
     knapsack \
-    src/test/resources/iingl/knapsack.mzn \
+    src/test/resources/coarse/knapsack.mzn \
     src/test/resources/problems/knapsack/k.mzn
 ```
 
@@ -274,15 +274,15 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/radiation/radiation.mzn \
-        -d target/iingl/problems/radiation \
+        -d target/coarse/problems/radiation \
         -p 'Intensity:min(Intensity)..max(Intensity)'
 ```
 
 #### Execute
 ```bash
-sbatch src/test/sh/iingl/iingl-run.sbatch \
+sbatch src/test/sh/coarse/coarse-run.sbatch \
     radiation \
-    src/test/resources/iingl/radiation.mzn \
+    src/test/resources/coarse/radiation.mzn \
     src/test/resources/problems/radiation/radiation.mzn
 ```
 
@@ -295,15 +295,15 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/mosp/mosp.mzn \
-        -d target/iingl/problems/mosp \
+        -d target/coarse/problems/mosp \
         -p graph
 ```
 
 #### Execute
 ```bash
-sbatch src/test/sh/iingl/iingl-run.sbatch \
+sbatch src/test/sh/coarse/coarse-run.sbatch \
     mosp \
-    src/test/resources/iingl/mosp.mzn \
+    src/test/resources/coarse/mosp.mzn \
     src/test/resources/problems/mosp/mosp.mzn
 ```
 
@@ -313,9 +313,9 @@ The experiments will be saved with following structure:
 ```text
 target/
 ├─ ...
-├─ iingl-generator.jar
+├─ coarse-generator.jar
 ├─ iingl-saver.jar
-└─ iingl/
+└─ coarse/
     └─ problems/
         └─ <problem>
             └─ <repetition>
@@ -331,17 +331,17 @@ target/
 ## Step 3 - Statistics and Table genetation
 To collect the statistics, simply run:
 ```python
-python3 src/test/python/iingl/iingl.py target/iingl/problems/ target/iingl/run.json
-python3 src/test/python/iingl/compute_metrics.py target/iingl/run.json target/iingl/metrics.json
-python3 src/test/python/iingl/generate_tables.py target/iingl/metrics.json -o target/iingl/tables
+python3 src/test/python/coarse/coarse.py target/coarse/problems/ target/coarse/run.json
+python3 src/test/python/coarse/compute_metrics.py target/coarse/run.json target/coarse/metrics.json
+python3 src/test/python/coarse/generate_tables.py target/coarse/metrics.json -o target/coarse/tables
 ```
-Tables are then stored in the `target/iingl/tables` folder.
+Tables are then stored in the `target/coarse/tables` folder.
 
 ## Notes
 * **All commands are intended to be executed from the repository root**.
 * The repository root is mounted into the container as `/workspace`.
 * The preprocessing step must be executed before submitting the corresponding Slurm job.
-* The Slurm script `src/test/sh/recovery/iingl-run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
+* The Slurm script `src/test/sh/recovery/run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
 * **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
 
 # Reproducibility of [IINGL](https://doi.org/10.1007/978-3-642-33558-7_19) paper
@@ -477,7 +477,7 @@ Tables are then stored in the `target/reproduce/tables` folder.
 
 # Finer IINGL
 
-Note that a processed benchmark can be found in `results/100/results.tar.xz`
+Note that a processed benchmark can be found in `results/iingl/results.tar.xz`
 
 ## Prerequisites
 The experiments require:
@@ -493,7 +493,7 @@ All commands below assume that they are executed from the **root directory of th
 ## Generate the dataset from scratch
 You can re-generate the dataset from scratch by running these commands:
 ```bash
-python3 src/test/python/100/generate_problems.py target/100/problems
+python3 src/test/python/iingl/generate_problems.py target/iingl/problems
 ```
 
 ## Preprocessing
@@ -507,7 +507,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/graph/gc-simplified.mzn \
-        -d target/100/problems/colouring \
+        -d target/iingl/problems/colouring \
         -p graph
 ```
 
@@ -519,7 +519,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/knapsack/k.mzn \
-        -d target/100/problems/knapsack \
+        -d target/iingl/problems/knapsack \
         -p 'size:min(size)..max(size)' \
         -p 'value:min(value)..max(value)'
 ```
@@ -532,7 +532,7 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/mosp/mosp.mzn \
-        -d target/100/problems/mosp \
+        -d target/iingl/problems/mosp \
         -p graph
 ```
 
@@ -544,40 +544,40 @@ podman run \
     docker.io/library/maven:3.9-eclipse-temurin-25 \
     java -jar target/iingl-saver.jar \
         -m src/test/resources/problems/radiation/radiation.mzn \
-        -d target/100/problems/radiation \
+        -d target/iingl/problems/radiation \
         -p 'Intensity:min(Intensity)..max(Intensity)'
 ```
 
 ## Execution
 ### Graph Coloring
 ```bash
-sbatch src/test/sh/100/100-run.sbatch \
+sbatch src/test/sh/iingl/run.sbatch \
     colouring \
-    src/test/resources/100/gc-simplified.mzn \
+    src/test/resources/iingl/gc-simplified.mzn \
     src/test/resources/problems/graph/gc-simplified.mzn
 ```
 
 ### Knapsack
 ```bash
-sbatch src/test/sh/100/100-run.sbatch \
+sbatch src/test/sh/iingl/run.sbatch \
     knapsack \
-    src/test/resources/100/knapsack.mzn \
+    src/test/resources/iingl/knapsack.mzn \
     src/test/resources/problems/knapsack/k.mzn
 ```
 
 ### Radiation
 ```bash
-sbatch src/test/sh/100/100-run.sbatch \
+sbatch src/test/sh/iingl/run.sbatch \
     radiation \
-    src/test/resources/100/radiation.mzn \
+    src/test/resources/iingl/radiation.mzn \
     src/test/resources/problems/radiation/radiation.mzn
 ```
 
 ### MOSP
 ```bash
-sbatch src/test/sh/100/100-run.sbatch \
+sbatch src/test/sh/iingl/run.sbatch \
     mosp \
-    src/test/resources/100/mosp.mzn \
+    src/test/resources/iingl/mosp.mzn \
     src/test/resources/problems/mosp/mosp.mzn
 ```
 
@@ -586,9 +586,8 @@ The experiments will be saved with following structure:
 ```text
 target/
 ├─ ...
-├─ iingl-generator.jar
 ├─ iingl-saver.jar
-└─ 100/
+└─ iingl/
     └─ problems/
         └─ <problem>
             └─ <repetition>

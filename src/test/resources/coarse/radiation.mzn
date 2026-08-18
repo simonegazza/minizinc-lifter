@@ -48,7 +48,7 @@ set of int: Columns = 1..n;
 
 	% Intensity matrix
 
-array[Rows, Columns] of var 1..10: Intensity_lifted :: doc_comment("Intensity_lifted");
+array[Rows, Columns] of var int: Intensity_lifted :: doc_comment("Intensity_lifted");
 
 set of int: BTimes = 1..Bt_max;
 
