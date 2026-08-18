@@ -493,10 +493,7 @@ All commands below assume that they are executed from the **root directory of th
 ## Generate the dataset from scratch
 You can re-generate the dataset from scratch by running these commands:
 ```bash
-python3 src/test/python/100/generate_colouring.py target/100/problems
-python3 src/test/python/100/generate_knapsack.py target/100/problems
-python3 src/test/python/100/generate_mosp.py target/100/problems
-python3 src/test/python/100/generate_radiation.py target/100/problems
+python3 src/test/python/100/generate_problems.py target/100/problems
 ```
 
 ## Preprocessing
@@ -594,12 +591,13 @@ target/
 └─ 100/
     └─ problems/
         └─ <problem>
-            └─ <percentage>
-                ├─ 00.dzn
-                ├─ ...
-                ├─ 99.dzn
-                ├─ chain.mzn
-                ├─ chain.txt
-                ├─ assumptions.txt
-                └─ one-by-one.txt
+            └─ <repetition>
+                └─ <percentage>
+                    ├─ 00.dzn
+                    ├─ ...
+                    ├─ 19.dzn
+                    ├─ chain.mzn
+                    ├─ chain.txt
+                    ├─ assumptions.txt
+                    └─ one-by-one.txt
 ```

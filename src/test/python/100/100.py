@@ -88,7 +88,7 @@ def main(folder: Path):
     paths = sorted(
         chain(
             folder.rglob("chain.txt"),
-            folder.rglob("assumptions.txt"),
+            #folder.rglob("assumptions.txt"),
             folder.rglob("one-by-one.txt"),
         )
     )
@@ -109,9 +109,9 @@ def main(folder: Path):
         if path.name == "chain.txt":
             entry = parse_chain(path)
             results[problem][percentage]["chain.txt"] = entry
-        elif path.name == "assumptions.txt":
-            entry = parse_one_by_one(path)
-            results[problem][percentage]["assumptions.txt"] = entry
+        #elif path.name == "assumptions.txt":
+        #    entry = parse_one_by_one(path)
+        #    results[problem][percentage]["assumptions.txt"] = entry
         else:
             entry = parse_one_by_one(path)
             results[problem][percentage]["one-by-one.txt"] = entry

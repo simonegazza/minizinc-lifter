@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
-import argparse, random
+import random
 from collections import deque
-from pathlib import Path
 
 N = 51
 PERCENTAGES = [1, 2, 5, 10, 20, 50]
-NUM_INSTANCES = 100
 EDGE_PROBABILITY = 0.72
+REPETITIONS = 5
+NUM_INSTANCES = 20
 
 
 def is_connected(graph):
@@ -105,32 +105,3 @@ def generate_percentage_folder(base_dir, percentage) -> None:
     for i in range(1, NUM_INSTANCES):
         current_graph = apply_changes(current_graph, percentage)
         write_dzn(folder / f"{i:02d}.dzn", current_graph)
-
-def main(output_dir, seed):
-    random.seed(seed)
-
-    colouring_dir = output_dir / "colouring"
-    colouring_dir.mkdir(parents=True, exist_ok=True)
-
-    for percentage in PERCENTAGES:
-        generate_percentage_folder(colouring_dir, percentage)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate MiniZinc .dzn datasets for a directed graph colouring problem."
-    )
-    parser.add_argument(
-        "output_dir",
-        type=Path,
-        help="Directory where the colouring folder will be created."
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Optional random seed for reproducibility."
-    )
-
-    args = parser.parse_args()
-    main(args.output_dir, seed=args.seed)

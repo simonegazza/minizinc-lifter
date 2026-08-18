@@ -3,11 +3,12 @@
 import argparse, random
 from pathlib import Path
 
-NUM_ITEMS = 33
+NUM_ITEMS = 35
 MIN_VALUE = 1
 MAX_VALUE = 10
 PERCENTAGES = [1, 2, 5, 10, 20, 50]
-NUM_INSTANCES = 100
+REPETITIONS = 5
+NUM_INSTANCES = 20
 
 
 def generate_base_instance():
@@ -68,8 +69,11 @@ def main(output_dir, seed):
     knapsack_dir = output_dir / "knapsack"
     knapsack_dir.mkdir(parents=True, exist_ok=True)
 
-    for percentage in PERCENTAGES:
-        generate_percentage_folder(knapsack_dir, percentage)
+    for repetition in range(REPETITIONS):
+        repetition_dir = knapsack_dir / str(repetition)
+        repetition_dir.mkdir(parents=True, exist_ok=True)
+        for percentage in PERCENTAGES:
+            generate_percentage_folder(repetition_dir, percentage)
 
 
 if __name__ == "__main__":
