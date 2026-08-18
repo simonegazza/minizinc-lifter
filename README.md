@@ -501,84 +501,100 @@ Generated instances needs to be saved into model, just like in the [coarse versi
 
 ### Graph Coloring
 ```bash
-podman run \
-    -v ./:/workspace \
-    -w /workspace \
-    docker.io/library/maven:3.9-eclipse-temurin-25 \
-    java -jar target/iingl-saver.jar \
-        -m src/test/resources/problems/graph/gc-simplified.mzn \
-        -d target/iingl/problems/colouring \
-        -p graph
+for r in `ls target/iingl/problems/colouring`; do
+    podman run \
+        -v ./:/workspace \
+        -w /workspace \
+        docker.io/library/maven:3.9-eclipse-temurin-25 \
+        java -jar target/iingl-saver.jar \
+            -m src/test/resources/problems/graph/gc-simplified.mzn \
+            -d target/iingl/problems/colouring/$r \
+            -p graph;
+done
 ```
 
 ### Knapsack
 ```bash
-podman run \
-    -v ./:/workspace \
-    -w /workspace \
-    docker.io/library/maven:3.9-eclipse-temurin-25 \
-    java -jar target/iingl-saver.jar \
-        -m src/test/resources/problems/knapsack/k.mzn \
-        -d target/iingl/problems/knapsack \
-        -p 'size:min(size)..max(size)' \
-        -p 'value:min(value)..max(value)'
-```
-
-### MOSP
-```bash
-podman run \
-    -v ./:/workspace \
-    -w /workspace \
-    docker.io/library/maven:3.9-eclipse-temurin-25 \
-    java -jar target/iingl-saver.jar \
-        -m src/test/resources/problems/mosp/mosp.mzn \
-        -d target/iingl/problems/mosp \
-        -p graph
+for r in `ls target/iingl/problems/knapsack`; do
+    podman run \
+        -v ./:/workspace \
+        -w /workspace \
+        docker.io/library/maven:3.9-eclipse-temurin-25 \
+        java -jar target/iingl-saver.jar \
+            -m src/test/resources/problems/knapsack/k.mzn \
+            -d target/iingl/problems/knapsack/$r \
+            -p 'size:min(size)..max(size)' \
+            -p 'value:min(value)..max(value)';
+done
 ```
 
 ### Radiation
 ```bash
-podman run \
-    -v ./:/workspace \
-    -w /workspace \
-    docker.io/library/maven:3.9-eclipse-temurin-25 \
-    java -jar target/iingl-saver.jar \
-        -m src/test/resources/problems/radiation/radiation.mzn \
-        -d target/iingl/problems/radiation \
-        -p 'Intensity:min(Intensity)..max(Intensity)'
+for r in `ls target/iingl/problems/radiation`; do
+    podman run \
+        -v ./:/workspace \
+        -w /workspace \
+        docker.io/library/maven:3.9-eclipse-temurin-25 \
+        java -jar target/iingl-saver.jar \
+            -m src/test/resources/problems/radiation/radiation.mzn \
+            -d target/iingl/problems/radiation/$r \
+            -p 'Intensity:min(Intensity)..max(Intensity)';
+done
+```
+
+### MOSP
+```bash
+for r in `ls target/iingl/problems/mosp`; do
+    podman run \
+        -v ./:/workspace \
+        -w /workspace \
+        docker.io/library/maven:3.9-eclipse-temurin-25 \
+        java -jar target/iingl-saver.jar \
+            -m src/test/resources/problems/mosp/mosp.mzn \
+            -d target/iingl/problems/mosp/$r \
+            -p graph;
+done
 ```
 
 ## Execution
 ### Graph Coloring
 ```bash
-sbatch src/test/sh/iingl/run.sbatch \
-    colouring \
-    src/test/resources/iingl/gc-simplified.mzn \
-    src/test/resources/problems/graph/gc-simplified.mzn
+for r in `ls target/iingl/problems/colouring`; do
+    sbatch src/test/sh/iingl/run.sbatch \
+        colouring \
+        $r \
+        src/test/resources/problems/graph/gc-simplified.mzn;
+done
 ```
 
 ### Knapsack
 ```bash
-sbatch src/test/sh/iingl/run.sbatch \
-    knapsack \
-    src/test/resources/iingl/knapsack.mzn \
-    src/test/resources/problems/knapsack/k.mzn
+for r in `ls target/iingl/problems/knapsack`; do
+    sbatch src/test/sh/iingl/run.sbatch \
+        knapsack \
+        $r \
+        src/test/resources/problems/knapsack/k.mzn;
+done
 ```
 
 ### Radiation
 ```bash
-sbatch src/test/sh/iingl/run.sbatch \
-    radiation \
-    src/test/resources/iingl/radiation.mzn \
-    src/test/resources/problems/radiation/radiation.mzn
+for r in `ls target/iingl/problems/radiation`; do
+    sbatch src/test/sh/iingl/run.sbatch \
+        radiation \
+        $r \
+        src/test/resources/problems/radiation/radiation.mzn;
+done
 ```
 
 ### MOSP
 ```bash
-sbatch src/test/sh/iingl/run.sbatch \
-    mosp \
-    src/test/resources/iingl/mosp.mzn \
-    src/test/resources/problems/mosp/mosp.mzn
+for r in `ls target/iingl/problems/mosp`; do
+    sbatch src/test/sh/iingl/run.sbatch \
+        mosp \
+        $r \
+        src/test/resources/problems/mosp/mosp.mzn;
+done
 ```
 
 ## Directory structure

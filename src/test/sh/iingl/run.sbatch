@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=mzn_iingl_100
+#SBATCH --job-name=mzn_iingl
 #SBATCH --array=1,2,5,10,20,50%1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
-#SBATCH --time=30:00:00
+#SBATCH --time=5:00:00
 #SBATCH --output=target/logs/%x_%A_%a.out
 #SBATCH --error=target/logs/%x_%A_%a.err
 #SBATCH --requeue
@@ -15,10 +15,14 @@ shopt -s nullglob
 # ------------------------------------------------------------------
 # INPUT
 # ------------------------------------------------------------------
-TARGET="target/100/problems/$1/$SLURM_ARRAY_TASK_ID"
+# $1 is the problem name (i.e. the name of the folder in target/iingl/problems/ folder)
+# $2 is the repetition id (i.e. the name of the repetition in $1 folder)
+# $3 is the original model
+# $SLURM_ARRAY_TASK_ID is the percentage
+
+TARGET="target/iingl/problems/$1/$2/$SLURM_ARRAY_TASK_ID"
 
 CHAIN_MODEL="/minizinc-lifter/$TARGET/chain.mzn"
-ASSUMPTIONS_MODEL="/minizinc-lifter/$2"
 ONE_BY_ONE_MODEL="/minizinc-lifter/$3"
 
 # ------------------------------------------------------------------
