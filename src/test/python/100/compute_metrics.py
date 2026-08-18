@@ -150,6 +150,31 @@ def main(file):
                 list(accumulate(solve_1by1))
             )
 
+            time_per_status = {
+                "chain": {},
+                "1by1": {},
+            }
+            for e in chain["chain"]:
+                status = e["status"]
+                time_per_status["chain"].setdefault(status, []).append(e["solveTime"])
+            for e in one_by_one:
+                status = e["status"]
+                time_per_status["1by1"].setdefault(status, []).append(e["solveTime"])
+            for type_name in ["chain", "1by1"]:
+                time_per_status[type_name] = {
+                    status: {
+                        "count": len(times),
+                        "mean": geometric_mean(times),
+                    }
+                    for status, times in time_per_status[type_name].items()
+                }
+            results[problem_name]["meanTimePerStatus"]["chain"].append(
+                time_per_status["chain"]
+            )
+            results[problem_name]["meanTimePerStatus"]["1by1"].append(
+                time_per_status["1by1"]
+            )
+
             # Other metrics
             metrics_cumulative = ["solveTimeCumulative"]
             for metric in ["failures", "peakDepth", "cpPropagatorCalls"]:
