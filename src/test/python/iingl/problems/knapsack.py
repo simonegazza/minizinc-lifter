@@ -1,14 +1,8 @@
-#!/usr/bin/env python3
-
-import argparse, random
-from pathlib import Path
+import random
 
 NUM_ITEMS = 35
 MIN_VALUE = 1
 MAX_VALUE = 10
-PERCENTAGES = [1, 2, 5, 10, 20, 50]
-REPETITIONS = 5
-NUM_INSTANCES = 20
 
 
 def generate_base_instance():
@@ -47,7 +41,7 @@ def write_dzn(path, size, value):
     )
     path.write_text(content, encoding="utf-8")
 
-def generate_percentage_folder(base_dir, percentage):
+def generate_percentage_folder(base_dir, percentage, n_instances):
     folder = base_dir / str(percentage)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -57,40 +51,8 @@ def generate_percentage_folder(base_dir, percentage):
     current_size = size
     current_value = value
 
-    for i in range(1, NUM_INSTANCES):
+    for i in range(1, n_instances):
         current_size, current_value = apply_changes(
             current_size, current_value, percentage
         )
         write_dzn(folder / f"{i:02d}.dzn", current_size, current_value)
-
-def main(output_dir, seed):
-    random.seed(seed)
-
-    knapsack_dir = output_dir / "knapsack"
-    knapsack_dir.mkdir(parents=True, exist_ok=True)
-
-    for repetition in range(REPETITIONS):
-        repetition_dir = knapsack_dir / str(repetition)
-        repetition_dir.mkdir(parents=True, exist_ok=True)
-        for percentage in PERCENTAGES:
-            generate_percentage_folder(repetition_dir, percentage)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate MiniZinc .dzn datasets for a knapsack problem."
-    )
-    parser.add_argument(
-        "output_dir",
-        type=Path,
-        help="Directory where the knapsack folder will be created."
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Optional random seed for reproducibility."
-    )
-
-    args = parser.parse_args()
-    main(args.output_dir, seed=args.seed)

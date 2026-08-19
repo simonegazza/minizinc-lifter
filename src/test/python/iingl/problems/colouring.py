@@ -1,13 +1,9 @@
-#!/usr/bin/env python3
-
 import random
 from collections import deque
 
 N = 51
 PERCENTAGES = [1, 2, 5, 10, 20, 50]
 EDGE_PROBABILITY = 0.72
-REPETITIONS = 5
-NUM_INSTANCES = 20
 
 
 def is_connected(graph):
@@ -93,7 +89,7 @@ def write_dzn(path, graph) -> None:
     )
     path.write_text(content, encoding="utf-8")
 
-def generate_percentage_folder(base_dir, percentage) -> None:
+def generate_percentage_folder(base_dir, percentage, n_instances):
     folder = base_dir / str(percentage)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -102,6 +98,6 @@ def generate_percentage_folder(base_dir, percentage) -> None:
 
     current_graph = graph
 
-    for i in range(1, NUM_INSTANCES):
+    for i in range(1, n_instances):
         current_graph = apply_changes(current_graph, percentage)
         write_dzn(folder / f"{i:02d}.dzn", current_graph)

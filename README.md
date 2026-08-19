@@ -613,6 +613,5 @@ target/
                     ├─ 19.dzn
                     ├─ chain.mzn
                     ├─ chain.txt
-                    ├─ assumptions.txt
                     └─ one-by-one.txt
 ```

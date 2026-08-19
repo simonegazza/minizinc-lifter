@@ -1,14 +1,8 @@
-#!/usr/bin/env python3
-
-import argparse, random
-from pathlib import Path
+import random
 
 C = 35  # number of customers
 P = 35  # number of products
 DENSITY = 0.20
-
-PERCENTAGES = [1, 2, 5, 10, 20, 50]
-NUM_INSTANCES = 100
 
 
 def generate_base_instance():
@@ -72,7 +66,7 @@ def write_dzn(path, graph):
     )
     path.write_text(content, encoding="utf-8")
 
-def generate_percentage_folder(base_dir, percentage):
+def generate_percentage_folder(base_dir, percentage, n_instances):
     folder = base_dir / str(percentage)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -81,35 +75,6 @@ def generate_percentage_folder(base_dir, percentage):
 
     current_graph = graph
 
-    for i in range(1, NUM_INSTANCES):
+    for i in range(1, n_instances):
         current_graph = apply_changes(current_graph, percentage)
         write_dzn(folder / f"{i:02d}.dzn", current_graph)
-
-def main(output_dir, seed):
-    random.seed(seed)
-
-    mosp_dir = output_dir / "mosp"
-    mosp_dir.mkdir(parents=True, exist_ok=True)
-
-    for percentage in PERCENTAGES:
-        generate_percentage_folder(mosp_dir, percentage)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate MiniZinc .dzn datasets for MOSP."
-    )
-    parser.add_argument(
-        "output_dir",
-        type=Path,
-        help="Directory where the mosp folder will be created."
-    )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Optional random seed for reproducibility."
-    )
-
-    args = parser.parse_args()
-    main(args.output_dir, seed=args.seed)

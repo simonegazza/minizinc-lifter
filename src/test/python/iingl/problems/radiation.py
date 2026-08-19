@@ -1,15 +1,9 @@
-#!/usr/bin/env python3
-
-import argparse, random
-from pathlib import Path
+import random
 
 M = 15
 N = 12
 BEAMTIME = 30
 BT_MAX = 10
-
-PERCENTAGES = [1, 2, 5, 10, 20, 50]
-NUM_INSTANCES = 100
 
 
 def generate_base_instance():
@@ -54,7 +48,7 @@ def write_dzn(path, matrix):
 
     path.write_text(content, encoding="utf-8")
 
-def generate_percentage_folder(base_dir, percentage):
+def generate_percentage_folder(base_dir, percentage, n_instances):
     folder = base_dir / str(percentage)
     folder.mkdir(parents=True, exist_ok=True)
 
@@ -63,37 +57,6 @@ def generate_percentage_folder(base_dir, percentage):
 
     current_matrix = matrix
 
-    for i in range(1, NUM_INSTANCES):
+    for i in range(1, n_instances):
         current_matrix = apply_changes(current_matrix, percentage)
         write_dzn(folder / f"{i:02d}.dzn", current_matrix)
-
-def main(output_dir, seed):
-    random.seed(seed)
-
-    radiation_dir = output_dir / "radiation"
-    radiation_dir.mkdir(parents=True, exist_ok=True)
-
-    for percentage in PERCENTAGES:
-        generate_percentage_folder(radiation_dir, percentage)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Generate MiniZinc .dzn datasets for the Radiation Therapy Problem."
-    )
-
-    parser.add_argument(
-        "output_dir",
-        type=Path,
-        help="Directory where the radiation folder will be created."
-    )
-
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="Optional random seed for reproducibility."
-    )
-
-    args = parser.parse_args()
-    main(args.output_dir, seed=args.seed)

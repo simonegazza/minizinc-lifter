@@ -32,7 +32,7 @@ def main(output_dir, seed):
             repetition_dir = problem_dir / str(repetition)
             repetition_dir.mkdir(parents=True, exist_ok=True)
             for percentage in PERCENTAGES:
-                generation_function(repetition_dir, percentage)
+                generation_function(repetition_dir, percentage, NUM_INSTANCES)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
