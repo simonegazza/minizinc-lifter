@@ -88,7 +88,6 @@ def main(folder: Path):
     paths = sorted(
         chain(
             folder.rglob("chain.txt"),
-            #folder.rglob("assumptions.txt"),
             folder.rglob("one-by-one.txt"),
         )
     )
@@ -97,24 +96,26 @@ def main(folder: Path):
     for path in paths:
         rel = path.relative_to(folder)
 
-
         # Structure:
-        # folder/problems/<problem>/<percentage>/{chain.txt|assumptions.txt|one-by-one.txt}
+        # folder/problems/<problem>/<repetition>/<percentage>/{chain.txt|one-by-one.txt}
         problem = rel.parts[0]
-        results.setdefault(problem, {})
+        repetition = int(rel.parts[1])
+        percentage = rel.parts[2]
 
-        percentage = rel.parts[1]
-        results[problem].setdefault(percentage, {})
+        results.setdefault(problem, [])
+
+        # Read order of the folders might be incorrect. Add necessary repetitions
+        while len(results[problem]) <= repetition:
+            results[problem].append({})
+
+        results[problem][repetition].setdefault(percentage, {})
 
         if path.name == "chain.txt":
             entry = parse_chain(path)
-            results[problem][percentage]["chain.txt"] = entry
-        #elif path.name == "assumptions.txt":
-        #    entry = parse_one_by_one(path)
-        #    results[problem][percentage]["assumptions.txt"] = entry
+            results[problem][repetition][percentage]["chain.txt"] = entry
         else:
             entry = parse_one_by_one(path)
-            results[problem][percentage]["one-by-one.txt"] = entry
+            results[problem][repetition][percentage]["one-by-one.txt"] = entry
 
     return results
 

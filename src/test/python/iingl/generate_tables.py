@@ -9,11 +9,7 @@ from pathlib import Path
 MAIN_TABLE_KEYS = [
     ("solveTime", "Mean Time"),
     ("solveTimeCumulative", "Cumulative Time"),
-    #("failures", "Failures"),
     ("failuresCumulative", "Cumulative Failures"),
-    #("peakDepth", "Peak Depth"),
-    #("cpPropagatorCallsCumulative", "CP Calls Cumulative"),
-    #("cpPropagatorCalls", "CP Propagator Calls"),
 ]
 
 # Select which metrics appear in the cumulative table
@@ -34,7 +30,6 @@ STATUS_KEYS = [
     ("UNKNOWN", "UNK"),
 ]
 
-
 DIFFS = ["1\\%", "2\\%", "5\\%", "10\\%", "20\\%", "50\\%"]
 
 def latex_header(cumulative=False):
@@ -48,7 +43,6 @@ def latex_header(cumulative=False):
 \centering
 """
         header += rf"\begin{{tabular}}{{{tabular}}}" + "\n"
-        #header += r"\hhline{~|" + "~" * (len(MAIN_TABLE_KEYS) * 2) + ("|~~" if INCLUDE_SPEEDUP else "") + "}" + "\n"
         header += r"    \multirow{2}{*}{\centering Diff} &" + "\n"
 
         groups = []
@@ -64,11 +58,7 @@ def latex_header(cumulative=False):
 
         subheaders = []
         for _ in MAIN_TABLE_KEYS:
-            #subheaders.extend(["Chain", "Assumptions", "Individual"])
             subheaders.extend(["Chain", "Original"])
-        #if INCLUDE_SPEEDUP:
-        #    #subheaders.extend(["Over assumptions", "Over individual"])
-        #    subheaders.extend(["Over individual"])
 
         header += " & ".join(subheaders) + r" \\" + "\n"
         header += r"\hhline{-" + "--" * len(MAIN_TABLE_KEYS)
@@ -102,10 +92,8 @@ def latex_header(cumulative=False):
 
         subs = []
         for _ in CUMULATIVE_TABLE_KEYS:
-            #subs.extend(["Chain", "Assumptions", "Individual"])
             subs.extend(["Chain", "Original"])
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            #subs.extend(["Over Assumptions", "Over Individual"])
             subs.extend(["Over Original"])
 
         header += " & ".join(subs) + r" \\" + "\n"
@@ -147,10 +135,8 @@ def generate_main_table(problem, data):
         values = [diff]
         for key, _ in MAIN_TABLE_KEYS:
             values.append(data[key]["chain"][i])
-            #values.append(data[key]["assumptions"][i])
             values.append(data[key]["1by1"][i])
         if INCLUDE_SPEEDUP:
-            #values.append(data["speedupOverAssumptions"][i])
             values.append(data["speedupOver1by1"][i])
         lines.append(row(values))
 
@@ -165,10 +151,8 @@ def generate_cumulative_table(problem, data):
         values = [diff]
         for key, _ in CUMULATIVE_TABLE_KEYS:
             values.append(data[key]["chain"][i])
-            #values.append(data[key]["assumptions"][i])
             values.append(data[key]["1by1"][i])
         if INCLUDE_CUMULATIVE_SPEEDUP:
-            #values.append(data["speedupOverAssumptionsCumulative"][i])
             values.append(data["speedupOver1by1Cumulative"][i])
         lines.append(row(values))
 
@@ -190,17 +174,14 @@ def generate_flat_status_table(data):
         r"\multirow{2}{*}{\centering Diff} & "
         r"\multicolumn{2}{c|}{Flat Time} & "
         r"\multicolumn{4}{c|}{Status Chain} & "
-        #r"\multicolumn{4}{c|}{Status Assumptions} & "
         r"\multicolumn{4}{c}{Status Individual}\\"
     )
 
     lines.append(r"\hhline{~~|~~|~~~~|~~~~}")
 
     lines.append(
-        #r"& & Chain & Assumptions & Individual & "
         r"& & Chain & Individual & "
         r"SAT & OPT & UNSAT & UNK & "
-        #r"SAT & OPT & UNSAT & UNK & "
         r"SAT & OPT & UNSAT & UNK\\"
     )
 
@@ -222,7 +203,6 @@ def generate_flat_status_table(data):
             # Flat times per percentage
             row.extend([
                 problem_data["flatTime"]["chain"][i],
-                #problem_data["flatTime"]["assumptions"][i],
                 problem_data["flatTime"]["1by1"][i],
             ])
 
@@ -234,14 +214,6 @@ def generate_flat_status_table(data):
                 chain_status.get("UNSATISFIABLE", 0),
                 chain_status.get("UNKNOWN", 0),
             ])
-
-            # assumptions_status = problem_data["statuses"]["assumptions"][i]
-            # row.extend([
-            #     assumptions_status.get("SATISFIABLE", 0),
-            #     assumptions_status.get("OPTIMAL_SOLUTION", 0),
-            #     assumptions_status.get("UNSATISFIABLE", 0),
-            #     assumptions_status.get("UNKNOWN", 0),
-            # ])
 
             onebyone_status = problem_data["statuses"]["1by1"][i]
             row.extend([
@@ -277,7 +249,7 @@ def main(data):
 
 def round_floats(obj, digits=3):
     if isinstance(obj, float):
-        return f"{obj:.{digits}f}" #round(obj, digits)
+        return f"{obj:.{digits}f}"
     if isinstance(obj, dict):
         return {key: round_floats(value, digits) for key, value in obj.items()}
     if isinstance(obj, list):
@@ -310,8 +282,6 @@ if __name__ == "__main__":
         t, t_cumulative = tables
         with open(output_dir / f"{name}.tex", "w") as f:
             f.write(t)
-            #f.write("\n\n")
-            #f.write(t_cumulative)
 
     with open(os.path.join(output_dir, "flat_status_table.tex"), "w") as f:
         f.write(flat_status_table)

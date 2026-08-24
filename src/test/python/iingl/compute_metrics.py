@@ -14,14 +14,13 @@ def aggregate_values(values, aggregator):
     except (StatisticsError, ValueError):
         raise ValueError(f"Non-numeric value in aggregation: {values}")
 
-def get_solve_time(problem):
-    chain = [p["solveTime"] for p in problem["chain.txt"]["chain"]]
-    one_by_one = [
-        p.get("solveTime", p["time"] - p["flatTime"])
-        for p in problem["one-by-one.txt"]
-    ]
-
-    return chain, one_by_one
+# def get_solve_time(problem):
+#     chain = [p["solveTime"] for p in problem["chain.txt"]["chain"]]
+#     one_by_one = [
+#         p.get("solveTime", p["time"] - p["flatTime"])
+#         for p in problem["one-by-one.txt"]
+#     ]
+#     return chain, one_by_one
 
 def get_metric(problem, metric):
     chain = [
@@ -34,12 +33,9 @@ def get_metric(problem, metric):
     ]
     return chain, one_by_one
 
-def get_cumulative_metric(problem, metric):
-    chain, one_by_one = get_metric(problem, metric)
-    return (
-        list(accumulate(chain)),
-        list(accumulate(one_by_one)),
-    )
+# def get_cumulative_metric(problem, metric):
+#     chain, one_by_one = get_metric(problem, metric)
+#     return (list(accumulate(chain)), list(accumulate(one_by_one)))
 
 def main(file):
     with open(file, encoding="utf-8") as f:
@@ -47,6 +43,16 @@ def main(file):
 
     results = {}
     for problem_name in data:
+        repetitions = data[problem_name]
+
+        # Check that all repetitions contain the expected percentages
+        for repetition, repetition_data in enumerate(repetitions):
+            if set(percentages) != set(repetition_data.keys()):
+                raise ValueError(
+                    f"{problem_name}, repetition {repetition} has wrong "
+                    f"percentages {set(repetition_data.keys())}"
+                )
+
         results[problem_name] = {
             "statuses": {
                 "chain": [],
@@ -95,79 +101,125 @@ def main(file):
         }
 
         for percentage in percentages:
-            experiment = data[problem_name][percentage]
+            # All experiments for this percentage, across repetitions
+            experiments = [repetition[percentage] for repetition in repetitions]
 
-            if set(percentages) != set(data[problem_name].keys()):
-                raise ValueError(f"{problem_name} has wrong percentages {set(data[problem_name].keys())}")
+            chains = [experiment["chain.txt"] for experiment in experiments]
+            one_by_ones = [experiment["one-by-one.txt"] for experiment in experiments]
 
-            chain = experiment["chain.txt"]
-            one_by_one = experiment["one-by-one.txt"]
+            # Check instance counts for every repetition
+            for repetition, (chain, one_by_one) in enumerate(zip(chains, one_by_ones)):
+                if len(chain["chain"]) != len(one_by_one):
+                    print(
+                        f"[{problem_name}, repetition {repetition}, "
+                        f"{percentage}%] "
+                        f"chain has {len(chain['chain'])} instances but "
+                        f"one-by-one has {len(one_by_one)}"
+                    )
 
-            if len(chain["chain"]) != len(one_by_one):
-                print(
-                    f"[{problem_name}, {percentage}%] "
-                    f"chain has {len(chain["chain"])} instances but "
-                    f"one-by-one has {len(one_by_one)}"
-                )
+            # ---------------------------------------------------------
+            # statuses
+            # ---------------------------------------------------------
+            chain_statuses = Counter()
+            one_by_one_statuses = Counter()
 
-            # Statuses per percentage
-            results[problem_name]["statuses"]["chain"].append(
-                dict(Counter(
+            for chain in chains:
+                chain_statuses.update(
                     p.get("status", ERROR_VALUE)
                     for p in chain["chain"]
-                ))
-            )
-            results[problem_name]["statuses"]["1by1"].append(
-                dict(Counter(
+                )
+            for one_by_one in one_by_ones:
+                one_by_one_statuses.update(
                     p.get("status", ERROR_VALUE)
                     for p in one_by_one
-                ))
-            )
+                )
+
+            results[problem_name]["statuses"]["chain"].append(dict(chain_statuses))
+            results[problem_name]["statuses"]["1by1"].append(dict(one_by_one_statuses))
+
+            # ---------------------------------------------------------
+            # flatTime
+            # ---------------------------------------------------------
+            chain_flat_times = [chain["flatTime"] for chain in chains]
+            one_by_one_flat_times = [
+                p["flatTime"]
+                for one_by_one in one_by_ones
+                for p in one_by_one
+            ]
 
             results[problem_name]["flatTime"]["chain"].append(
-                chain["flatTime"]
+                aggregate_values(chain_flat_times, geometric_mean)
             )
             results[problem_name]["flatTime"]["1by1"].append(
-                aggregate_values(
-                    [p["flatTime"] for p in one_by_one],
-                    geometric_mean,
-                )
+                aggregate_values(one_by_one_flat_times, geometric_mean)
             )
 
-            solve_chain, solve_1by1 = get_solve_time(experiment)
-            results[problem_name]["solveTime"]["chain"].append(
-                aggregate_values(solve_chain, geometric_mean)
-            )
-            results[problem_name]["solveTime"]["1by1"].append(
-                aggregate_values(solve_1by1, geometric_mean)
-            )
+            # # ---------------------------------------------------------
+            # # solveTime
+            # # ---------------------------------------------------------
+            # solve_chain = []
+            # solve_1by1 = []
+            # for experiment in experiments:
+            #     chain_values, one_values = get_solve_time(experiment)
+            #     solve_chain.extend(chain_values)
+            #     solve_1by1.extend(one_values)
 
+            # results[problem_name]["solveTime"]["chain"].append(
+            #     aggregate_values(solve_chain, geometric_mean)
+            # )
+            # results[problem_name]["solveTime"]["1by1"].append(
+            #     aggregate_values(solve_1by1, geometric_mean)
+            # )
 
-            results[problem_name]["solveTimeCumulative"]["chain"].append(
-                list(accumulate(solve_chain))
-            )
-            results[problem_name]["solveTimeCumulative"]["1by1"].append(
-                list(accumulate(solve_1by1))
-            )
+            # # ---------------------------------------------------------
+            # # solveTimeCumulative
+            # # ---------------------------------------------------------
+            # chain_cumulative = list(accumulate(solve_chain))
+            # one_by_one_cumulative = list(accumulate(solve_1by1))
 
+            # results[problem_name]["solveTimeCumulative"]["chain"].append(
+            #     chain_cumulative[-1]
+            #     if chain_cumulative
+            #     else ERROR_VALUE
+            # )
+            # results[problem_name]["solveTimeCumulative"]["1by1"].append(
+            #     one_by_one_cumulative[-1]
+            #     if one_by_one_cumulative
+            #     else ERROR_VALUE
+            # )
+
+            # ---------------------------------------------------------
+            # Mean time per status
+            # ---------------------------------------------------------
             time_per_status = {
                 "chain": {},
                 "1by1": {},
             }
-            for e in chain["chain"]:
-                status = e["status"]
-                time_per_status["chain"].setdefault(status, []).append(e["solveTime"])
-            for e in one_by_one:
-                status = e["status"]
-                time_per_status["1by1"].setdefault(status, []).append(e["solveTime"])
+
+            for chain in chains:
+                for e in chain["chain"]:
+                    status = e["status"]
+                    time_per_status["chain"].setdefault(
+                        status, []
+                    ).append(e["solveTime"])
+
+            for one_by_one in one_by_ones:
+                for e in one_by_one:
+                    status = e["status"]
+                    time_per_status["1by1"].setdefault(
+                        status, []
+                    ).append(e["solveTime"])
+
             for type_name in ["chain", "1by1"]:
                 time_per_status[type_name] = {
                     status: {
                         "count": len(times),
                         "mean": geometric_mean(times),
                     }
-                    for status, times in time_per_status[type_name].items()
+                    for status, times
+                    in time_per_status[type_name].items()
                 }
+
             results[problem_name]["meanTimePerStatus"]["chain"].append(
                 time_per_status["chain"]
             )
@@ -175,15 +227,17 @@ def main(file):
                 time_per_status["1by1"]
             )
 
+            # ---------------------------------------------------------
             # Other metrics
-            metrics_cumulative = ["solveTimeCumulative"]
-            for metric in ["failures", "peakDepth", "cpPropagatorCalls"]:
-                metric_name = f"{metric}Cumulative"
-                metrics_cumulative.append(metric_name)
-                chain_values, one_values = get_metric(
-                    experiment,
-                    metric,
-                )
+            # ---------------------------------------------------------
+            for metric in ["solveTime", "failures", "peakDepth", "cpPropagatorCalls"]:
+                chain_values = []
+                one_values = []
+                for experiment in experiments:
+                    chain_metric, one_metric = get_metric(experiment, metric)
+
+                    chain_values.extend(chain_metric)
+                    one_values.extend(one_metric)
 
                 results[problem_name][metric]["chain"].append(
                     aggregate_values(chain_values, mean)
@@ -193,28 +247,29 @@ def main(file):
                 )
 
                 # Cumulative metric
-                results[problem_name][metric_name]["chain"].append(
-                    list(accumulate(chain_values))
+                chain_cumulative = list(accumulate(chain_values))
+                one_cumulative = list(accumulate(one_values))
+
+                results[problem_name][f"{metric}Cumulative"]["chain"].append(
+                    chain_cumulative[-1]
+                    if chain_cumulative
+                    else ERROR_VALUE
                 )
-                results[problem_name][metric_name]["1by1"].append(
-                    list(accumulate(one_values))
+
+                results[problem_name][f"{metric}Cumulative"]["1by1"].append(
+                    one_cumulative[-1]
+                    if one_cumulative
+                    else ERROR_VALUE
                 )
 
-        for metric in metrics_cumulative:
-            for method in ["chain", "1by1"]:
-                cumulative = results[problem_name][metric][method]
-
-                results[problem_name][metric][method] = [
-                    series[-1] if series else ERROR_VALUE
-                    for series in cumulative
-                ]
-
+        # -------------------------------------------------------------
         # Speedups
+        # -------------------------------------------------------------
         results[problem_name]["speedupOver1by1"] = [
             one_by_one / chain
             for chain, one_by_one in zip(
                 results[problem_name]["solveTime"]["chain"],
-                results[problem_name]["solveTime"]["1by1"]
+                results[problem_name]["solveTime"]["1by1"],
             )
         ]
         results[problem_name]["speedupOver1by1Cumulative"] = [
@@ -222,6 +277,13 @@ def main(file):
             for chain, one_by_one in zip(
                 results[problem_name]["solveTimeCumulative"]["chain"],
                 results[problem_name]["solveTimeCumulative"]["1by1"],
+            )
+        ]
+        results[problem_name]["failureReductionRatio"] = [
+            one_by_one / chain
+            for chain, one_by_one in zip(
+                results[problem_name]["failures"]["chain"],
+                results[problem_name]["failures"]["1by1"],
             )
         ]
 
