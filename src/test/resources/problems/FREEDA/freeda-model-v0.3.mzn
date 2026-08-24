@@ -73,14 +73,14 @@ array[Res] of MIN_RBOUNDS..MAX_RBOUNDS: worstBounds;
 % required by c to be executed in flavour f: if worstBounds[r] = MIN_RBOUNDS,
 % then c requires at least comReq[Idx(c,f), r] units of r; otherwise, it
 % requires at most comReq[Idx(c,f), r] units of r.
-array[CompFlavs, Res] of int: comReq;
+array[CompFlavs, Res] of MIN_RBOUNDS..MAX_RBOUNDS: comReq;
 
 % depReq[c, f, c', r] defines the amount of resource r in Req_cfc[c,f,c']
 % required by the link connecting the node of the source component c to the
 % node of the target component c′: if worstBounds[r] = MIN_RBOUNDS,
 % then the link requires at least depReq[c, f, c', r] units of r; otherwise,
 % it requires at most depReq[c, f, c', r] units of r.
-array[Comps, Flavs, Comps, Res] of int: depReq;
+array[Comps, Flavs, Comps, Res] of MIN_RBOUNDS..MAX_RBOUNDS: depReq;
 
 %%%%% Infrastructure, capacity and budget %%%%%
 
@@ -96,34 +96,34 @@ array[Nodes] of set of Res: Req_n = [
 ];
 
 % nodeCap[n,r] is maximum amount of resource r available at node n.
-array[Nodes0, Res] of int: nodeCap;
+array[Nodes0, Res] of MIN_RBOUNDS..MAX_RBOUNDS: nodeCap;
 % If n = 0, it must be nodeCap[n,r] = bestBounds[r].
 constraint assert (forall(r in Res)(nodeCap[0,r] = bestBounds[r]),
   "Assertion nodeCap[0,r] = bestBounds[r] failed.", true);
 
 % linkCap[n, n', r] is the maximum amount of r that the link between n and n′
 % can handle.
-array[Nodes0, Nodes0, Res] of int: linkCap;
+array[Nodes0, Nodes0, Res] of MIN_RBOUNDS..MAX_RBOUNDS: linkCap;
 % If n = 0 or n' = 0, it must be linkCap[n, n', r] = bestBounds[r].
 constraint assert (forall(n in Nodes, r in Res)(
   linkCap[n,0,r] = bestBounds[r] /\ linkCap[0, n, r] = bestBounds[r]),
   "Assertion linkCap[n,0,r] = linkCap[0,n,r] = bestBounds[r] failed.", true);
 
 % cost[n,r] is the unit cost of using resource r node n.
-array[Nodes0, Res] of int: cost;
+array[Nodes0, Res] of 0..10: cost;
 % It must be cost[0,r] = 0.
 constraint assert (forall(r in Res)(cost[0,r] = 0),
   "Assertion cost[0,r] = 0 failed.", true);
 % Money budget.
-int: costBudget;
+1..1000000: costBudget;
 
 % carb[n] is the carbon emission per node n.
-array[Nodes0] of int: carb;
+array[Nodes0] of 0..10: carb;
 % It must be carb[0] = 0.
 constraint assert (carb[0] = 0,
   "Assertion carb[0] = 0 failed.", true);
 % Carbon budget.
-int: carbBudget;
+1..2000000: carbBudget;
 
 
 %%%%%%%%%%%%%%%%%%%%%
@@ -139,18 +139,20 @@ array [Comps] of var Nodes0: node = [
 ];
 
 % Total cost of the deployment.
-var int: totCost = sum(c in Comps, i in Flav[c], r in Req_cf[Idx(c, i)])(
+var int: totCost;
+constraint totCost = sum(c in Comps, i in Flav[c], r in Req_cf[Idx(c, i)])(
   comReq[Idx(c, i), r] * cost[node[c], r] * D[Idx(c, i), node[c]]
 );
 
 % Energy reuirements for each component-flavour
-array[CompFlavs] of int: energy;
+array[CompFlavs] of 0..1000: energy;
 
 % Energy consumption for the dependency between components
-array[Comps, Flavs, Comps] of int: energy_dependency;
+array[Comps, Flavs, Comps] of 0..1000: energy_dependency;
 
 % Total carbon emission of the deployment.
-var int: totCarb = sum(cs in Comps, is in Flav[cs], js in Nodes)(
+var int: totCarb;
+constraint totCarb = sum(cs in Comps, is in Flav[cs], js in Nodes)(
   D[Idx(cs, is), js] * (
     energy[Idx(cs, is)] * carb[js] + sum(
       cd in Comps,
