@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 import me.simonegazza.lift.assumptions.Assumer;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.types.MiniZincArrayType;
+import me.simonegazza.lift.types.MiniZincCompositeType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
 
@@ -74,9 +75,15 @@ public class Learner implements Callable<String> {
 	 */
 	private String solvePiece(LiftedParameter p) {
 		String result = p.getSolvePiece();
-		return result.replaceFirst(
-			p.getOriginalName() + "\\[",
-			p.getOriginalName() + "\\[i, ");
+		if (p.getParameter().getType() instanceof MiniZincCompositeType) {
+			return result.replaceFirst(
+				p.getOriginalName() + "\\[",
+				p.getOriginalName() + "\\[i, ");
+		} else {
+			return result.replaceFirst(
+				p.getOriginalName() + "\\)",
+				p.getOriginalName() + "\\[i\\]\\)");
+		}
 	}
 
 	/**
@@ -203,12 +210,23 @@ public class Learner implements Callable<String> {
 
 		sb.append(collector.values().stream()
 			.flatMap(List::stream)
-			.map(l -> "[\"\\noriginal " + l.getOriginalName()
-				+ " = \\(" + l.getOriginalName() + "[fix(current_instance), "
-				+ l.getDimensions().stream().map(_ -> "..").collect(Collectors.joining(", "))
-				+ "])\\n"
-				+ "lifted   " + l.getOriginalName()
-				+ " = \\(" + l.getLiftedName() + ")\\n\\n\"]")
+			.map(l -> {
+				String result = "[\"\\noriginal "
+					+ l.getOriginalName()
+					+ " = \\(" + l.getOriginalName()
+					+ "[fix(current_instance)";
+
+				if (l.getParameter().getType() instanceof MiniZincCompositeType) {
+					result += ", "
+						+ l.getDimensions().stream().map(_ -> "..").collect(Collectors.joining(", "))
+						+ "])\\nlifted   " + l.getOriginalName()
+						+ " = \\(" + l.getLiftedName() + ")\\n\\n\"]";
+				} else {
+					result += "])\"]";
+				}
+
+				return result;
+			})
 			.collect(Collectors.joining(
 				" ++ ",
 				"output [\"current_instance = \\(current_instance)\"] ++ ",

@@ -15,6 +15,7 @@ import me.simonegazza.lift.requests.SimpleLiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincBasicType;
 import me.simonegazza.lift.types.MiniZincCompositeType;
+import me.simonegazza.lift.types.MiniZincExpressionType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import org.antlr.v4.runtime.CharStream;
@@ -98,7 +99,7 @@ public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 
 		if (allChanges.get(0) instanceof SimpleLiftRequest slr) {
 			MiniZincType type = parameter.getType();
-			if (type instanceof MiniZincBasicType) {
+			if (type instanceof MiniZincBasicType || type instanceof MiniZincExpressionType) {
 				return new LiftedSimpleParameter(parameter, slr, allLifts);
 			} else if (type instanceof MiniZincSetType) {
 				return new LiftedSetParameter(parameter, slr, allLifts);

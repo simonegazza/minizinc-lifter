@@ -3,6 +3,7 @@ package me.simonegazza.learning;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,7 @@ import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import me.simonegazza.lift.parameters.OriginalParameter;
 import me.simonegazza.lift.requests.LiftRequest;
-import me.simonegazza.lift.types.MiniZincCompositeType;
+import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ParameterGraph;
@@ -190,90 +191,110 @@ public class Saver implements Callable<Integer> {
 
 			// Add the new aggregated parameter definitions
 			logger.info("Aggregating parameters...");
-			String allAggregatedParameters = liftedParameters.stream()
-				.map(p -> {
 
-					// get the value string from each data file
-					List<String> parameterStrings = dataFiles.stream()
-						.sorted()
-						.map(f -> {
-							try {
-								return Files.lines(f);
-							} catch (IOException e) {
-								throw new IllegalStateException("Cannot read from file " + f);
-							}
-						})
-						.map(ls -> ls
-							// take only the lines in each data file that
-							// starts with the current parameter name
-							.filter(l -> l.startsWith(p.getOriginalName()))
-							.findAny()
-							// there is always one definition per data file
-							// so this should not return empty
-							.get())
-						// clean each definition: remove everything before
-						// the (first) equal sign and also the ';' at the
-						// end of the parameter, if any
-						.map(d -> {
-							List<String> split = Arrays.asList(d.split("="));
-							String values = split.subList(1, split.size()).stream().collect(Collectors.joining());
-							if (values.charAt(values.length() - 1) == ';') {
-								return values.substring(0, values.length() - 1);
-							} else {
-								return values;
-							}
-						})
-						.toList();
+			List<String> allAggregatedParameters = new ArrayList<>();
+			for (LiftedParameter p : liftedParameters) {
+				// get the value string from each data file
+				List<String> parameterStrings = new ArrayList<>();
+				for (Path filePath : dataFiles) {
+					try {
+						List<String> lines = Files.lines(filePath).toList();
 
-					// try to get if these values are arrays. If they are
-					// arrays, just concatenate them with "++", otherwise
-					// join with ", " and use "[" and "]" to make it an
-					// array
-					char firstChar = parameterStrings.get(0).strip().charAt(0);
-					boolean wasArray;
-					Collector<CharSequence, ?, String> joiner;
-					if (firstChar == '[' || firstChar == 'a') {
-						// standard array definition or arrayXd(...) case
-						joiner = Collectors.joining(" ++ ");
-						wasArray = true;
-					} else {
-						// assume it is not an array
-						joiner = Collectors.joining(", ", "[", "]");
-						wasArray = false;
+						// take only the lines in each data file that starts
+						// with the current parameter name and ends with ";"
+						List<String> fileParameterString = new ArrayList<>();
+						int i = 0;
+						for (; i < lines.size(); i++) {
+							if (lines.get(i).startsWith(p.getOriginalName())) {
+								break;
+							}
+						}
+						for (; i < lines.size(); i++) {
+							fileParameterString.add(lines.get(i));
+							if (lines.get(i).endsWith(";")) {
+								break;
+							}
+						}
+						parameterStrings.add(fileParameterString.stream().collect(Collectors.joining("\n")));
+
+					} catch (IOException e) {
+						throw new IllegalStateException("Cannot read from file " + filePath);
 					}
 
-					String aggregatedValues = parameterStrings.stream().collect(joiner);
+				}
 
-					StringBuilder builder = new StringBuilder("array");
-					if (wasArray) {
-						MiniZincType type = p.getParameter().getType();
-						type = ((MiniZincCompositeType) type).getSubtype();
+				// it may happen that we are looking for a parameter that is
+				// a derived (i.e. a parameter defined in terms of another
+				// one) but the definition of this parameter can be in the
+				// original model only (since MiniZinc does not accept
+				// "complicated" expressions in the datafile
+				if (parameterStrings.stream().allMatch(String::isEmpty)) {
+					baseModel = new DeclarationRewriter(p, liftedParameters, graph, baseModel).call();
+					continue;
+				}
 
-						builder.append("[instances, ");
-						String remainingDimensions = p.getDimensions().stream()
-							.map(d -> "1.." + d)
-							.collect(Collectors.joining(", ", "", ","));
-						builder.append(remainingDimensions)
-							.append("] of ")
-							.append(type)
-							.append(": ")
-							.append(p.getOriginalName())
-							.append(" = array")
-							.append(p.getDimensions().size() + 1)
-							.append("d(instances, ")
-							.append(remainingDimensions);
+				List<String> parameterPerDataFile = new ArrayList<>();
+				for (String d : parameterStrings) {
+					List<String> split = Arrays.asList(d.split("="));
+					String values = split.subList(1, split.size()).stream().collect(Collectors.joining());
+					if (values.charAt(values.length() - 1) == ';') {
+						parameterPerDataFile.add(values.substring(0, values.length() - 1));
 					} else {
-						builder.append("[instances] of int: ")
-							.append(p.getOriginalName())
-							.append(" = ");
+						parameterPerDataFile.add(values);
 					}
-					builder.append(aggregatedValues).append("\n);");
+				}
 
-					return builder.toString();
-				}).collect(Collectors.joining("\n\n"));
+				// If they are arrays, just concatenate them with "++",
+				// otherwise join them
+				char firstChar = parameterPerDataFile.get(0).strip().charAt(0);
+				boolean wasArray;
+				Collector<CharSequence, ?, String> joiner;
+				if (firstChar == '[' || firstChar == 'a') {
+					// standard array definition and arrayXd(...) case
+					joiner = Collectors.joining(" ++ ");
+					wasArray = true;
+				} else {
+					// assume it is not an array
+					joiner = Collectors.joining(", ", "[", "]");
+					wasArray = false;
+				}
+
+				String aggregatedValues = parameterPerDataFile.stream().collect(joiner);
+
+				StringBuilder builder = new StringBuilder("array");
+				if (wasArray) {
+					MiniZincArrayType typeComposite = (MiniZincArrayType) p.getParameter().getType();
+					MiniZincType subtype = typeComposite.getSubtype();
+
+					builder.append("[instances, ");
+					String remainingDimensions = typeComposite.getDimensionsString(false).stream()
+						.collect(Collectors.joining(", ", "", ","));
+					builder.append(remainingDimensions)
+						.append("] of ")
+						.append(subtype)
+						.append(": ")
+						.append(p.getOriginalName())
+						.append(" = array")
+						.append(p.getDimensions().size() + 1)
+						.append("d(instances, ")
+						.append(remainingDimensions)
+						.append(aggregatedValues)
+						.append("\n);");
+				} else {
+					builder.append("[instances] of int: ")
+						.append(p.getOriginalName())
+						.append(" = ")
+						.append(aggregatedValues)
+						.append(";");
+				}
+
+				allAggregatedParameters.add(builder.toString());
+			}
 
 			repetition = repetition.toAbsolutePath().resolve("chain.mzn");
-			Files.writeString(repetition, baseModel + "\n\n" + allAggregatedParameters);
+			Files.writeString(
+				repetition,
+				baseModel + "\n\n" + allAggregatedParameters.stream().collect(Collectors.joining("\n\n")));
 		}
 
 		return 0;

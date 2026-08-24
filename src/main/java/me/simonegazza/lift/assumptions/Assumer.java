@@ -77,21 +77,45 @@ public class Assumer implements Callable<String> {
 
 		Map<Object, List<LiftedParameter>> result = new HashMap<>();
 		for (LiftedParameter lp : lifted) {
+
 			Object mapDiscriminant = lp.getParameter().getType();
-			if (mapDiscriminant instanceof MiniZincArrayType mda) {
-				// TODO: to do this operation properly, it should be recursive
-				mapDiscriminant = mda.getSubtype();
-			}
 
 			if (mapDiscriminant instanceof MiniZincBasicType mdb) {
 				mapDiscriminant = mdb.toString();
+			}
+
+			// TODO: discriminate this case better
+			if (mapDiscriminant instanceof MiniZincExpressionType) {
+				mapDiscriminant = MiniZincBasicType.INT.toString();
 			}
 
 			if (mapDiscriminant.getClass().equals(MiniZincSetType.class)) {
 				mapDiscriminant = MiniZincSetType.class;
 			}
 
-			if (mapDiscriminant instanceof MiniZincIdentifier || mapDiscriminant instanceof MiniZincExpressionType) {
+			// TODO: to do this operation properly, it should be recursive
+			if (mapDiscriminant instanceof MiniZincArrayType mda) {
+				if (mda.getSubtype() instanceof MiniZincBasicType) {
+					mapDiscriminant = mda.getSubtype();
+				} else {
+					MiniZincArray value = (MiniZincArray) lp.getParameter().getValue();
+					Object e = value.flatten().getFirst();
+
+					if (e instanceof Integer) {
+						mapDiscriminant = MiniZincBasicType.INT.toString();
+					} else if (e instanceof Double) {
+						mapDiscriminant = MiniZincBasicType.FLOAT.toString();
+					} else if (e instanceof String) {
+						mapDiscriminant = MiniZincBasicType.STRING.toString();
+					} else if (e instanceof Boolean) {
+						mapDiscriminant = MiniZincBasicType.BOOL.toString();
+					} else if (e instanceof MiniZincSet) {
+						mapDiscriminant = MiniZincSetType.class;
+					}
+				}
+			}
+
+			if (mapDiscriminant instanceof MiniZincIdentifier) {
 				Object value = lp.getParameter().getValue();
 				if (value instanceof MiniZincArray va) {
 					Object e = va.flatten().getFirst();
@@ -105,7 +129,7 @@ public class Assumer implements Callable<String> {
 						mapDiscriminant = MiniZincBasicType.BOOL.toString();
 					}
 				} else if (value instanceof MiniZincSet) {
-					mapDiscriminant = MiniZincSet.class;
+					mapDiscriminant = MiniZincSetType.class;
 				} else {
 					throw new IllegalStateException(
 						"Unable to discriminate the type for computing the parameter arrays");
