@@ -556,6 +556,20 @@ for r in `ls target/iingl/problems/mosp`; do
 done
 ```
 
+### FREEDA
+```bash
+for r in `ls target/iingl/problems/FREEDA`; do
+    podman run \
+        -v ./:/workspace \
+        -w /workspace \
+        docker.io/library/maven:3.9-eclipse-temurin-25 \
+        java -jar target/iingl-saver.jar \
+            -m src/test/resources/problems/FREEDA/freeda-model-v0.3.mzn \
+            -d target/iingl/problems/FREEDA/$r \
+            -p depReq -p linkCap -p nodeCap -p energy -p energy_dependency -p comReq -p cost -p carb -p costBudget -p carbBudget;
+done
+```
+
 ## Execution
 ### Graph Coloring
 ```bash
@@ -594,6 +608,16 @@ for r in `ls target/iingl/problems/mosp`; do
         mosp \
         $r \
         src/test/resources/problems/mosp/mosp.mzn;
+done
+```
+
+### FREEDA
+```bash
+for r in `ls target/iingl/problems/FREEDA`; do
+    sbatch src/test/sh/iingl/run.sbatch \
+        FREEDA \
+        $r \
+        src/test/resources/problems/FREEDA/freeda-model-v0.3.mzn;
 done
 ```
 
