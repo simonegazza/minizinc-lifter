@@ -18,9 +18,10 @@ CUMULATIVE_TABLE_KEYS = [
     ("failuresCumulative", "Cumulative Failures"),
 ]
 
-# Select whether speedup is included
+# Select whether other metrics are included
 INCLUDE_SPEEDUP = True
 INCLUDE_CUMULATIVE_SPEEDUP = True
+INCLUDE_FAILURE_REDUCTION_RATIO = True
 
 # Select statuses to show
 STATUS_KEYS = [
@@ -38,6 +39,8 @@ def latex_header(cumulative=False):
 
         if INCLUDE_SPEEDUP:
             tabular += "|c"
+        if INCLUDE_FAILURE_REDUCTION_RATIO:
+            tabular += "|c"
 
         header = r"""\begin{table*}[t]
 \centering
@@ -51,9 +54,20 @@ def latex_header(cumulative=False):
 
         if INCLUDE_SPEEDUP:
             groups.append(r"    \multirow{2}{*}{Speedup}")
+        if INCLUDE_FAILURE_REDUCTION_RATIO:
+            groups.append(
+                r"    \multirow{2}{*}{Failure Reduction Ratio}"
+            )
 
         header += " &\n".join(groups) + r" \\" + "\n"
-        header += r"\hhline{~" + "~" * (len(MAIN_TABLE_KEYS) * 2) + ("~" if INCLUDE_SPEEDUP else "") + "}" + "\n"
+        header += (
+            r"\hhline{~"
+            + r"~" * (len(MAIN_TABLE_KEYS) * 2)
+            + (r"~" if INCLUDE_SPEEDUP else "")
+            + (r"~" if INCLUDE_FAILURE_REDUCTION_RATIO else "")
+            + "}"
+            + "\n"
+        )
         header += "& "
 
         subheaders = []
@@ -63,6 +77,8 @@ def latex_header(cumulative=False):
         header += " & ".join(subheaders) + r" \\" + "\n"
         header += r"\hhline{-" + "--" * len(MAIN_TABLE_KEYS)
         if INCLUDE_SPEEDUP:
+            header += "-"
+        if INCLUDE_FAILURE_REDUCTION_RATIO:
             header += "-"
         header += "}\n"
 
@@ -138,6 +154,8 @@ def generate_main_table(problem, data):
             values.append(data[key]["1by1"][i])
         if INCLUDE_SPEEDUP:
             values.append(data["speedupOver1by1"][i])
+        if INCLUDE_FAILURE_REDUCTION_RATIO:
+            values.append(data["failureReductionRatio"][i])
         lines.append(row(values))
 
     lines.append(latex_footer(problem, False))
@@ -154,6 +172,8 @@ def generate_cumulative_table(problem, data):
             values.append(data[key]["1by1"][i])
         if INCLUDE_CUMULATIVE_SPEEDUP:
             values.append(data["speedupOver1by1Cumulative"][i])
+        if INCLUDE_FAILURE_REDUCTION_RATIO:
+            values.append(data["failureReductionRatio"][i])
         lines.append(row(values))
 
     lines.append(latex_footer(problem, True))

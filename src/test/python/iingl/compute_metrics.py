@@ -14,14 +14,6 @@ def aggregate_values(values, aggregator):
     except (StatisticsError, ValueError):
         raise ValueError(f"Non-numeric value in aggregation: {values}")
 
-# def get_solve_time(problem):
-#     chain = [p["solveTime"] for p in problem["chain.txt"]["chain"]]
-#     one_by_one = [
-#         p.get("solveTime", p["time"] - p["flatTime"])
-#         for p in problem["one-by-one.txt"]
-#     ]
-#     return chain, one_by_one
-
 def get_metric(problem, metric):
     chain = [
         p.get(metric, ERROR_VALUE)
@@ -32,10 +24,6 @@ def get_metric(problem, metric):
         for p in problem["one-by-one.txt"]
     ]
     return chain, one_by_one
-
-# def get_cumulative_metric(problem, metric):
-#     chain, one_by_one = get_metric(problem, metric)
-#     return (list(accumulate(chain)), list(accumulate(one_by_one)))
 
 def main(file):
     with open(file, encoding="utf-8") as f:
@@ -154,42 +142,8 @@ def main(file):
                 aggregate_values(one_by_one_flat_times, geometric_mean)
             )
 
-            # # ---------------------------------------------------------
-            # # solveTime
-            # # ---------------------------------------------------------
-            # solve_chain = []
-            # solve_1by1 = []
-            # for experiment in experiments:
-            #     chain_values, one_values = get_solve_time(experiment)
-            #     solve_chain.extend(chain_values)
-            #     solve_1by1.extend(one_values)
-
-            # results[problem_name]["solveTime"]["chain"].append(
-            #     aggregate_values(solve_chain, geometric_mean)
-            # )
-            # results[problem_name]["solveTime"]["1by1"].append(
-            #     aggregate_values(solve_1by1, geometric_mean)
-            # )
-
-            # # ---------------------------------------------------------
-            # # solveTimeCumulative
-            # # ---------------------------------------------------------
-            # chain_cumulative = list(accumulate(solve_chain))
-            # one_by_one_cumulative = list(accumulate(solve_1by1))
-
-            # results[problem_name]["solveTimeCumulative"]["chain"].append(
-            #     chain_cumulative[-1]
-            #     if chain_cumulative
-            #     else ERROR_VALUE
-            # )
-            # results[problem_name]["solveTimeCumulative"]["1by1"].append(
-            #     one_by_one_cumulative[-1]
-            #     if one_by_one_cumulative
-            #     else ERROR_VALUE
-            # )
-
             # ---------------------------------------------------------
-            # Mean time per status
+            # mean time per status
             # ---------------------------------------------------------
             time_per_status = {
                 "chain": {},
@@ -228,7 +182,7 @@ def main(file):
             )
 
             # ---------------------------------------------------------
-            # Other metrics
+            # other metrics
             # ---------------------------------------------------------
             for metric in ["solveTime", "failures", "peakDepth", "cpPropagatorCalls"]:
                 chain_values = []
