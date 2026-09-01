@@ -1,6 +1,6 @@
 import random
 
-NUM_ITEMS = 35
+NUM_ITEMS = 30
 MIN_VALUE = 1
 MAX_VALUE = 10
 
