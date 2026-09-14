@@ -56,7 +56,7 @@ def latex_header(cumulative=False):
             groups.append(r"    \multirow{2}{*}{Speedup}")
         if INCLUDE_FAILURE_REDUCTION_RATIO:
             groups.append(
-                r"    \multirow{2}{*}{Failure Reduction Ratio}"
+                r"    \multirow{2}{*}{\shortstack{Failure\\Ratio}}"
             )
 
         header += " &\n".join(groups) + r" \\" + "\n"
@@ -74,7 +74,12 @@ def latex_header(cumulative=False):
         for _ in MAIN_TABLE_KEYS:
             subheaders.extend(["Chain", "Original"])
 
-        header += " & ".join(subheaders) + r" \\" + "\n"
+        header += (
+            " & ".join(subheaders)
+            + (r" &" if INCLUDE_FAILURE_REDUCTION_RATIO else "")
+            + r" \\"
+            + "\n"
+        )
         header += r"\hhline{-" + "--" * len(MAIN_TABLE_KEYS)
         if INCLUDE_SPEEDUP:
             header += "-"
