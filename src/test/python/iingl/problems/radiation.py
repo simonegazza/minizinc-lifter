@@ -5,25 +5,49 @@ N = 12
 BEAMTIME = 30
 BT_MAX = 10
 
+def row_complexity(row):
+    """Mimimum time (total positive variation) required to build the row."""
+    c = row[0]
+    for j in range(1, len(row)):
+        c += max(row[j] - row[j - 1], 0)
+    return c
+
+def generate_row(budget, lo=1, hi=BT_MAX):
+    """Generate one random row without surpassing 'budget'"""
+    row = [random.randint(lo, hi)]
+    used = row[0]
+    for _ in range(1, N):
+        remaining = budget - used
+        max_up = min(hi - row[-1], max(0, remaining))
+        min_down = lo - row[-1]
+        delta = random.randint(min_down, max_up)
+        row.append(row[-1] + delta)
+        if delta > 0:
+            used += delta
+    return row
 
 def generate_base_instance():
-    return [
-        [random.randint(1, BT_MAX) for _ in range(N)]
-        for _ in range(M)
-    ]
+    return [generate_row(BEAMTIME) for _ in range(M)]
 
-def apply_changes(matrix, percentage):
+def apply_changes(matrix, percentage, budget=BEAMTIME):
     new_matrix = [row[:] for row in matrix]
 
     positions = [(i, j) for i in range(M) for j in range(N)]
     num_changes = max(1, round(len(positions) * percentage / 100))
-
     changed_positions = random.sample(positions, num_changes)
 
     for i, j in changed_positions:
-        current = new_matrix[i][j]
-        choices = [v for v in range(1, BT_MAX + 1) if v != current]
-        new_matrix[i][j] = random.choice(choices)
+        row = new_matrix[i]
+        current = row[j]
+        candidates = [v for v in range(1, BT_MAX + 1) if v != current]
+        random.shuffle(candidates)
+
+        for v in candidates:
+            trial_row = row[:]
+            trial_row[j] = v
+            if row_complexity(trial_row) <= budget:
+                new_matrix[i][j] = v
+                break
 
     return new_matrix
 
@@ -33,7 +57,6 @@ def flatten_matrix(matrix):
         for j in range(N):
             flat.append(str(matrix[i][j]))
     return flat
-
 
 def write_dzn(path, matrix):
     flat = flatten_matrix(matrix)
