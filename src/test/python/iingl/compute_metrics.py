@@ -194,10 +194,10 @@ def main(file):
                     one_values.extend(one_metric)
 
                 results[problem_name][metric]["chain"].append(
-                    aggregate_values(chain_values, mean)
+                    aggregate_values(chain_values, mean if metric != "solveTime" else geometric_mean)
                 )
                 results[problem_name][metric]["1by1"].append(
-                    aggregate_values(one_values, mean)
+                    aggregate_values(one_values, mean if metric != "solveTime" else geometric_mean)
                 )
 
                 # Cumulative metric

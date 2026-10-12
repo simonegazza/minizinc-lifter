@@ -10,7 +10,6 @@ NAME_MAP = {
     "fixtures": "Fixtures",
     "ihtc-2024-kletzander": "IHTC",
     "tsptw": "TSPTW",
-    # "EchoSched": "EchoSched",
 }
 
 ORDER = [
@@ -34,20 +33,24 @@ def generate_table(data):
     lines = [
         r"\begin{table*}[t]",
         r"\centering",
-        r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
-        r"\hhline{~|~~|~~~|~~~|~~~}",
+        #r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
+        r"\begin{tabular}{l|cc|ccc|ccc}",
+        #r"\hhline{~|~~|~~~|~~~|~~~}",
+        r"\hhline{~|~~|~~~|~~~}",
         r"\multirow{2}{*}{\centering Problem} &"
         r"\multicolumn{2}{c|}{Parameters} &"
-        r"\multicolumn{3}{c|}{Core Parameters} &"
-        r"\multicolumn{3}{c|}{Iterations} &"
-        r"\multicolumn{3}{c}{Process Duration}\\",
-        r"\hhline{~|~~|~~~|~~~|~~~}",
+        r"\multicolumn{3}{c|}{Core Size} &"
+        #r"\multicolumn{3}{c|}{Iterations} &"
+        r"\multicolumn{3}{c}{Runtime}\\",
+        #r"\hhline{~|~~|~~~|~~~|~~~}",
+        r"\hhline{~|~~|~~~|~~~}",
         r"&"
         r"Modified & Lifted &"
         r"Min & Avg & Max & "
-        r"Min & Avg & Max & "
+        #r"Min & Avg & Max & "
         r"Min & Avg & Max\\",
-        r"\hhline{-|--|---|---|---}",
+        #r"\hhline{-|--|---|---|---}",
+        r"\hhline{-|--|---|---}",
     ]
 
     for key in ORDER:
@@ -69,9 +72,9 @@ def generate_table(data):
             f' & {d["minCoreVariables"]}'
             f' & {d["meanCoreVariables"]}'
             f' & {d["maxCoreVariables"]}'
-            f' & {d["minIterations"]}'
-            f' & {d["meanIterations"]}'
-            f' & {d["maxIterations"]}'
+            #f' & {d["minIterations"]}'
+            #f' & {d["meanIterations"]}'
+            #f' & {d["maxIterations"]}'
             f' & {fmt_float(d["minTotalDuration"])}'
             f' & {fmt_float(d["avgTotalDuration"])}'
             f' & {fmt_float(d["maxTotalDuration"])}\\\\'
@@ -79,9 +82,10 @@ def generate_table(data):
 
     lines.extend(
         [
-            r"\hhline{~|~~|~~~|~~~|~~~}",
+            #r"\hhline{~|~~|~~~|~~~|~~~}",
+            r"\hhline{~|~~|~~~|~~~}",
             r"\end{tabular}",
-            r"\caption{Summary of feasibility restoration experiments}",
+            r"\caption{Summary of feasibility-recovery experiments.}",
             r"\label{tab:recovery}",
             r"\end{table*}",
         ]

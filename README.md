@@ -77,9 +77,9 @@ target/recover/results/<problem>/<repetition>/
 After all experiments have completed, the raw output is aggregated into a single JSON file:
 
 ```bash
-python3 ./src/test/python/recover.py target/recover/results/ target/recover/run.json
-python3 ./src/test/python/compute_metrics.py target/recover/run.json target/recover/metrics.json
-python3 ./src/test/python/generate_table.py target/recover/metrics.json target/recover/table.tex
+python3 ./src/test/python/recover/recover.py target/recover/results/ target/recover/run.json
+python3 ./src/test/python/recover/compute_metrics.py target/recover/run.json target/recover/metrics.json
+python3 ./src/test/python/recover/generate_table.py target/recover/metrics.json target/recover/table.tex
 ```
 
 ## Directory structure
@@ -135,7 +135,7 @@ All commands below assume that they are executed from the **root directory of th
 Create the output directory and extract the benchmark models and data files:
 
 ```bash
-mkdir -p target/comparison
+mkdir -p target/comparison/{results,tables}
 unxz -c results/comparison/results.tar.xz | tar -xvf - -C target/comparison
 ```
 
@@ -151,11 +151,11 @@ The scripts accept a single argument specifying the benchmark to execute. The su
 
 For example:
 ```bash
-sbatch src/test/sh/recovery/run-lifted.sbatch TAP
+sbatch src/test/sh/comparison/run-lifted.sbatch TAP
 ```
 runs the benchmark for the TAP problem with our approach, while
 ```bash
-sbatch src/test/sh/recovery/run-soft.sbatch TAP
+sbatch src/test/sh/comparison/run-soft.sbatch TAP
 ```
 runs the benchmark for the TAP problem with the soft approach.
 
@@ -170,7 +170,7 @@ python3 src/test/python/comparison/process_all.py target/comparison/results
 
 Generate the LaTeX table reported in the paper:
 ```bash
-python3 src/test/python/comparison/generate_table.py target/comparison/results
+python3 src/test/python/comparison/generate_table.py target/comparison/results > target/comparison/tables/table.tex
 ```
 
 # Coarse and increasing change Inter-Instances Nogood Learning (IINGL)

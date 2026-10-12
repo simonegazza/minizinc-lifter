@@ -5,23 +5,17 @@ from pathlib import Path
 # TABLE CONFIGURATION
 # ==========================
 
-# Select which metrics appear in the normal table
-MAIN_TABLE_KEYS = [
-    ("solveTime", "Mean Time"),
-    ("solveTimeCumulative", "Cumulative Time"),
-    ("failuresCumulative", "Cumulative Failures"),
-]
+# Label for the first column and for the two compared methods
+DIFF_LABEL = "$k$"
+METHOD_LABELS = (r"\iingl", "Independently")
 
-# Select which metrics appear in the cumulative table
-CUMULATIVE_TABLE_KEYS = [
-    ("solveTimeCumulative", "Cumulative Time"),
-    ("failuresCumulative", "Cumulative Failures"),
+# Each group: (data key, group title, ratio key or None, ratio label or None)
+# The ratio column, if present, is placed inside the group after the two methods.
+MAIN_TABLE_GROUPS = [
+    ("solveTime",           "Mean Time",           "speedupOver1by1",       "Speedup"),
+    ("solveTimeCumulative", "Cumulative Time",     None,                    None),
+    ("failuresCumulative",  "Cumulative Failures", "failureReductionRatio", "Ratio"),
 ]
-
-# Select whether other metrics are included
-INCLUDE_SPEEDUP = True
-INCLUDE_CUMULATIVE_SPEEDUP = True
-INCLUDE_FAILURE_REDUCTION_RATIO = True
 
 # Select statuses to show
 STATUS_KEYS = [
@@ -33,107 +27,57 @@ STATUS_KEYS = [
 
 DIFFS = ["1\\%", "2\\%", "5\\%", "10\\%", "20\\%", "50\\%"]
 
-def latex_header(cumulative=False):
-    if not cumulative:
-        tabular = "c|" + "|".join(["cc"] * len(MAIN_TABLE_KEYS))
+def group_width(group):
+    _, _, ratio_key, _ = group
+    return 2 + (1 if ratio_key else 0)
 
-        if INCLUDE_SPEEDUP:
-            tabular += "|c"
-        if INCLUDE_FAILURE_REDUCTION_RATIO:
-            tabular += "|c"
+def latex_header(groups):
+    tabular = "c|" + "|".join("c" * group_width(g) for g in groups)
 
-        header = r"""\begin{table*}[t]
-\centering
-"""
-        header += rf"\begin{{tabular}}{{{tabular}}}" + "\n"
-        header += r"    \multirow{2}{*}{\centering Diff} &" + "\n"
+    lines = [
+        r"\begin{table*}[t]",
+        r"\centering",
+        rf"\begin{{tabular}}{{{tabular}}}",
+    ]
 
-        groups = []
-        for _, name in MAIN_TABLE_KEYS:
-            groups.append(rf"    \multicolumn{{2}}{{c|}}{{{name}}}")
+    # Group titles
+    cells = [rf"\multirow{{2}}{{*}}{{{DIFF_LABEL}}}"]
+    for idx, g in enumerate(groups):
+        align = "c|" if idx < len(groups) - 1 else "c"
+        cells.append(rf"\multicolumn{{{group_width(g)}}}{{{align}}}{{{g[1]}}}")
+    lines.append("\n& ".join(cells) + r" \\")
 
-        if INCLUDE_SPEEDUP:
-            groups.append(r"    \multirow{2}{*}{Speedup}")
-        if INCLUDE_FAILURE_REDUCTION_RATIO:
-            groups.append(
-                r"    \multirow{2}{*}{\shortstack{Failure\\Ratio}}"
-            )
+    # Sub-headers: methods, plus ratio label where present
+    subs = [""]
+    for _, _, ratio_key, ratio_label in groups:
+        subs.extend(METHOD_LABELS)
+        if ratio_key:
+            subs.append(ratio_label)
+    lines.append(" & ".join(subs) + r" \\")
+    lines.append(r"\hline")
 
-        header += " &\n".join(groups) + r" \\" + "\n"
-        header += (
-            r"\hhline{~"
-            + r"~" * (len(MAIN_TABLE_KEYS) * 2)
-            + (r"~" if INCLUDE_SPEEDUP else "")
-            + (r"~" if INCLUDE_FAILURE_REDUCTION_RATIO else "")
-            + "}"
-            + "\n"
-        )
-        header += "& "
+    return "\n".join(lines)
 
-        subheaders = []
-        for _ in MAIN_TABLE_KEYS:
-            subheaders.extend(["Chain", "Original"])
-
-        header += (
-            " & ".join(subheaders)
-            + (r" &" if INCLUDE_FAILURE_REDUCTION_RATIO else "")
-            + r" \\"
-            + "\n"
-        )
-        header += r"\hhline{-" + "--" * len(MAIN_TABLE_KEYS)
-        if INCLUDE_SPEEDUP:
-            header += "-"
-        if INCLUDE_FAILURE_REDUCTION_RATIO:
-            header += "-"
-        header += "}\n"
-
-        return header
-
-    else:
-        groups = []
-        for _, name in CUMULATIVE_TABLE_KEYS:
-            groups.append(rf"\multicolumn{{2}}{{c|}}{{{name}}}")
-        if INCLUDE_CUMULATIVE_SPEEDUP:
-            groups.append(r"\multicolumn{1}{c}{Speedup Cumulative}")
-
-        tabular = "c|" + "|".join(["cc"] * len(CUMULATIVE_TABLE_KEYS))
-        if INCLUDE_CUMULATIVE_SPEEDUP:
-            tabular += "|cc"
-
-        header = r"""
-\begin{table*}[t]
-\centering
-"""
-        header += rf"\begin{{tabular}}{{{tabular}}}" + "\n"
-        header += r"\hhline{~|" + "~"*(len(CUMULATIVE_TABLE_KEYS) * 2) + ("|~" if INCLUDE_CUMULATIVE_SPEEDUP else "") + "}" + "\n"
-        header += r"\multirow{2}{*}{\centering Diff} & "
-        header += " & ".join(groups) + r" \\" + "\n"
-        header += r"\hhline{~|" + "~"*(len(CUMULATIVE_TABLE_KEYS) * 2) + ("|~" if INCLUDE_CUMULATIVE_SPEEDUP else "") + "}" + "\n"
-        header += "& "
-
-        subs = []
-        for _ in CUMULATIVE_TABLE_KEYS:
-            subs.extend(["Chain", "Original"])
-        if INCLUDE_CUMULATIVE_SPEEDUP:
-            subs.extend(["Over Original"])
-
-        header += " & ".join(subs) + r" \\" + "\n"
-        header += r"\hhline{-|" + "---|" * len(CUMULATIVE_TABLE_KEYS)
-        if INCLUDE_CUMULATIVE_SPEEDUP:
-            header += "--"
-        header += "}"
-        header += "\n"
-
-        return header
-
-def latex_footer(problem, cumulative=False):
-    suffix = "cumulative" if cumulative else "main"
+def latex_footer(problem, suffix):
     return rf"""
 \end{{tabular}}
 \caption{{\iingl results for {problem}.}}
 \label{{tab:iingl-{problem}-{suffix}}}
 \end{{table*}}
 """
+
+def generate_table(problem, data, groups, suffix):
+    lines = [latex_header(groups)]
+    for i, diff in enumerate(DIFFS):
+        values = [diff]
+        for key, _, ratio_key, _ in groups:
+            values.append(data[key]["chain"][i])
+            values.append(data[key]["1by1"][i])
+            if ratio_key:
+                values.append(data[ratio_key][i])
+        lines.append(row(values))
+    lines.append(latex_footer(problem, suffix))
+    return "\n".join(lines)
 
 def row(values):
     vs = []
@@ -148,43 +92,6 @@ def row(values):
             vs.append(str(v))
     return " & ".join(v for v in vs) + r" \\"
 
-def generate_main_table(problem, data):
-    lines = []
-    lines.append(latex_header(False))
-
-    for i, diff in enumerate(DIFFS):
-        values = [diff]
-        for key, _ in MAIN_TABLE_KEYS:
-            values.append(data[key]["chain"][i])
-            values.append(data[key]["1by1"][i])
-        if INCLUDE_SPEEDUP:
-            values.append(data["speedupOver1by1"][i])
-        if INCLUDE_FAILURE_REDUCTION_RATIO:
-            values.append(data["failureReductionRatio"][i])
-        lines.append(row(values))
-
-    lines.append(latex_footer(problem, False))
-
-    return "\n".join(lines)
-
-def generate_cumulative_table(problem, data):
-    lines = []
-    lines.append(latex_header(True))
-    for i, diff in enumerate(DIFFS):
-        values = [diff]
-        for key, _ in CUMULATIVE_TABLE_KEYS:
-            values.append(data[key]["chain"][i])
-            values.append(data[key]["1by1"][i])
-        if INCLUDE_CUMULATIVE_SPEEDUP:
-            values.append(data["speedupOver1by1Cumulative"][i])
-        if INCLUDE_FAILURE_REDUCTION_RATIO:
-            values.append(data["failureReductionRatio"][i])
-        lines.append(row(values))
-
-    lines.append(latex_footer(problem, True))
-
-    return "\n".join(lines)
-
 def generate_flat_status_table(data):
     lines = []
 
@@ -196,16 +103,16 @@ def generate_flat_status_table(data):
 
     lines.append(
         r"\multirow{2}{*}{\centering Problem} & "
-        r"\multirow{2}{*}{\centering Diff} & "
+        r"\multirow{2}{*}{\centering Run k} & "
         r"\multicolumn{2}{c|}{Flat Time} & "
-        r"\multicolumn{4}{c|}{Status Chain} & "
-        r"\multicolumn{4}{c}{Status Individual}\\"
+        r"\multicolumn{4}{c|}{Status IINGL} & "
+        r"\multicolumn{4}{c}{Status Original}\\"
     )
 
     lines.append(r"\hhline{~~|~~|~~~~|~~~~}")
 
     lines.append(
-        r"& & Chain & Individual & "
+        r"& & IINGL & Original & "
         r"SAT & OPT & UNSAT & UNK & "
         r"SAT & OPT & UNSAT & UNK\\"
     )
@@ -263,13 +170,9 @@ def generate_flat_status_table(data):
 
 def main(data):
     result = {
-        problem : (
-            generate_main_table(problem, problem_data),
-            generate_cumulative_table(problem, problem_data)
-        )
+        problem: generate_table(problem, problem_data, MAIN_TABLE_GROUPS, "main")
         for problem, problem_data in data.items()
     }
-
     return result, generate_flat_status_table(data)
 
 def round_floats(obj, digits=3):
@@ -298,15 +201,14 @@ if __name__ == "__main__":
     with open(args.input) as f:
         data = json.load(f)
 
-    all_tables, flat_status_table = main(round_floats(data))
+    tables, flat_status_table = main(round_floats(data))
 
     output_dir = Path(args.output)
     output_dir.mkdir(exist_ok=True)
 
-    for name, tables in all_tables.items():
-        t, t_cumulative = tables
+    for name, table in tables.items():
         with open(output_dir / f"{name}.tex", "w") as f:
-            f.write(t)
+            f.write(table)
 
     with open(os.path.join(output_dir, "flat_status_table.tex"), "w") as f:
         f.write(flat_status_table)

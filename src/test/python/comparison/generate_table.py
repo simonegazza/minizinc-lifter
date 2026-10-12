@@ -10,29 +10,27 @@ METHOD_COLUMNS = {
         ("solveTimeMean", "Solve Time"),
         ("failures", "Failures"),
         #("cpPropagatorCalls", "CP Calls"),
-        ("unknowns", "UNK"),
+        ("unknowns", "Call TO"),
     ],
     "lifted": [
         #("gMean(iterationSumFlatTime)", "Flat Time"),
         ("gMean(iterationSumSolveTime)", "Solve Time"),
         ("failures", "Failures"),
         #("cpPropagatorCalls", "CP Calls"),
-        ("unknowns", "UNK"),
+        ("unknowns", "Call TO"),
     ],
 }
 
 # Which status groups to include and in what order.
 # Modify this to change the table layout.
 STATUS_GROUPS = {
-    "status": [
-        ("better", "Better"),
-        ("worse", "Worse"),
-        ("MUSes", "MUSes"),
+    "Status of Lifted vs CMPCS": [
+        ("better", "Not Weaker"),
+        ("worse", "Weaker"),
+        ("MUSes", "Global TO"),
         #("discordant", "Disc."),
     ]
 }
-
-# ---------------------------------------------------------------------
 
 def fmt(x):
     """Pretty formatting for numbers."""
@@ -69,14 +67,16 @@ def generate_table(results):
     # Header
     # ------------------------------------------------------------
 
+    status_column_name = list(STATUS_GROUPS.keys())[0]
+
     lines.append(
         r"\multirow{2}{*}{Problem} & "
         r"\multirow{2}{*}{Method} & "
-        + " & ".join(
+        + " &\n".join(
             rf"\multirow{{2}}{{*}}{{{title}}}"
             for _, title in METHOD_COLUMNS["soft"]
         )
-        + rf" & \multicolumn{{{n_status_cols}}}{{c}}{{Status}} \\"
+        + " &\n" + rf"\multicolumn{{{n_status_cols}}}{{c}}{{{status_column_name}}} \\"
     )
 
     status_headers = []
@@ -101,9 +101,11 @@ def generate_table(results):
         for key, _ in METHOD_COLUMNS["soft"]:
             row.append(fmt(metrics[key]))
 
-        for _, cols in STATUS_GROUPS.items():
-            for key, _ in cols:
-                row.append(str(pdata["better"]["soft"][key]))
+        #for _, cols in STATUS_GROUPS.items():
+        #    for key, _ in cols:
+        #        row.append(str(pdata["better"]["soft"][key]))
+        for key, _ in STATUS_GROUPS[status_column_name]:
+            row.append(r"\multirow{2}{*}{" + str(pdata["better"]["soft"][key]) + "}")
 
         lines.append(" & ".join(row) + r" \\")
 
@@ -113,8 +115,8 @@ def generate_table(results):
         for key, _ in METHOD_COLUMNS["lifted"]:
             row.append(fmt(metrics[key]))
 
-        for key, _ in STATUS_GROUPS["status"]:
-            row.append(str(pdata["better"]["soft"][key]))
+        for key, _ in STATUS_GROUPS[status_column_name]:
+            row.append("")
 
         lines.append(" & ".join(row) + r" \\")
 
@@ -123,7 +125,14 @@ def generate_table(results):
 
     lines.append(r"\end{tabular}")
 
-    return "\n".join(lines)
+    table = "\n".join(lines)
+    table += (
+        "\n\\caption{Results of the comparison with CMPCS.}\n"
+        "\\label{tab:comparison}\n"
+        "\\end{table*}"
+    )
+
+    return table
 
 def main(folder):
     return generate_table(process(folder))
