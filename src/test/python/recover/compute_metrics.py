@@ -1,6 +1,29 @@
 import argparse, json, statistics, sys
 from collections import Counter
 
+# Time limit (in seconds) of each execution of a solver
+TIME_LIMIT = 60
+# Tolerance (in seconds) over the time limit before warning
+TOLERANCE = 1
+
+def capped_solve_time(problem_name, run, iteration):
+    """
+    Search time of an iteration, capped at the time limit of its solver
+    executions: the main solver and, if it did not decide (the iteration was
+    completed by another solver), the recovery solver. A time over the limit
+    (plus a tolerance) is reported as a warning.
+    """
+    executions = 1 if iteration["solverUsed"] in ("solutions.huub", "error") else 2
+    limit = TIME_LIMIT * executions
+    solve_time = iteration["solveTime"]
+    if solve_time > limit + TOLERANCE:
+        print(
+            f"Warning: {problem_name}, {run.get('dataFile')}, iteration {iteration['iteration']}: "
+            f"search time {solve_time:.2f}s over the limit of {limit}s",
+            file=sys.stderr,
+        )
+    return min(solve_time, limit)
+
 def main():
     parser = argparse.ArgumentParser(
         description="Process benchmark results JSON."
@@ -37,13 +60,20 @@ def main():
         if not has_solve_time:
             print(f"{problem_name}: no search time recorded, runtime not available", file=sys.stderr)
 
-        duration = [r["statistics"]["totalSolveTime"] for r in runs] if has_solve_time else None
+        # Search time of each iteration, capped at the time limit, and of each
+        # run (sum of its iterations)
+        if has_solve_time:
+            iteration_times = [
+                [capped_solve_time(problem_name, r, it) for it in r["statistics"]["iterations"]]
+                for r in runs
+            ]
+            duration = [sum(times) for times in iteration_times]
+        else:
+            duration = None
 
         if has_solve_time:
-            total_solver_runtime = sum(
-                it["solveTime"] for r in runs for it in r["statistics"]["iterations"]
-            )
-            avg_solver_runtime = total_solver_runtime / len(list(1 for r in runs for _ in r["statistics"]["iterations"]))
+            total_solver_runtime = sum(duration)
+            avg_solver_runtime = total_solver_runtime / sum(len(times) for times in iteration_times)
             avg_total_solver_runtime = total_solver_runtime / len(runs)
 
         # Value of the objective function (distance from the original

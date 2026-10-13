@@ -133,8 +133,10 @@ public class ModelRunner {
 					"-w", // suppress warnings
 					// solver statistics (e.g., the search time "solveTime")
 					"--statistics",
-					// 1 minute timeout expressed in milliseconds
-					"--time-limit", String.valueOf(1000 * 60 * 1),
+					// 1 minute timeout of the solver (search only) expressed in
+					// milliseconds, passed to the solver as "-t": unlike
+					// "--time-limit", it does not include the flattening
+					"--solver-time-limit", String.valueOf(1000 * 60 * 1),
 					// "--verbose",
 					(modelBasePath.toString() + ".mzn"))
 				.redirectErrorStream(true)
