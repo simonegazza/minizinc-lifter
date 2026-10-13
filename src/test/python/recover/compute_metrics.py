@@ -1,4 +1,4 @@
-import argparse, json, statistics
+import argparse, json, statistics, sys
 from collections import Counter
 
 def main():
@@ -29,15 +29,22 @@ def main():
 
         iteration_per_run = list(len(r["statistics"]["iterations"]) for r in runs)
 
-        duration = list(r["statistics"]["totalDurationMs"] / 1000.0 for r in runs)
+        # Runtime: only the time spent by the solvers in the search (as reported
+        # by MiniZinc), without the lifting, the generation of the models and
+        # the flattening. It is recorded only by the runs executed with the
+        # "--statistics" of MiniZinc: for older runs it is not available.
+        has_solve_time = all("totalSolveTime" in r["statistics"] for r in runs)
+        if not has_solve_time:
+            print(f"{problem_name}: no search time recorded, runtime not available", file=sys.stderr)
 
-        total_solver_runtime = sum(
-            sum(it["durationMs"] for it in r["statistics"]["iterations"]) / 1000.0
-            for r in runs
-        )
+        duration = [r["statistics"]["totalSolveTime"] for r in runs] if has_solve_time else None
 
-        avg_solver_runtime = total_solver_runtime / len(list(1 for r in runs for _ in r["statistics"]["iterations"]))
-        avg_total_solver_runtime = total_solver_runtime / len(runs)
+        if has_solve_time:
+            total_solver_runtime = sum(
+                it["solveTime"] for r in runs for it in r["statistics"]["iterations"]
+            )
+            avg_solver_runtime = total_solver_runtime / len(list(1 for r in runs for _ in r["statistics"]["iterations"]))
+            avg_total_solver_runtime = total_solver_runtime / len(runs)
 
         # Value of the objective function (distance from the original
         # parameters) of the runs that found a solution
@@ -56,6 +63,10 @@ def main():
             for it in r["statistics"]["iterations"]
             if it["solverUsed"] not in ("solutions.huub", "error")
         )
+
+        # MiniZinc status of the last execution of each run (a run without
+        # status ended with an error)
+        statuses = Counter(r["statistics"].get("status") or "ERROR" for r in runs)
 
         final_state_counts = Counter(
             r["statistics"]["finalState"]
@@ -77,17 +88,19 @@ def main():
             "runs": len(runs),
             "maxIterations": max(iteration_per_run),
 
-            "avgTotalDuration": round(statistics.geometric_mean(duration), 2),
-            "minTotalDuration": min(duration),
-            "maxTotalDuration": max(duration),
+            "avgTotalDuration": round(statistics.geometric_mean(duration), 2) if duration else None,
+            "minTotalDuration": min(duration) if duration else None,
+            "maxTotalDuration": max(duration) if duration else None,
 
             "minObjective": min(objectives) if objectives else None,
             "medianObjective": statistics.median(objectives) if objectives else None,
             "maxObjective": max(objectives) if objectives else None,
 
-            "totalSolverRuntime": round(total_solver_runtime, 2),
-            "avgTotalSolverRuntime": round(avg_total_solver_runtime, 2),
-            "avgSolverRuntimePerIteration": round(avg_solver_runtime, 2),
+            "statuses": dict(sorted(statuses.items())),
+
+            "totalSolverRuntime": round(total_solver_runtime, 2) if has_solve_time else None,
+            "avgTotalSolverRuntime": round(avg_total_solver_runtime, 2) if has_solve_time else None,
+            "avgSolverRuntimePerIteration": round(avg_solver_runtime, 2) if has_solve_time else None,
         }
 
         for state, count in sorted(final_state_counts.items()):

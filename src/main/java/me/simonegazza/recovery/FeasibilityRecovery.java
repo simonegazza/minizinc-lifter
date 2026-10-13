@@ -219,6 +219,12 @@ public class FeasibilityRecovery implements Callable<Integer> {
 		.compile(Pattern.quote(Assumer.OBJECTIVE_OUTPUT) + "(-?[0-9.eE+-]+)");
 
 	/**
+	 * The search time reported in the statistics of a MiniZinc execution.
+	 */
+	private static final Pattern SOLVE_TIME = Pattern
+		.compile("^%%%mzn-stat: solveTime=([0-9.eE+-]+)$");
+
+	/**
 	 * An element of the core.
 	 */
 	private static final Pattern ASSUMPTION = Pattern.compile("assumed\\[(\\d+)\\]");
@@ -247,6 +253,23 @@ public class FeasibilityRecovery implements Callable<Integer> {
 	}
 
 	/**
+	 * Reads the time spent by the solver in the search from the statistics of a
+	 * MiniZinc execution.
+	 *
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)}
+	 *
+	 * @return the search time in seconds ({@code 0} if not reported)
+	 */
+	private double getSolveTime(List<String> commandOutput) {
+		return commandOutput.stream()
+			.map(SOLVE_TIME::matcher)
+			.filter(Matcher::matches)
+			.mapToDouble(m -> Double.parseDouble(m.group(1)))
+			.sum();
+	}
+
+	/**
 	 * Determines the outcome of a MiniZinc execution.
 	 * <p>
 	 * The output can also contain other lines (e.g., the traces of the model),
@@ -264,6 +287,24 @@ public class FeasibilityRecovery implements Callable<Integer> {
 			return Outcome.UNSATISFIABLE;
 		}
 		return Outcome.UNKNOWN;
+	}
+
+	/**
+	 * Determines the MiniZinc status of an execution: a solution is optimal
+	 * only if the search was completed ({@code ==========}).
+	 *
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)}
+	 *
+	 * @return {@code OPTIMAL}, {@code SATISFIABLE}, {@code UNSATISFIABLE} or
+	 *             {@code UNKNOWN}
+	 */
+	private String getStatus(List<String> commandOutput) {
+		return switch (getOutcome(commandOutput)) {
+		case SOLUTION -> commandOutput.contains("==========") ? "OPTIMAL" : "SATISFIABLE";
+		case UNSATISFIABLE -> "UNSATISFIABLE";
+		case UNKNOWN -> "UNKNOWN";
+		};
 	}
 
 	/**
@@ -408,10 +449,12 @@ public class FeasibilityRecovery implements Callable<Integer> {
 			// Run the .fzn
 			logger.info("Running the lifted model...");
 			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, solverUsed);
+			stats.addSolveTime(getSolveTime(commandOutput));
 
 			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
 			if (coreAssumptionIndeces.isEmpty()) {
 				getObjective(commandOutput).ifPresent(stats::setObjective);
+				stats.setStatus(getStatus(commandOutput));
 				return finish(
 					getOutcome(commandOutput) == Outcome.SOLUTION
 						? RunStatistics.FinalState.SOLUTION_FOUND
@@ -431,8 +474,10 @@ public class FeasibilityRecovery implements Callable<Integer> {
 					recoverySolver,
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
+				stats.addSolveTime(getSolveTime(recoveryOuput));
 
 				getObjective(recoveryOuput).ifPresent(stats::setObjective);
+				stats.setStatus(getStatus(recoveryOuput));
 				return switch (getOutcome(recoveryOuput)) {
 				case SOLUTION -> finish(RunStatistics.FinalState.SOLUTION_FOUND_VIA_RECOVERY, solverUsed);
 				case UNSATISFIABLE -> finish(RunStatistics.FinalState.ABORTED, solverUsed);

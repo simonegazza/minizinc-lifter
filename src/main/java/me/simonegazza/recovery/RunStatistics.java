@@ -75,6 +75,10 @@ public class RunStatistics {
 	 *                          counter used by the feasibility recovery
 	 *                          procedure
 	 * @param durationMs    wall-clock duration of the iteration in milliseconds
+	 *                          (including the generation of the model and the
+	 *                          flattening)
+	 * @param solveTime     time (in seconds) spent by the solvers in the search
+	 *                          during this iteration, as reported by MiniZinc
 	 * @param coreVariables indexes of the lifted variables that belong to the
 	 *                          extracted UNSAT core; empty when no core was
 	 *                          produced
@@ -84,6 +88,7 @@ public class RunStatistics {
 	public record IterationRecord(
 		int iteration,
 		long durationMs,
+		double solveTime,
 		List<Integer> coreVariables,
 		String solverUsed) {
 
@@ -97,6 +102,7 @@ public class RunStatistics {
 
 			json.put("iteration", iteration);
 			json.put("durationMs", durationMs);
+			json.put("solveTime", solveTime);
 			json.put("coreVariables", new JSONArray(coreVariables));
 			json.put("solverUsed", solverUsed);
 
@@ -137,6 +143,12 @@ public class RunStatistics {
 	private long currentIterationStartNano;
 
 	/**
+	 * Search time (in seconds) of the solver executions of the current
+	 * iteration.
+	 */
+	private double currentIterationSolveTime;
+
+	/**
 	 * Amount of changes originally introduced in the model, counted by scanning
 	 * for "% CHANGED HERE from" comments.
 	 */
@@ -152,6 +164,13 @@ public class RunStatistics {
 	 * from the original ones) of the solution found, if any.
 	 */
 	private Number objective;
+
+	/**
+	 * MiniZinc status of the last execution ({@code OPTIMAL},
+	 * {@code SATISFIABLE}, {@code UNSATISFIABLE} or {@code UNKNOWN}), if the
+	 * procedure ended without errors.
+	 */
+	private String status;
 
 	/**
 	 * Records the number of changes originally introduced in the model, by
@@ -203,6 +222,16 @@ public class RunStatistics {
 	public void startIteration(int iteration) {
 		currentIteration = iteration;
 		currentIterationStartNano = System.nanoTime();
+		currentIterationSolveTime = 0;
+	}
+
+	/**
+	 * Adds the search time of a solver execution to the current iteration.
+	 *
+	 * @param solveTime the time (in seconds) spent by the solver in the search
+	 */
+	public void addSolveTime(double solveTime) {
+		currentIterationSolveTime += solveTime;
 	}
 
 	/**
@@ -225,6 +254,7 @@ public class RunStatistics {
 		iterations.add(new IterationRecord(
 			currentIteration,
 			durationMs,
+			currentIterationSolveTime,
 			coreVariables,
 			solverUsed));
 	}
@@ -236,6 +266,15 @@ public class RunStatistics {
 	 */
 	public void setObjective(Number objective) {
 		this.objective = objective;
+	}
+
+	/**
+	 * Records the MiniZinc status of the last execution.
+	 *
+	 * @param status the MiniZinc status
+	 */
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	/**
@@ -260,8 +299,20 @@ public class RunStatistics {
 	}
 
 	/**
+	 * Returns the time spent by the solvers in the search, summed over all the
+	 * iterations (it does not include the lifting, the generation of the models
+	 * and the flattening).
+	 *
+	 * @return total search time in seconds
+	 */
+	public double getTotalSolveTime() {
+		return iterations.stream().mapToDouble(IterationRecord::solveTime).sum();
+	}
+
+	/**
 	 * Returns the total wall-clock duration of the procedure in milliseconds,
-	 * measured from the {@link #start()} call to the {@link #finish} call.
+	 * measured from the {@link #start()} call to the {@link #finish} call
+	 * (including the lifting, the generation of the models and the flattening).
 	 * <p>
 	 * Returns {@code 0} when {@link #finish(FinalState)} has not yet been
 	 * called.
@@ -322,9 +373,11 @@ public class RunStatistics {
 		JSONObject root = new JSONObject();
 
 		root.put("totalDurationMs", getTotalDurationMs());
+		root.put("totalSolveTime", getTotalSolveTime());
 		root.put("liftedParameters", parameterNumber);
 		root.put("originalParameterModified", changes);
 		root.put("_objective", objective == null ? JSONObject.NULL : objective);
+		root.put("status", status == null ? JSONObject.NULL : status);
 
 		if (finalState != null) {
 			root.put("finalState", finalState.name());

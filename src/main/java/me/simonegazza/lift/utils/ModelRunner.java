@@ -131,6 +131,8 @@ public class ModelRunner {
 					"--solver", solverName,
 					// "-a",
 					"-w", // suppress warnings
+					// solver statistics (e.g., the search time "solveTime")
+					"--statistics",
 					// 1 minute timeout expressed in milliseconds
 					"--time-limit", String.valueOf(1000 * 60 * 1),
 					// "--verbose",

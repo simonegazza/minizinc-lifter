@@ -34,6 +34,48 @@ def parse_file(filepath):
         print(f"Error parsing {filepath}: {e}", file=sys.stderr)
         return None
 
+MARKER = "*********************************************"
+
+# Last MiniZinc line of an execution -> MiniZinc status
+STATUS_LINES = {
+    "==========": "OPTIMAL",
+    "----------": "SATISFIABLE",
+    "=====UNSATISFIABLE=====": "UNSATISFIABLE",
+    "=====UNKNOWN=====": "UNKNOWN",
+}
+
+def statuses_from_log(filepath):
+    """
+    MiniZinc status of each run, read from the log before the statistics: the
+    output of the executions of a run is followed by the statistics of the run
+    (a JSON object with "finalState"), and the status is given by the last
+    status line of the run (a solution is OPTIMAL only if followed by
+    "=========="). Used for the runs whose statistics have no "status".
+    """
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+    idx = content.find(MARKER)
+    log = content if idx == -1 else content[:idx]
+
+    decoder = json.JSONDecoder()
+    statuses = []
+    last = None
+    position = 0
+    for line in log.splitlines(keepends=True):
+        stripped = line.strip()
+        if stripped in STATUS_LINES:
+            last = STATUS_LINES[stripped]
+        elif stripped == "{":
+            try:
+                obj, _ = decoder.raw_decode(log, position)
+            except json.JSONDecodeError:
+                obj = None
+            if isinstance(obj, dict) and "finalState" in obj:
+                statuses.append(last or "UNKNOWN")
+                last = None
+        position += len(line)
+    return statuses
+
 def main():
     parser = argparse.ArgumentParser(
         description="Parse JSON from .txt files in a folder and combine them into a single JSON file."
@@ -76,7 +118,17 @@ def main():
             combined_data[filename] = parsed_json
             found_files += 1
 
-            for run in parsed_json.get("runs", []):
+            # Runs recorded before the "status" statistic: read it from the log
+            runs = parsed_json.get("runs", [])
+            if any("status" not in run.get("statistics", {}) for run in runs):
+                statuses = statuses_from_log(filepath)
+                if len(statuses) == len(runs):
+                    for run, status in zip(runs, statuses):
+                        run["statistics"].setdefault("status", status)
+                else:
+                    print(f"{filename}: cannot read the status of the runs from the log", file=sys.stderr)
+
+            for run in runs:
                 state = run.get("statistics", {}).get("finalState")
                 if state is None or state == "ERROR":
                     failures.append((f"{filename}: {run.get('dataFile')}", f"final state {state}"))

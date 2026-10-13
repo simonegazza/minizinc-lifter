@@ -25,7 +25,7 @@ def fmt_int(value):
     return "N/A" if value is None else str(int(value))
 
 def fmt_float(value):
-    return f"{value:.2f}"
+    return "N/A" if value is None else f"{value:.2f}"
 
 def fmt_number(value):
     """Integers as they are, floats with two decimals, missing values as N/A."""
@@ -35,24 +35,63 @@ def fmt_number(value):
         return str(value)
     return f"{value:.2f}"
 
+# MiniZinc statuses and their column titles, in the order of the table: only
+# the statuses of at least one run are shown
+STATUSES = [
+    ("OPTIMAL", "OPT"),
+    ("SATISFIABLE", "SAT"),
+    ("UNKNOWN", "UNK"),
+    ("UNSATISFIABLE", "UNSAT"),
+    ("ERROR", "ERR"),
+]
+
+
+def collect_statuses(data):
+    """Statuses (and titles) with at least one run in the shown problems."""
+    present = set()
+    for key in ORDER:
+        if key in data:
+            present |= {s for s, n in data[key]["statuses"].items() if n > 0}
+
+    known = [s for s, _ in STATUSES]
+    columns = [(s, title) for s, title in STATUSES if s in present]
+    # Statuses not in the list are added at the end with their own name
+    columns += [(s, s) for s in sorted(present) if s not in known]
+    return columns
+
+
 def generate_table(data):
+    statuses = collect_statuses(data)
+    groups = [2, 3, 3, 3] + ([len(statuses)] if statuses else [])
+
+    def hhline(char):
+        """Horizontal rule over all the column groups ("~" none, "-" all)."""
+        return r"\hhline{" + char + "|" + "|".join(char * n for n in groups) + "}"
+
     lines = [
         r"\begin{table*}[t]",
         r"\centering",
-        r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
-        r"\hhline{~|~~|~~~|~~~|~~~}",
+        r"\begin{tabular}{l|" + "|".join("c" * n for n in groups) + "}",
+        hhline("~"),
         r"\multirow{2}{*}{\centering Problem} &"
         r"\multicolumn{2}{c|}{Parameters} &"
         r"\multicolumn{3}{c|}{Core Size} &"
         r"\multicolumn{3}{c|}{Runtime} &"
-        r"\multicolumn{3}{c}{Objectives}\\",
-        r"\hhline{~|~~|~~~|~~~|~~~}",
+        + (
+            r"\multicolumn{3}{c|}{Objectives} &"
+            + rf"\multicolumn{{{len(statuses)}}}{{c}}{{Statuses}}\\"
+            if statuses
+            else r"\multicolumn{3}{c}{Objectives}\\"
+        ),
+        hhline("~"),
         r"&"
         r"Modified & Lifted &"
         r"Min & Avg & Max & "
         r"Min & Mean & Max & "
-        r"Min & Median & Max\\",
-        r"\hhline{-|--|---|---|---}",
+        r"Min & Median & Max"
+        + "".join(f" & {title}" for _, title in statuses)
+        + r"\\",
+        hhline("-"),
     ]
 
     for key in ORDER:
@@ -79,12 +118,14 @@ def generate_table(data):
             f' & {fmt_float(d["maxTotalDuration"])}'
             f' & {fmt_number(d.get("minObjective"))}'
             f' & {fmt_number(d.get("medianObjective"))}'
-            f' & {fmt_number(d.get("maxObjective"))}\\\\'
+            f' & {fmt_number(d.get("maxObjective"))}'
+            + "".join(f' & {d["statuses"].get(status, 0)}' for status, _ in statuses)
+            + r"\\"
         )
 
     lines.extend(
         [
-            r"\hhline{~|~~|~~~|~~~|~~~}",
+            hhline("~"),
             r"\end{tabular}",
             r"\caption{Summary of feasibility-recovery experiments.}",
             r"\label{tab:recovery}",
