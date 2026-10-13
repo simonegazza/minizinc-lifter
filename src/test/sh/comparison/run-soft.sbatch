@@ -12,7 +12,7 @@
 set -xeuo pipefail
 
 base="$1"
-dir="target/comparison/$base"
+dir="target/comparison/data/$base"
 model="$dir/${base}_soft.mzn"
 result="target/comparison/results"
 
@@ -28,10 +28,10 @@ outfile="$result/soft_${base}_${instance}.txt"
 errfile="$result/soft_${base}_${instance}.err"
 
 podman run --rm \
-	-w /workdir \
     -v ../huub:/huub \
     -v ../huub/share/minizinc/huub/huub.msc:/usr/share/minizinc/solvers/huub.msc \
-    -v "$dir":/workdir \
+    -v ./:/minizinc-lifter \
+	-w /minizinc-lifter \
     docker.io/minizinc/minizinc:edge-noble \
 	minizinc \
 	--solver solutions.huub \

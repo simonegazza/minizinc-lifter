@@ -40,15 +40,41 @@ java -jar target/recovery.jar \
 ```
 
 # Automatic Feasibility Recovery
-This repository also contains the implementation and experimental artifacts for the **Automatic Feasibility Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script.
+This repository also contains the implementation and experimental artifacts for the **Automatic Feasibility Recovery** evaluation presented in our paper. As the other experiments, it is executed on a computing cluster through Slurm and Podman (see [Running on the cluster](#running-on-the-cluster)); the same pipeline can also be executed locally with the `src/test/sh/recovery/recovery.sh` script.
 
 ## Prerequisites
 The experiments require:
 * Java 25
 * Maven
 * Python >= 3.11
+* Podman (or Docker, with equivalent commands) and the Slurm workload manager (`sbatch`), to execute the experiments on a computing cluster
+* MiniZinc with the Huub solver, only to execute the experiments locally (`minizinc` must be in the `PATH`)
 
 All commands are executed from the **root directory of the repository**.
+
+## Running on the cluster
+The feasibility recovery tool (Java) runs MiniZinc, so both must be in the same container. No dedicated image is needed: the Slurm script uses the MiniZinc image of the other experiments (`docker.io/minizinc/minizinc:edge-noble`) and mounts in it, read-only, the Java runtime of the Maven image used to run the other Java tools (`docker.io/library/maven:3.9-eclipse-temurin-25`, through Podman's `--mount type=image`).
+
+As for the other experiments, Huub is expected in `../huub` and it is mounted in the container. The jars must be built before (see [Building](#building)); if Java 25 is not available on the cluster, they can be built with Podman too:
+
+```bash
+podman run --rm -v ./:/workspace -w /workspace docker.io/library/maven:3.9-eclipse-temurin-25 ./mvnw package
+```
+
+Then, each task of the Slurm array executes one of the scripts in `src/test/sh/recovery/problems/` (Step 1 and Step 2 below, for one problem) inside the container:
+
+```bash
+mkdir -p target/logs
+sbatch src/test/sh/recovery/run.sbatch
+```
+
+The statistics of each problem are written to `target/recover/results/<problem>.sh.txt` (and the logs to `target/recover/results/<problem>.sh.err`). When all the tasks have completed, the statistics are collected (Step 3 below) with:
+
+```bash
+sh src/test/sh/recovery/collect.sh
+```
+
+The steps below describe what is executed for each problem.
 
 ## Experimental pipeline
 We will use the fixture problem as running example for this experimentation. The other scripts are available in `src/test/sh/recovery/problems`.
@@ -97,7 +123,7 @@ target/recover/results/<problem>/<repetition>/
 ```
 
 ### Step 3 - Collecting statistics
-After all experiments have completed, the raw output is aggregated into a single JSON file:
+After all experiments have completed, the raw output is aggregated into a single JSON file, the metrics are computed (including the minimum, average and maximum value of the objective function, i.e. the distance of the recovered parameters from the original ones) and the LaTeX table is generated. This is done by `src/test/sh/recovery/collect.sh`:
 
 ```bash
 python3 ./src/test/python/recover/recover.py target/recover/results/ target/recover/run.json
@@ -119,6 +145,7 @@ target/
     ├─ table.tex                      # LaTeX table (generate_table.py)
     └─ results/
         ├─ <problem>.sh.txt           # output of src/test/sh/recovery/problems/<problem>.sh
+        ├─ <problem>.sh.err           # its logs (only when executed with run.sbatch)
         └─ <problem>/
             ├─ <repetition>-<data>.dzn       # randomized instance (test-randomizer.jar)
             ├─ ...
@@ -159,14 +186,14 @@ All commands below assume that they are executed from the **root directory of th
 
 ## Step 1 - Extract the benchmark data
 
-Create the output directories and extract the benchmark models and data files (the archive has a top-level `dataset/` folder, which is stripped):
+Create the output directories and extract the benchmark models and data files (the archive has a top-level `data/` folder):
 
 ```bash
 mkdir -p target/comparison/{results,tables} logs
-unxz -c src/test/resources/comparison/data.tar.xz | tar -xvf - -C target/comparison --strip-components=1
+tar -xvf src/test/resources/comparison/data.tar.xz -C target/comparison
 ```
 
-After extraction, each benchmark is available as `target/comparison/<benchmark>/`, containing the `<benchmark>_lifted.mzn` and `<benchmark>_soft.mzn` models and the `unsat_dzn/` instances used by the Slurm scripts. The `logs/` folder is required by the `--output`/`--error` options of the Slurm scripts.
+After extraction, each benchmark is available as `target/comparison/data/<benchmark>/`, containing the `<benchmark>_lifted.mzn` and `<benchmark>_soft.mzn` models and the `unsat_dzn/` instances used by the Slurm scripts. The `logs/` folder is required by the `--output`/`--error` options of the Slurm scripts.
 
 The outputs of our runs are archived in `results/comparison/results.tar.xz` (they extract to a `results/` folder, i.e. the content of `target/comparison/results`).
 
