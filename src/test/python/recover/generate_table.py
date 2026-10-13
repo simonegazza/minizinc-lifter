@@ -29,28 +29,39 @@ def fmt_float(value):
     return f"{value:.2f}"
 
 
+def fmt_number(value):
+    """Integers as they are, floats with two decimals, missing values as N/A."""
+    if value is None:
+        return "N/A"
+    if isinstance(value, int):
+        return str(value)
+    return f"{value:.2f}"
+
+
 def generate_table(data):
     lines = [
         r"\begin{table*}[t]",
         r"\centering",
         #r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
-        r"\begin{tabular}{l|cc|ccc|ccc}",
+        r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
         #r"\hhline{~|~~|~~~|~~~|~~~}",
-        r"\hhline{~|~~|~~~|~~~}",
+        r"\hhline{~|~~|~~~|~~~|~~~}",
         r"\multirow{2}{*}{\centering Problem} &"
         r"\multicolumn{2}{c|}{Parameters} &"
         r"\multicolumn{3}{c|}{Core Size} &"
         #r"\multicolumn{3}{c|}{Iterations} &"
-        r"\multicolumn{3}{c}{Runtime}\\",
+        r"\multicolumn{3}{c|}{Runtime} &"
+        r"\multicolumn{3}{c}{Objectives}\\",
         #r"\hhline{~|~~|~~~|~~~|~~~}",
-        r"\hhline{~|~~|~~~|~~~}",
+        r"\hhline{~|~~|~~~|~~~|~~~}",
         r"&"
         r"Modified & Lifted &"
         r"Min & Avg & Max & "
         #r"Min & Avg & Max & "
+        r"Min & Avg & Max & "
         r"Min & Avg & Max\\",
         #r"\hhline{-|--|---|---|---}",
-        r"\hhline{-|--|---|---}",
+        r"\hhline{-|--|---|---|---}",
     ]
 
     for key in ORDER:
@@ -77,13 +88,16 @@ def generate_table(data):
             #f' & {d["maxIterations"]}'
             f' & {fmt_float(d["minTotalDuration"])}'
             f' & {fmt_float(d["avgTotalDuration"])}'
-            f' & {fmt_float(d["maxTotalDuration"])}\\\\'
+            f' & {fmt_float(d["maxTotalDuration"])}'
+            f' & {fmt_number(d.get("minObjective"))}'
+            f' & {fmt_number(d.get("meanObjective"))}'
+            f' & {fmt_number(d.get("maxObjective"))}\\\\'
         )
 
     lines.extend(
         [
             #r"\hhline{~|~~|~~~|~~~|~~~}",
-            r"\hhline{~|~~|~~~|~~~}",
+            r"\hhline{~|~~|~~~|~~~|~~~}",
             r"\end{tabular}",
             r"\caption{Summary of feasibility-recovery experiments.}",
             r"\label{tab:recovery}",

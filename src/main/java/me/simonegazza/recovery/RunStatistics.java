@@ -148,6 +148,12 @@ public class RunStatistics {
 	private int parameterNumber;
 
 	/**
+	 * Value of the objective function (the distance of the lifted parameters
+	 * from the original ones) of the solution found, if any.
+	 */
+	private Number objective;
+
+	/**
 	 * Records the number of changes originally introduced in the model, by
 	 * counting the number of "% CHANGED HERE from" comments.
 	 *
@@ -221,6 +227,15 @@ public class RunStatistics {
 			durationMs,
 			coreVariables,
 			solverUsed));
+	}
+
+	/**
+	 * Records the value of the objective function of the solution found.
+	 *
+	 * @param objective the value of the objective function
+	 */
+	public void setObjective(Number objective) {
+		this.objective = objective;
 	}
 
 	/**
@@ -309,6 +324,7 @@ public class RunStatistics {
 		root.put("totalDurationMs", getTotalDurationMs());
 		root.put("liftedParameters", parameterNumber);
 		root.put("originalParameterModified", changes);
+		root.put("_objective", objective == null ? JSONObject.NULL : objective);
 
 		if (finalState != null) {
 			root.put("finalState", finalState.name());

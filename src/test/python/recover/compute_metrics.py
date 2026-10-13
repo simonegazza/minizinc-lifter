@@ -39,6 +39,14 @@ def main():
         avg_solver_runtime = total_solver_runtime / len(list(1 for r in runs for _ in r["statistics"]["iterations"]))
         avg_total_solver_runtime = total_solver_runtime / len(runs)
 
+        # Value of the objective function (distance from the original
+        # parameters) of the runs that found a solution
+        objectives = [
+            r["statistics"]["_objective"]
+            for r in runs
+            if r["statistics"].get("_objective") is not None
+        ]
+
         final_state_counts = Counter(
             r["statistics"]["finalState"]
             for r in runs
@@ -59,6 +67,10 @@ def main():
             "avgTotalDuration": round(statistics.geometric_mean(duration), 2),
             "minTotalDuration": min(duration),
             "maxTotalDuration": max(duration),
+
+            "minObjective": min(objectives) if objectives else None,
+            "meanObjective": round(statistics.mean(objectives), 2) if objectives else None,
+            "maxObjective": max(objectives) if objectives else None,
 
             "totalSolverRuntime": round(total_solver_runtime, 2),
             "avgTotalSolverRuntime": round(avg_total_solver_runtime, 2),

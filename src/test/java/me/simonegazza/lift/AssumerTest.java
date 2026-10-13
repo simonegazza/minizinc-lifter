@@ -107,4 +107,16 @@ public class AssumerTest {
 		assertTrue(second.compareTo(first) > 0);
 		assertEquals(0, first.compareTo(new RevokedAssumption("a_lifted", List.of(1, 2))));
 	}
+
+	@Test
+	public void objectiveIsPrintedTest() {
+		String model = lift("""
+			int: a = 1;
+			var 0..10: x;
+			constraint x > a;
+			solve satisfy;
+			""", "a").withAssumptions(List.of());
+
+		assertTrue(model.contains("output [\"" + Assumer.OBJECTIVE_OUTPUT + "\\(objective_lifted)\\n\"];"));
+	}
 }

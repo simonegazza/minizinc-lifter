@@ -23,6 +23,19 @@ def collect_statuses(raw_data):
                 break
     return result
 
+def last_objective(streams):
+    """Value of "_objective" of the last solution in a json-stream, if any."""
+    objective = None
+    for stream in streams:
+        if stream.get("type") == "solution":
+            value = stream["output"].get("json", {}).get("_objective")
+            if value is not None:
+                objective = value
+    return objective
+
+def collect_objectives(raw_data):
+    return [last_objective(instance["combined"]) for instance in raw_data]
+
 def main(raw_data):
     flat_times = []
     recursively_collect_key(raw_data, "flatTime", flat_times)
@@ -42,6 +55,7 @@ def main(raw_data):
         "flatTimeMean" : statistics.geometric_mean(flat_times),
         "solveTimeMean" : statistics.geometric_mean(solve_times),
         "statuses" : statuses,
+        "objectives" : collect_objectives(raw_data),
         "failures": statistics.geometric_mean(failures),
         "cpPropagatorCalls": statistics.geometric_mean(cpPropagatorCalls)
     }

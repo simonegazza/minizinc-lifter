@@ -56,6 +56,12 @@ public class Assumer implements Callable<String> {
 	private final List<LiftedParameter> maxParameters;
 
 	/**
+	 * Prefix of the line, in the output of the model, with the value of the
+	 * objective function.
+	 */
+	public static final String OBJECTIVE_OUTPUT = "_objective = ";
+
+	/**
 	 * A MiniZinc float literal (e.g., {@code 1.5}, but not the range
 	 * {@code 1..5}).
 	 */
@@ -234,7 +240,10 @@ public class Assumer implements Callable<String> {
 			.append("\n;\n")
 			.append("solve")
 			.append("\n\t::warm_start(assumed, [true | _ in index_set(assumed)])")
-			.append("\nminimize objective_lifted;\n\n");
+			.append("\nminimize objective_lifted;\n\n")
+			// Separate output item, so that the value of the objective can be
+			// read from the output of every run
+			.append("output [\"" + OBJECTIVE_OUTPUT + "\\(objective_lifted)\\n\"];\n\n");
 
 		return obj.toString();
 	}

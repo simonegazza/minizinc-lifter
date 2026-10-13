@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.lift.Main;
 import me.simonegazza.lift.ModelLifter;
+import me.simonegazza.lift.assumptions.Assumer;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import me.simonegazza.lift.utils.ModelRunner;
@@ -211,9 +213,38 @@ public class FeasibilityRecovery implements Callable<Integer> {
 	private static final String CORE_PREFIX = "%%%mzn-core:";
 
 	/**
+	 * The value of the objective function printed by the lifted model.
+	 */
+	private static final Pattern OBJECTIVE = Pattern
+		.compile(Pattern.quote(Assumer.OBJECTIVE_OUTPUT) + "(-?[0-9.eE+-]+)");
+
+	/**
 	 * An element of the core.
 	 */
 	private static final Pattern ASSUMPTION = Pattern.compile("assumed\\[(\\d+)\\]");
+
+	/**
+	 * Reads the value of the objective function of the last solution in the
+	 * output of a MiniZinc execution.
+	 *
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)} (the last
+	 *                          line first)
+	 *
+	 * @return the value of the objective function, if any
+	 */
+	private Optional<Number> getObjective(List<String> commandOutput) {
+		// The output of the model may not end with a new line, so the value
+		// can be at the end of another line
+		return commandOutput.stream()
+			.map(OBJECTIVE::matcher)
+			.filter(Matcher::find)
+			.findFirst()
+			.map(m -> m.group(1))
+			.map(v -> v.contains(".") || v.contains("e")
+				? (Number) Double.valueOf(v)
+				: (Number) Long.valueOf(v));
+	}
 
 	/**
 	 * Determines the outcome of a MiniZinc execution.
@@ -380,6 +411,7 @@ public class FeasibilityRecovery implements Callable<Integer> {
 
 			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
 			if (coreAssumptionIndeces.isEmpty()) {
+				getObjective(commandOutput).ifPresent(stats::setObjective);
 				return finish(
 					getOutcome(commandOutput) == Outcome.SOLUTION
 						? RunStatistics.FinalState.SOLUTION_FOUND
@@ -400,6 +432,7 @@ public class FeasibilityRecovery implements Callable<Integer> {
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
 
+				getObjective(recoveryOuput).ifPresent(stats::setObjective);
 				return switch (getOutcome(recoveryOuput)) {
 				case SOLUTION -> finish(RunStatistics.FinalState.SOLUTION_FOUND_VIA_RECOVERY, solverUsed);
 				case UNSATISFIABLE -> finish(RunStatistics.FinalState.ABORTED, solverUsed);

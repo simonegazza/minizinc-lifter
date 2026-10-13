@@ -61,6 +61,29 @@ def first_hard_better(lifted_status, soft_status):
             return "MUSes"
         return False
 
+def compare_objectives(lifted_status, lifted_objective, soft_objective):
+    """
+    Compares the objective (the L1 distance from the original parameters,
+    to be minimised) of Lifted against CMPCS.
+    """
+    # The lifted procedure was stopped by the global time limit while
+    # removing cores (as for the "Global TO" of the statuses)
+    if lifted_status == "UNSATISFIABLE":
+        return "globalTO"
+    # A method without a solution is worse than one with a solution; if both
+    # have no solution, none of the two is better
+    if lifted_objective is None and soft_objective is None:
+        return "equal"
+    if lifted_objective is None:
+        return "worse"
+    if soft_objective is None:
+        return "better"
+    if lifted_objective < soft_objective:
+        return "better"
+    if lifted_objective > soft_objective:
+        return "worse"
+    return "equal"
+
 def main(main_folder : Path):
     result = {}
     for problem in PROBLEMS:
@@ -90,8 +113,18 @@ def main(main_folder : Path):
                 soft_processed["statuses"])
         ]
 
+        objective_comparison = [
+            compare_objectives(lifted_status, lifted_objective, soft_objective)
+            for (lifted_status, lifted_objective, soft_objective) in zip(
+                lifted_processed["statuses"],
+                lifted_processed["objectives"],
+                soft_processed["objectives"])
+        ]
+
         del soft_processed["statuses"]
         del lifted_processed["statuses"]
+        del soft_processed["objectives"]
+        del lifted_processed["objectives"]
 
         result[problem] = {
             "soft" : soft_processed,
@@ -110,6 +143,10 @@ def main(main_folder : Path):
                     "MUSes" : len([s for s in soft_better_status if s == "MUSes"]),
                     "discordant" : len([s for s in hard_better_status if s == None])
                 }
+            },
+            "objective" : {
+                key : len([o for o in objective_comparison if o == key])
+                for key in ["better", "equal", "worse", "globalTO"]
             }
         }
 

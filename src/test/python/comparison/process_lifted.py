@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse, json, statistics, re
 
+from process_soft import last_objective
+
 def recursively_collect_key(obj, key_name, result):
     if isinstance(obj, dict):
         for key, value in obj.items():
@@ -41,6 +43,23 @@ def collect_statuses(raw_data):
             if found:
                 break
 
+    return result
+
+def collect_objectives(raw_data):
+    """
+    Value of "_objective" of the last solution of each instance, taken from the
+    last iteration with a status (the same used by collect_statuses).
+    """
+    result = []
+    for instance in raw_data:
+        objective = None
+        for stream in reversed(instance["combined"]):
+            if any(js["type"] == "status"
+                   or (js["type"] == "statistics" and "status" in js["statistics"])
+                   for js in stream):
+                objective = last_objective(stream)
+                break
+        result.append(objective)
     return result
 
 def main(raw_data):
@@ -103,6 +122,7 @@ def main(raw_data):
         "gMean(iterationSumFlatTime)" : statistics.geometric_mean(flat_times),
         "gMean(iterationSumSolveTime)" : statistics.geometric_mean(solve_times),
         "statuses" : statuses,
+        "objectives" : collect_objectives(raw_data),
         "failures" : statistics.geometric_mean(failures),
         "minIterations" : min(iterations),
         "medianIterations" : int(statistics.median(iterations)),

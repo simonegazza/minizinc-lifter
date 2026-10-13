@@ -21,15 +21,29 @@ METHOD_COLUMNS = {
     ],
 }
 
-# Which status groups to include and in what order.
+# Which comparison groups to include and in what order: each group is a
+# multi-column with a title, the function that selects its counts from the
+# results of a problem, and its (JSON key, LaTeX column title) sub-columns.
 # Modify this to change the table layout.
 STATUS_GROUPS = {
-    "Status of Lifted vs CMPCS": [
-        ("better", "Not Weaker"),
-        ("worse", "Weaker"),
-        ("MUSes", "Global TO"),
-        #("discordant", "Disc."),
-    ]
+    "Status of Lifted vs CMPCS": (
+        lambda pdata: pdata["better"]["soft"],
+        [
+            ("better", "Not Weaker"),
+            ("worse", "Weaker"),
+            ("MUSes", "Global TO"),
+            #("discordant", "Disc."),
+        ],
+    ),
+    "Objective of Lifted vs CMPCS": (
+        lambda pdata: pdata["objective"],
+        [
+            ("better", "Better"),
+            ("equal", "Equal"),
+            ("worse", "Worse"),
+            ("globalTO", "Global TO"),
+        ],
+    ),
 }
 
 def fmt(x):
@@ -48,13 +62,11 @@ def fmt(x):
 
 
 def generate_table(results):
-    n_status_cols = sum(len(v) for v in STATUS_GROUPS.values())
-
     alignment = (
         "c|c|"
         + "|".join("r" for _ in METHOD_COLUMNS["soft"])
         + "|"
-        + "|".join("r" * len(v) for v in STATUS_GROUPS.values())
+        + "|".join("r" * len(cols) for _, cols in STATUS_GROUPS.values())
     )
 
     lines = []
@@ -67,7 +79,10 @@ def generate_table(results):
     # Header
     # ------------------------------------------------------------
 
-    status_column_name = list(STATUS_GROUPS.keys())[0]
+    group_headers = [
+        rf"\multicolumn{{{len(cols)}}}{{c{'|' if i < len(STATUS_GROUPS) - 1 else ''}}}{{{name}}}"
+        for i, (name, (_, cols)) in enumerate(STATUS_GROUPS.items())
+    ]
 
     lines.append(
         r"\multirow{2}{*}{Problem} & "
@@ -76,11 +91,11 @@ def generate_table(results):
             rf"\multirow{{2}}{{*}}{{{title}}}"
             for _, title in METHOD_COLUMNS["soft"]
         )
-        + " &\n" + rf"\multicolumn{{{n_status_cols}}}{{c}}{{{status_column_name}}} \\"
+        + " &\n" + " &\n".join(group_headers) + r" \\"
     )
 
     status_headers = []
-    for cols in STATUS_GROUPS.values():
+    for _, cols in STATUS_GROUPS.values():
         status_headers.extend(title for _, title in cols)
 
     lines.append(
@@ -101,11 +116,10 @@ def generate_table(results):
         for key, _ in METHOD_COLUMNS["soft"]:
             row.append(fmt(metrics[key]))
 
-        #for _, cols in STATUS_GROUPS.items():
-        #    for key, _ in cols:
-        #        row.append(str(pdata["better"]["soft"][key]))
-        for key, _ in STATUS_GROUPS[status_column_name]:
-            row.append(r"\multirow{2}{*}{" + str(pdata["better"]["soft"][key]) + "}")
+        for select, cols in STATUS_GROUPS.values():
+            counts = select(pdata)
+            for key, _ in cols:
+                row.append(r"\multirow{2}{*}{" + str(counts[key]) + "}")
 
         lines.append(" & ".join(row) + r" \\")
 
@@ -115,8 +129,9 @@ def generate_table(results):
         for key, _ in METHOD_COLUMNS["lifted"]:
             row.append(fmt(metrics[key]))
 
-        for key, _ in STATUS_GROUPS[status_column_name]:
-            row.append("")
+        for _, cols in STATUS_GROUPS.values():
+            for _ in cols:
+                row.append("")
 
         lines.append(" & ".join(row) + r" \\")
 
