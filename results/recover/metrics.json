@@ -11,15 +11,19 @@
     "mainSolverTimeouts": 0,
     "runs": 5,
     "maxIterations": 4,
-    "avgTotalDuration": 34.39,
-    "minTotalDuration": 17.326,
-    "maxTotalDuration": 63.916,
+    "avgTotalDuration": 31.74,
+    "minTotalDuration": 15.922154541,
+    "maxTotalDuration": 61.697316125,
     "minObjective": 5,
     "medianObjective": 11,
-    "maxObjective": 18,
-    "totalSolverRuntime": 190.57,
-    "avgTotalSolverRuntime": 38.11,
-    "avgSolverRuntimePerIteration": 9.53,
+    "maxObjective": 20,
+    "statuses": {
+      "OPTIMAL": 4,
+      "SATISFIABLE": 1
+    },
+    "totalSolverRuntime": 179.56,
+    "avgTotalSolverRuntime": 35.91,
+    "avgSolverRuntimePerIteration": 8.98,
     "count_SOLUTION_FOUND": 5
   },
   "FREEDA": {
@@ -34,15 +38,18 @@
     "mainSolverTimeouts": 0,
     "runs": 5,
     "maxIterations": 3,
-    "avgTotalDuration": 64.74,
-    "minTotalDuration": 62.694,
-    "maxTotalDuration": 68.858,
-    "minObjective": 141,
-    "medianObjective": 810,
-    "maxObjective": 4718,
-    "totalSolverRuntime": 323.2,
-    "avgTotalSolverRuntime": 64.64,
-    "avgSolverRuntimePerIteration": 24.86,
+    "avgTotalDuration": 60.25,
+    "minTotalDuration": 60.04033925,
+    "maxTotalDuration": 60.820254167,
+    "minObjective": 142,
+    "medianObjective": 774,
+    "maxObjective": 4700,
+    "statuses": {
+      "SATISFIABLE": 5
+    },
+    "totalSolverRuntime": 301.27,
+    "avgTotalSolverRuntime": 60.25,
+    "avgSolverRuntimePerIteration": 23.17,
     "count_SOLUTION_FOUND": 5
   },
   "aircraft": {
@@ -57,15 +64,18 @@
     "mainSolverTimeouts": 0,
     "runs": 5,
     "maxIterations": 2,
-    "avgTotalDuration": 7.14,
-    "minTotalDuration": 6.141,
-    "maxTotalDuration": 8.46,
+    "avgTotalDuration": 2.35,
+    "minTotalDuration": 1.7103609160000002,
+    "maxTotalDuration": 4.0369839999999995,
     "minObjective": 1,
     "medianObjective": 2,
     "maxObjective": 3,
-    "totalSolverRuntime": 35.35,
-    "avgTotalSolverRuntime": 7.07,
-    "avgSolverRuntimePerIteration": 3.54,
+    "statuses": {
+      "OPTIMAL": 5
+    },
+    "totalSolverRuntime": 12.36,
+    "avgTotalSolverRuntime": 2.47,
+    "avgSolverRuntimePerIteration": 1.24,
     "count_SOLUTION_FOUND": 5
   },
   "fixtures": {
@@ -80,15 +90,18 @@
     "mainSolverTimeouts": 0,
     "runs": 5,
     "maxIterations": 2,
-    "avgTotalDuration": 4.6,
-    "minTotalDuration": 4.464,
-    "maxTotalDuration": 4.793,
+    "avgTotalDuration": 4.46,
+    "minTotalDuration": 4.239760084,
+    "maxTotalDuration": 4.780636709,
     "minObjective": 2899,
     "medianObjective": 3191,
     "maxObjective": 3464,
-    "totalSolverRuntime": 22.58,
-    "avgTotalSolverRuntime": 4.52,
-    "avgSolverRuntimePerIteration": 2.26,
+    "statuses": {
+      "OPTIMAL": 5
+    },
+    "totalSolverRuntime": 22.32,
+    "avgTotalSolverRuntime": 4.46,
+    "avgSolverRuntimePerIteration": 2.23,
     "count_SOLUTION_FOUND": 5
   },
   "ihtc-2024-kletzander": {
@@ -103,15 +116,18 @@
     "mainSolverTimeouts": 0,
     "runs": 5,
     "maxIterations": 3,
-    "avgTotalDuration": 2.93,
-    "minTotalDuration": 2.153,
-    "maxTotalDuration": 4.723,
+    "avgTotalDuration": 0.76,
+    "minTotalDuration": 0.285148167,
+    "maxTotalDuration": 3.0600661249999996,
     "minObjective": 4,
     "medianObjective": 5,
     "maxObjective": 13,
-    "totalSolverRuntime": 15.02,
-    "avgTotalSolverRuntime": 3.0,
-    "avgSolverRuntimePerIteration": 1.37,
+    "statuses": {
+      "OPTIMAL": 5
+    },
+    "totalSolverRuntime": 5.57,
+    "avgTotalSolverRuntime": 1.11,
+    "avgSolverRuntimePerIteration": 0.51,
     "count_SOLUTION_FOUND": 5
   },
   "tsptw": {
@@ -126,15 +142,19 @@
     "mainSolverTimeouts": 0,
     "runs": 5,
     "maxIterations": 2,
-    "avgTotalDuration": 13.85,
-    "minTotalDuration": 3.182,
-    "maxTotalDuration": 61.107,
+    "avgTotalDuration": 12.18,
+    "minTotalDuration": 2.5805549579999996,
+    "maxTotalDuration": 60.013066875,
     "minObjective": 30,
     "medianObjective": 129,
-    "maxObjective": 483,
-    "totalSolverRuntime": 107.57,
-    "avgTotalSolverRuntime": 21.51,
-    "avgSolverRuntimePerIteration": 10.76,
+    "maxObjective": 461,
+    "statuses": {
+      "OPTIMAL": 4,
+      "SATISFIABLE": 1
+    },
+    "totalSolverRuntime": 101.66,
+    "avgTotalSolverRuntime": 20.33,
+    "avgSolverRuntimePerIteration": 10.17,
     "count_SOLUTION_FOUND": 5
   }
 }
