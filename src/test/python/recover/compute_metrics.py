@@ -47,6 +47,16 @@ def main():
             if r["statistics"].get("_objective") is not None
         ]
 
+        # Timeouts of the main solver (UNKNOWN): the iteration is completed by
+        # the recovery solver, so it is recorded with a different solver (at
+        # most once per run, since the procedure ends there)
+        main_solver_timeouts = sum(
+            1
+            for r in runs
+            for it in r["statistics"]["iterations"]
+            if it["solverUsed"] not in ("solutions.huub", "error")
+        )
+
         final_state_counts = Counter(
             r["statistics"]["finalState"]
             for r in runs
@@ -62,6 +72,9 @@ def main():
 
             "meanIterations": round(statistics.mean(iteration_per_run), 2),
             "minIterations": min(iteration_per_run),
+            "medianIterations": statistics.median(iteration_per_run),
+            "mainSolverTimeouts": main_solver_timeouts,
+            "runs": len(runs),
             "maxIterations": max(iteration_per_run),
 
             "avgTotalDuration": round(statistics.geometric_mean(duration), 2),
@@ -69,7 +82,7 @@ def main():
             "maxTotalDuration": max(duration),
 
             "minObjective": min(objectives) if objectives else None,
-            "meanObjective": round(statistics.mean(objectives), 2) if objectives else None,
+            "medianObjective": statistics.median(objectives) if objectives else None,
             "maxObjective": max(objectives) if objectives else None,
 
             "totalSolverRuntime": round(total_solver_runtime, 2),

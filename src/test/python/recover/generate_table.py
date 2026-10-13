@@ -3,13 +3,13 @@
 import argparse
 import json
 
-
 NAME_MAP = {
     "FREEDA": "FREEDA",
     "aircraft": "Aircraft",
     "fixtures": "Fixtures",
     "ihtc-2024-kletzander": "IHTC",
     "tsptw": "TSPTW",
+    "EchoSched": "EchoSched"
 }
 
 ORDER = [
@@ -18,16 +18,14 @@ ORDER = [
     "fixtures",
     "ihtc-2024-kletzander",
     "tsptw",
+    "EchoSched"
 ]
-
 
 def fmt_int(value):
     return "N/A" if value is None else str(int(value))
 
-
 def fmt_float(value):
     return f"{value:.2f}"
-
 
 def fmt_number(value):
     """Integers as they are, floats with two decimals, missing values as N/A."""
@@ -37,30 +35,23 @@ def fmt_number(value):
         return str(value)
     return f"{value:.2f}"
 
-
 def generate_table(data):
     lines = [
         r"\begin{table*}[t]",
         r"\centering",
-        #r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
         r"\begin{tabular}{l|cc|ccc|ccc|ccc}",
-        #r"\hhline{~|~~|~~~|~~~|~~~}",
         r"\hhline{~|~~|~~~|~~~|~~~}",
         r"\multirow{2}{*}{\centering Problem} &"
         r"\multicolumn{2}{c|}{Parameters} &"
         r"\multicolumn{3}{c|}{Core Size} &"
-        #r"\multicolumn{3}{c|}{Iterations} &"
         r"\multicolumn{3}{c|}{Runtime} &"
         r"\multicolumn{3}{c}{Objectives}\\",
-        #r"\hhline{~|~~|~~~|~~~|~~~}",
         r"\hhline{~|~~|~~~|~~~|~~~}",
         r"&"
         r"Modified & Lifted &"
         r"Min & Avg & Max & "
-        #r"Min & Avg & Max & "
-        r"Min & Avg & Max & "
-        r"Min & Avg & Max\\",
-        #r"\hhline{-|--|---|---|---}",
+        r"Min & Mean & Max & "
+        r"Min & Median & Max\\",
         r"\hhline{-|--|---|---|---}",
     ]
 
@@ -83,20 +74,16 @@ def generate_table(data):
             f' & {d["minCoreVariables"]}'
             f' & {d["meanCoreVariables"]}'
             f' & {d["maxCoreVariables"]}'
-            #f' & {d["minIterations"]}'
-            #f' & {d["meanIterations"]}'
-            #f' & {d["maxIterations"]}'
             f' & {fmt_float(d["minTotalDuration"])}'
             f' & {fmt_float(d["avgTotalDuration"])}'
             f' & {fmt_float(d["maxTotalDuration"])}'
             f' & {fmt_number(d.get("minObjective"))}'
-            f' & {fmt_number(d.get("meanObjective"))}'
+            f' & {fmt_number(d.get("medianObjective"))}'
             f' & {fmt_number(d.get("maxObjective"))}\\\\'
         )
 
     lines.extend(
         [
-            #r"\hhline{~|~~|~~~|~~~|~~~}",
             r"\hhline{~|~~|~~~|~~~|~~~}",
             r"\end{tabular}",
             r"\caption{Summary of feasibility-recovery experiments.}",
@@ -106,7 +93,6 @@ def generate_table(data):
     )
 
     return "\n".join(lines)
-
 
 def main():
     parser = argparse.ArgumentParser(
@@ -127,6 +113,17 @@ def main():
         data = json.load(f)
 
     latex = generate_table(data)
+
+    # Iterations and timeouts are not in the table: (min, mean, max)
+    # iterations and the timeouts of the main solver for each benchmark
+    print("Iterations (min, mean, max) and main solver timeouts:")
+    for key in ORDER:
+        if key in data:
+            d = data[key]
+            print(
+                f'  {NAME_MAP[key]}: ({d["minIterations"]}, {d["meanIterations"]}, {d["maxIterations"]}), '
+                f'timeouts {d["mainSolverTimeouts"]}/{d["runs"]}'
+            )
 
     with open(args.output_tex, "w") as f:
         f.write(latex)
