@@ -175,6 +175,24 @@
 			                </descriptorRefs>
 			            </configuration>
 			        </execution>
+			        <!-- recovery.jar -->
+			        <execution>
+			            <id>recovery</id>
+			            <phase>package</phase>
+			            <goals><goal>single</goal></goals>
+			            <configuration>
+			                <appendAssemblyId>false</appendAssemblyId>
+			                <finalName>recovery</finalName>
+			                <archive>
+			                    <manifest>
+			                        <mainClass>me.simonegazza.recovery.FeasibilityRecovery</mainClass>
+			                    </manifest>
+			                </archive>
+			                <descriptorRefs>
+			                    <descriptorRef>jar-with-dependencies</descriptorRef>
+			                </descriptorRefs>
+			            </configuration>
+			        </execution>
 			        <!-- test-run.jar -->
 			        <execution>
 			            <id>test-run</id>

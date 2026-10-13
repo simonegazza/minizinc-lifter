@@ -122,6 +122,14 @@ public class OriginalParameter {
 	}
 
 	/**
+	 * @return true if a value was assigned to this parameter, either in the
+	 *             declaration or in an assignment (e.g., in a data file)
+	 */
+	public boolean hasExpression() {
+		return expression != null;
+	}
+
+	/**
 	 * @return true if it was assigned at declaration
 	 */
 	public boolean isAssignedAtDeclaration() {
@@ -157,12 +165,25 @@ public class OriginalParameter {
 	 *                        values, used during expression evaluation
 	 *
 	 * @return the computed value of the expression
+	 *
+	 * @throws IllegalStateException if no value was assigned to this parameter
 	 */
 	public Object evaluate(Map<String, Object> environment) {
+		if (!hasExpression()) {
+			throw new IllegalStateException("Parameter " + name + " left undefined.");
+		}
 		if (value == null) {
 			value = new EvaluatorVisitor(environment).visit(expression);
 		}
 		return value;
+	}
+
+	/**
+	 * @return true if the value of this parameter has already been computed
+	 *             with {@link #evaluate(Map)}
+	 */
+	public boolean hasValue() {
+		return value != null;
 	}
 
 	/**

@@ -302,8 +302,8 @@ public class ParameterExtractor implements Callable<ParameterGraph> {
 		 * <p>
 		 * It performs a post-processing step after the full AST traversal:
 		 * <ul>
-		 * <li>Assigns expression values to each parameter</li>
-		 * <li>Validates that all parameters have a value</li>
+		 * <li>Assigns expression values to each parameter, if any (otherwise,
+		 * the value is expected from a data file)</li>
 		 * <li>Resolves dependencies into graph edges</li>
 		 * <li>Adds implicit dependencies from composite types</li>
 		 * </ul>
@@ -314,8 +314,6 @@ public class ParameterExtractor implements Callable<ParameterGraph> {
 		 * @param ctx the root model context
 		 *
 		 * @return the fully constructed dependency graph
-		 *
-		 * @throws IllegalStateException if a parameter has no assigned value
 		 */
 		@Override
 		public Void visitModel(ModelContext ctx) {
@@ -323,16 +321,14 @@ public class ParameterExtractor implements Callable<ParameterGraph> {
 
 			for (OriginalParameter par : graph.getNodes()) {
 				ParserRuleContext valueContext = assignments.get(par.getName());
-				// There must be a value, otherwise the MiniZinc model won't
-				// compile
-				if (valueContext == null) {
-					throw new IllegalStateException("Parameter " + par.getName() + " left undefined.");
+				// A parameter without value must be assigned by a data file
+				// when the model is run
+				if (valueContext != null) {
+					String value = ctx.getStart().getInputStream().getText(new Interval(
+						valueContext.getStart().getStartIndex(),
+						valueContext.getStop().getStopIndex()));
+					par.setExpression(valueContext, value);
 				}
-
-				String value = ctx.getStart().getInputStream().getText(new Interval(
-					valueContext.getStart().getStartIndex(),
-					valueContext.getStop().getStopIndex()));
-				par.setExpression(valueContext, value);
 
 				MiniZincType type = par.getType();
 				if (type instanceof MiniZincCompositeType t) {

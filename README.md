@@ -16,6 +16,29 @@ To compile the code, run any of the tests (both the code tests and the following
 ./mvnw package
 ```
 
+## Parameter lifting
+The lifting is performed by `lifter.jar` and only needs the MiniZinc model: no data file is required. The lifted model (with assumptions and the objective function) is written to `<output>/lifted-<model>.mzn` and can be run with any data file of the original model.
+
+```bash
+java -jar target/lifter.jar \
+    -o target/lifted \
+    -m src/test/resources/problems/fixtures/cp-model-new.mzn \
+    -p WMin:100..2200 \
+    -p HMin:100..2200
+```
+
+## Feasibility recovery of a single instance
+The feasibility recovery of a single instance is performed by `recovery.jar`, that needs both the model (`-m`) and the data (`-d`):
+
+```bash
+java -jar target/recovery.jar \
+    -o target/recovered \
+    -m src/test/resources/problems/fixtures/cp-model-new.mzn \
+    -d src/test/resources/problems/fixtures/coffee_table.dzn \
+    -p WMin:100..2200 \
+    -p HMin:100..2200
+```
+
 # Automatic Feasibility Recovery
 This repository also contains the implementation and experimental artifacts for the **Automatic Feasibility Recovery** evaluation presented in our paper. The complete experimental pipeline is automated by the `src/test/sh/recovery/recovery.sh` script.
 
@@ -50,7 +73,7 @@ target/recover/results/<problem>/<repetition>.dzn
 Each `.dzn` file corresponds to one independent randomized repetition of the experiment.
 
 ### Step 2 - Run
-The recovery procedure is executed using `test-run.jar`.
+The recovery procedure is executed using `test-run.jar`, that runs the feasibility recovery (as `recovery.jar`) for every `.dzn` file in the data folder.
 
 For the fixture benchmark:
 ```bash

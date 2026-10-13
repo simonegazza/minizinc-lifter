@@ -8,19 +8,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.IntStream;
-import me.simonegazza.lift.Main;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 /**
- * Batch driver that runs the lifting procedure for every {@code .dzn} data file
- * found in a given folder.
+ * Batch driver that runs the feasibility recovery procedure for every
+ * {@code .dzn} data file found in a given folder.
  * <p>
- * For each data file, a fresh {@link Main} instance is created and executed.
- * The {@link RunStatistics} produced by each run are collected into a
- * {@link BatchRunStatistics} object. When all files have been processed, the
- * aggregate statistics are serialised to JSON and printed to standard output.
+ * For each data file, a fresh {@link FeasibilityRecovery} instance is created
+ * and executed. The {@link RunStatistics} produced by each run are collected
+ * into a {@link BatchRunStatistics} object. When all files have been processed,
+ * the aggregate statistics are serialised to JSON and printed to standard
+ * output.
  * <p>
  * A run that raises an uncaught exception is recorded as failed; its partial
  * statistics (collected up to the point of failure) are still included in the
@@ -74,9 +74,9 @@ public class Runner implements Callable<Integer> {
 	}
 
 	/**
-	 * Executes the lifting procedure for every {@code .dzn} file in the data
-	 * folder, collects the per-run statistics, and prints the aggregated JSON
-	 * to standard output.
+	 * Executes the feasibility recovery procedure for every {@code .dzn} file
+	 * in the data folder, collects the per-run statistics, and prints the
+	 * aggregated JSON to standard output.
 	 *
 	 * @return {@code 0} if all runs completed without throwing an exception;
 	 *             {@code 1} otherwise
@@ -115,19 +115,19 @@ public class Runner implements Callable<Integer> {
 			List<String> commandArgument = new ArrayList<>(ps);
 			commandArgument.add("-m");
 			commandArgument.add(modelPath.toAbsolutePath().toString());
-			commandArgument.add("-m");
+			commandArgument.add("-d");
 			commandArgument.add(dznPath.toAbsolutePath().toString());
 			commandArgument.add("-o");
 			commandArgument.add(mainOutPath.toString());
 
-			Main mainInstance = new Main();
+			FeasibilityRecovery recovery = new FeasibilityRecovery();
 			try {
-				new CommandLine(mainInstance).execute(commandArgument.toArray(new String[0]));
+				new CommandLine(recovery).execute(commandArgument.toArray(new String[0]));
 				correct.add(Optional.empty());
 			} catch (Throwable t) {
 				correct.add(Optional.of(t));
 			}
-			batchStats.add(dznPath, mainInstance.getStats());
+			batchStats.add(dznPath, recovery.getStats());
 		}
 
 		System.out.println("*********************************************");

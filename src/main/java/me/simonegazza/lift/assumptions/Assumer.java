@@ -60,8 +60,9 @@ public class Assumer implements Callable<String> {
 	 * The grouping key is derived from the parameter's declared type when
 	 * possible. For arrays, the element subtype is used. For expression-based
 	 * or identifier types whose concrete type cannot be determined statically,
-	 * the type is inferred from the parameter value. Set types are grouped
-	 * together under a common discriminator.
+	 * the type is inferred from the parameter value (or assumed to be an
+	 * {@code int} when no value is available). Set types are grouped together
+	 * under a common discriminator.
 	 *
 	 * @param lifted the lifted parameters to classify
 	 *
@@ -97,6 +98,11 @@ public class Assumer implements Callable<String> {
 			if (mapDiscriminant instanceof MiniZincArrayType mda) {
 				if (mda.getSubtype() instanceof MiniZincBasicType) {
 					mapDiscriminant = mda.getSubtype();
+				} else if (mda.getSubtype() instanceof MiniZincSetType) {
+					mapDiscriminant = MiniZincSetType.class;
+				} else if (!lp.getParameter().hasValue()) {
+					// Without data, assume an enum (that can be coerced to int)
+					mapDiscriminant = MiniZincBasicType.INT.toString();
 				} else {
 					MiniZincArray value = (MiniZincArray) lp.getParameter().getValue();
 					Object e = value.flatten().getFirst();
@@ -115,7 +121,10 @@ public class Assumer implements Callable<String> {
 				}
 			}
 
-			if (mapDiscriminant instanceof MiniZincIdentifier) {
+			if (mapDiscriminant instanceof MiniZincIdentifier && !lp.getParameter().hasValue()) {
+				// Without data, assume an enum (that can be coerced to int)
+				mapDiscriminant = MiniZincBasicType.INT.toString();
+			} else if (mapDiscriminant instanceof MiniZincIdentifier) {
 				Object value = lp.getParameter().getValue();
 				if (value instanceof MiniZincArray va) {
 					Object e = va.flatten().getFirst();

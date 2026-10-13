@@ -5,23 +5,23 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import me.simonegazza.lift.Main;
 import me.simonegazza.lift.parameters.LiftedParameter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * Collects and exposes runtime statistics for a single execution of the lifting
- * procedure driven by {@link Main}. The collected data can be serialised to a
- * JSON string via {@link #toJson()}. The serialisation relies solely on the
- * standard library and requires no external dependencies.
+ * Collects and exposes runtime statistics for a single execution of the
+ * feasibility recovery procedure driven by {@link FeasibilityRecovery}. The
+ * collected data can be serialised to a JSON string via {@link #toJson()}. The
+ * serialisation relies solely on the standard library and requires no external
+ * dependencies.
  * <p>
  * All durations are expressed in milliseconds.
  */
 public class RunStatistics {
 
 	/**
-	 * Describes the final outcome of the lifting procedure.
+	 * Describes the final outcome of the feasibility recovery procedure.
 	 */
 	public enum FinalState {
 
@@ -60,7 +60,8 @@ public class RunStatistics {
 	 * was required.
 	 *
 	 * @param iteration     one-based index of the iteration, matching the loop
-	 *                          counter used by the lifting procedure
+	 *                          counter used by the feasibility recovery
+	 *                          procedure
 	 * @param durationMs    wall-clock duration of the iteration in milliseconds
 	 * @param coreVariables indexes of the lifted variables that belong to the
 	 *                          extracted UNSAT core; empty when no core was

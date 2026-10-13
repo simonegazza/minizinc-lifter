@@ -1,8 +1,10 @@
 package me.simonegazza.lift;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
+import java.util.HashMap;
 import java.util.Optional;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
@@ -28,10 +30,14 @@ public class TypeVisitorTest {
 	}
 
 	@Test
-	public void undefinedThrowsTest() {
+	public void undefinedEvaluationThrowsTest() {
+		var graph = parse("int: a;");
+		OriginalParameter op = graph.getNodes().stream().findAny().get();
+
+		assertFalse(op.hasExpression());
 		assertThrowsExactly(
 			new IllegalStateException().getClass(),
-			() -> parse("int: a;"));
+			() -> op.evaluate(new HashMap<>()));
 	}
 
 	@Test

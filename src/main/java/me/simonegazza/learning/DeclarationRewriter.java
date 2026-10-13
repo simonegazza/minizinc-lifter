@@ -42,11 +42,6 @@ public class DeclarationRewriter extends MiniZincBaseVisitor<Void> implements Ca
 	private final Set<LiftedParameter> dependencies;
 
 	/**
-	 * Original model to modify.
-	 */
-	private final String model;
-
-	/**
 	 * Rewriter to change model String.
 	 */
 	private final TokenStreamRewriter rewriter;
@@ -62,7 +57,6 @@ public class DeclarationRewriter extends MiniZincBaseVisitor<Void> implements Ca
 		ParameterGraph graph,
 		String model) {
 		this.parameter = parameter;
-		this.model = model;
 		dependencies = graph.getAdjacent(parameter.getParameter()).stream()
 			.filter(op -> liftedParameters.stream().anyMatch(lp -> lp.getOriginalName().equals(op.getName())))
 			.map(op -> liftedParameters.stream()

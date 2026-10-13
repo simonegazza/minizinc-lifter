@@ -146,6 +146,23 @@ public class Lifter implements Callable<String> {
 		return value;
 	}
 
+	/**
+	 * Checks whether the value of a parameter can be computed, i.e., whether
+	 * the parameter and all its dependencies were assigned a value.
+	 *
+	 * @param p     the parameter to check
+	 * @param graph the directed graph representing dependencies between
+	 *                  parameters
+	 *
+	 * @return {@code true} if
+	 *             {@link #computeValue(OriginalParameter, ParameterGraph, Map)}
+	 *             can be called on {@code p}
+	 */
+	public static boolean isComputable(OriginalParameter p, ParameterGraph graph) {
+		return p.hasExpression()
+			&& graph.getAdjacent(p).stream().allMatch(d -> isComputable(d, graph));
+	}
+
 	public Lifter(
 		TokenStream tokens,
 		ModelContext ctx,
@@ -218,8 +235,11 @@ public class Lifter implements Callable<String> {
 				// THE FOLLOWING LINE IS NECESSARY ONLY TO COMPUTE VALUES FOR
 				// THE "originalParameterModified" KEY IN THE EXPERIMETS AND TO
 				// GENERATE A SET OF INSTANCES FOR AN ORIGINAL ONE. IF YOU ARE
-				// NOT COLLECTING DATA, YOU CAN REMOVE THIS LINE.
-				computeValue(original, graph, env);
+				// NOT COLLECTING DATA, YOU CAN REMOVE THIS LINE. Values can be
+				// computed only if the data is part of the model.
+				if (isComputable(original, graph)) {
+					computeValue(original, graph, env);
+				}
 
 				return LiftedParameter.create(
 					original,

@@ -9,7 +9,7 @@ import org.json.JSONObject;
 
 /**
  * Aggregates the {@link RunStatistics} produced by multiple executions of the
- * lifting procedure, each driven by a distinct data file.
+ * feasibility recovery procedure, each driven by a distinct data file.
  * <p>
  * Instances of this class are built incrementally by {@link Runner}: after each
  * data file is processed, the caller adds the corresponding statistics via
@@ -23,7 +23,7 @@ public class BatchRunStatistics {
 
 	/**
 	 * Associates the path of a data file with the {@link RunStatistics}
-	 * collected during the lifting procedure that processed it.
+	 * collected during the feasibility recovery procedure that processed it.
 	 *
 	 * @param dataFile   path to the data file ({@code .dzn}) that was used as
 	 *                       input for this run
