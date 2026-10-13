@@ -229,6 +229,12 @@ Generate the LaTeX table reported in the paper:
 python3 src/test/python/comparison/generate_table.py target/comparison/results > target/comparison/tables/table.tex
 ```
 
+By default, the table compare the values of the objective function of the two methods (column *Objective of Lifted vs CMPCS*). To remove it, use the `--no-objectives` flag:
+
+```bash
+python3 src/test/python/comparison/generate_table.py --no-objectives target/comparison/results > target/comparison/tables/table.tex
+```
+
 # Coarse and increasing change Inter-Instances Nogood Learning (IINGL)
 
 This repository contains also the implementation and the experimental artifacts used to reproduce the **Inter-Instances Nogood Learning (IINGL)** experiments presented in our paper.
