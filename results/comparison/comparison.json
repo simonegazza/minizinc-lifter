@@ -1,20 +1,20 @@
 {
   "latin": {
     "soft": {
-      "flatTimeMean": 0.1944791401084111,
-      "solveTimeMean": 24.835160905056874,
-      "failures": 121743.9328464476,
-      "cpPropagatorCalls": 14373902.381135084,
+      "flatTimeMean": 0.19485248883113387,
+      "solveTimeMean": 25.235800773440292,
+      "failures": 116995.30541047065,
+      "cpPropagatorCalls": 13811806.045545373,
       "unknowns": 0
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.17921321170120805,
-      "gMean(iterationSumSolveTime)": 0.07215644652619693,
-      "failures": 140.2138812173948,
-      "minIterations": 7,
-      "medianIterations": 18,
-      "maxIterations": 28,
-      "cpPropagatorCalls": 53498.433828645044,
+      "gMean(iterationSumFlatTime)": 0.18415571844181236,
+      "gMean(iterationSumSolveTime)": 1.4504031988984991,
+      "failures": 8544.995167768206,
+      "minIterations": 6,
+      "medianIterations": 14,
+      "maxIterations": 20,
+      "cpPropagatorCalls": 791788.8530589403,
       "unknowns": 0
     },
     "better": {
@@ -26,30 +26,36 @@
         "discordant": 0
       },
       "hard": {
-        "better": 32,
-        "worse": 18,
+        "better": 27,
+        "worse": 23,
         "MUSes": 0,
         "discordant": 0
       }
+    },
+    "objective": {
+      "better": 17,
+      "equal": 15,
+      "worse": 18,
+      "globalTO": 0
     }
   },
   "TAP": {
     "soft": {
-      "flatTimeMean": 0.4204624488361254,
-      "solveTimeMean": 60.01488451953365,
-      "failures": 35830.74243861029,
-      "cpPropagatorCalls": 9230202.074933654,
-      "unknowns": 0
+      "flatTimeMean": 0.41382768258082914,
+      "solveTimeMean": 45.23748645116186,
+      "failures": 174579.5313417109,
+      "cpPropagatorCalls": 5322438.8232538095,
+      "unknowns": 37
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.5967012495003226,
-      "gMean(iterationSumSolveTime)": 0.8641769059372687,
-      "failures": 9843.877886487331,
+      "gMean(iterationSumFlatTime)": 0.4066816797906405,
+      "gMean(iterationSumSolveTime)": 47.59039703577827,
+      "failures": 37523.89931008278,
       "minIterations": 1,
       "medianIterations": 2,
-      "maxIterations": 6,
-      "cpPropagatorCalls": 314087.9211580042,
-      "unknowns": 4
+      "maxIterations": 2,
+      "cpPropagatorCalls": 7692067.046611342,
+      "unknowns": 3
     },
     "better": {
       "total": 50,
@@ -60,63 +66,75 @@
         "discordant": 0
       },
       "hard": {
-        "better": 40,
-        "worse": 10,
+        "better": 34,
+        "worse": 16,
         "MUSes": 0,
         "discordant": 0
       }
+    },
+    "objective": {
+      "better": 34,
+      "equal": 3,
+      "worse": 13,
+      "globalTO": 0
     }
   },
   "RSBP": {
     "soft": {
-      "flatTimeMean": 0.2525383410639774,
-      "solveTimeMean": 60.00621126480711,
-      "failures": 38983.34185032576,
-      "cpPropagatorCalls": 44963466.03234522,
+      "flatTimeMean": 0.2647536925628857,
+      "solveTimeMean": 60.01075398745441,
+      "failures": 23093.423382806934,
+      "cpPropagatorCalls": 33567347.01341893,
       "unknowns": 0
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.25546941700814674,
-      "gMean(iterationSumSolveTime)": 11.277471639736929,
-      "failures": 104707.14571324894,
+      "gMean(iterationSumFlatTime)": 0.2746540692507984,
+      "gMean(iterationSumSolveTime)": 61.02102304596906,
+      "failures": 54370.01633938689,
       "minIterations": 1,
-      "medianIterations": 4,
-      "maxIterations": 57,
-      "cpPropagatorCalls": 14212797.224209197,
-      "unknowns": 16
+      "medianIterations": 2,
+      "maxIterations": 2,
+      "cpPropagatorCalls": 38350601.71793748,
+      "unknowns": 9
     },
     "better": {
       "total": 50,
       "soft": {
-        "better": 32,
-        "worse": 16,
-        "MUSes": 2,
+        "better": 41,
+        "worse": 9,
+        "MUSes": 0,
         "discordant": 0
       },
       "hard": {
-        "better": 29,
-        "worse": 19,
-        "MUSes": 2,
+        "better": 0,
+        "worse": 50,
+        "MUSes": 0,
         "discordant": 0
       }
+    },
+    "objective": {
+      "better": 19,
+      "equal": 0,
+      "worse": 31,
+      "globalTO": 0
     }
   },
   "RCPSP": {
     "soft": {
-      "flatTimeMean": 0.19001460486359487,
-      "solveTimeMean": 3.5352371629454704,
-      "failures": 11103.939489368491,
-      "cpPropagatorCalls": 1957394.6773826375,
+      "flatTimeMean": 0.19065947966390023,
+      "solveTimeMean": 3.467956789083479,
+      "failures": 11101.707764280472,
+      "cpPropagatorCalls": 1955720.0956603088,
       "unknowns": 0
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 1.6569864087958661,
-      "gMean(iterationSumSolveTime)": 66.15198191822928,
-      "failures": 2271.3916377468286,
+      "gMean(iterationSumFlatTime)": 1.6069727076570735,
+      "gMean(iterationSumSolveTime)": 73.83364849460777,
+      "failures": 2639.6660645163834,
       "minIterations": 12,
       "medianIterations": 41,
-      "maxIterations": 55,
-      "cpPropagatorCalls": 295850313.0993074,
+      "maxIterations": 54,
+      "cpPropagatorCalls": 319552484.4054909,
       "unknowns": 0
     },
     "better": {
@@ -133,6 +151,12 @@
         "MUSes": 40,
         "discordant": 0
       }
+    },
+    "objective": {
+      "better": 0,
+      "equal": 0,
+      "worse": 10,
+      "globalTO": 40
     }
   }
 }

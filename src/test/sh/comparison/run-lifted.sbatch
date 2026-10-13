@@ -18,7 +18,7 @@ result="target/comparison/results"
 
 [[ -f "$model" ]]
 
-dzn=( "$dir"/unsat_dzn/"${SLURM_ARRAY_TASK_ID}"*.dzn )
+dzn=( "$dir"/unsat_dzn/"${SLURM_ARRAY_TASK_ID}"_*.dzn )
 [[ -e "${dzn[0]}" ]]
 
 instance=$(basename "${dzn[0]}" .dzn)
