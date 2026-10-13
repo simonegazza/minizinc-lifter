@@ -58,7 +58,7 @@ Random benchmark instances are generated using the `test-randomizer` tool.
 
 ```bash
 java -jar target/test-randomizer.jar \
-    -o target/recover/results/random-fixtures \
+    -o target/recover/results/fixtures \
     -m src/test/resources/problems/fixtures/cp-model-new.mzn \
     -m src/test/resources/problems/fixtures/coffee_table.dzn \
     -p WMin \
@@ -67,7 +67,7 @@ java -jar target/test-randomizer.jar \
 
 The generated instances are stored as `.dzn` files under:
 ```text
-target/recover/results/<problem>/<repetition>.dzn
+target/recover/results/<problem>/<repetition>-<data>.dzn
 ```
 
 Each `.dzn` file corresponds to one independent randomized repetition of the experiment.
@@ -113,22 +113,26 @@ After the experiment completes, the output directory has the following structure
 target/
 ├─ test-randomizer.jar
 ├─ test-run.jar
-├─ test-classes/
-│   └─ random-<problem>/
-│       ├─ 1.dzn
-│       ├─ 0002.dzn
-│       ├─ ...
-│       ├─ 0001/
-│       │   ├─ ...
-│       │   └─ recovered models
-│       ├─ 0002/
-│       │   └─ ...
-│       └─ ...
-└─ results/
-    ├─ *.txt
-    ├─ result.json
-    └─ tables.json
+└─ recover/
+    ├─ run.json                       # statistics of all the problems (recover.py)
+    ├─ metrics.json                   # aggregated metrics (compute_metrics.py)
+    ├─ table.tex                      # LaTeX table (generate_table.py)
+    └─ results/
+        ├─ <problem>.sh.txt           # output of src/test/sh/recovery/problems/<problem>.sh
+        └─ <problem>/
+            ├─ <repetition>-<data>.dzn       # randomized instance (test-randomizer.jar)
+            ├─ ...
+            └─ <repetition>-<data>/          # one folder per instance (test-run.jar)
+                ├─ <model>.mzn               # original model with the instance data
+                ├─ 1-<model>.mzn             # lifted model of the first iteration
+                ├─ 2-<model>.mzn             # lifted model of the second iteration (core removed)
+                ├─ ...
+                └─ recovery-<i>-<model>.mzn  # only if the recovery solver was used at iteration i
 ```
+
+The folder of a problem is the one given with `-o`/`-d` in its script (e.g., `random-aircraft` for `aircraft.sh`). FREEDA does not use randomized instances: its instances are read from `src/test/resources/problems/FREEDA/test-data`, so `target/recover/results/FREEDA/` only contains one folder per instance.
+
+The statistics of each run are printed by `test-run.jar` after the `*********************************************` line of `<problem>.sh.txt`. A problem without statistics, or a run that ended with an error, makes `recover.py` exit with an error listing them (use `--allow-failures` to produce `run.json` anyway).
 
 # Comparison with CMPCS
 This repository also contains the implementation and experimental artifacts used to reproduce the **comparison** experiments presented in our paper.
@@ -155,14 +159,16 @@ All commands below assume that they are executed from the **root directory of th
 
 ## Step 1 - Extract the benchmark data
 
-Create the output directory and extract the benchmark models and data files:
+Create the output directories and extract the benchmark models and data files (the archive has a top-level `dataset/` folder, which is stripped):
 
 ```bash
-mkdir -p target/comparison/{results,tables}
-unxz -c results/comparison/results.tar.xz | tar -xvf - -C target/comparison
+mkdir -p target/comparison/{results,tables} logs
+unxz -c src/test/resources/comparison/data.tar.xz | tar -xvf - -C target/comparison --strip-components=1
 ```
 
-After extraction, the benchmark instances are available under the `target/comparison/` folder.
+After extraction, each benchmark is available as `target/comparison/<benchmark>/`, containing the `<benchmark>_lifted.mzn` and `<benchmark>_soft.mzn` models and the `unsat_dzn/` instances used by the Slurm scripts. The `logs/` folder is required by the `--output`/`--error` options of the Slurm scripts.
+
+The outputs of our runs are archived in `results/comparison/results.tar.xz` (they extract to a `results/` folder, i.e. the content of `target/comparison/results`).
 
 ## Step 2 - Run the experiments
 
@@ -220,7 +226,7 @@ All commands below assume that they are executed from the **root directory of th
 The repository root is mounted inside the container as `/workspace`
 
 ## Script
-A convenience script is placed in `src/test/sh/recovery/coarse-run.sbatch` and it takes the problem name as an argument.
+A convenience script is placed in `src/test/sh/coarse/run.sbatch`: it takes as arguments the problem name (i.e. the folder in `target/coarse/problems/`), the model with assumptions and the original model.
 
 ## Step 1 - Generate the instances
 
@@ -242,7 +248,7 @@ The `-a 100` option generates 100 instances for each benchmark family.
 ## Step 2 - Run
 For each benchmark, the experiment consists of two phases:
 1. **Preprocessing**, that generates the chain model.
-2. **Execution**, submitted through Slurm using the provided `sc/test/sh/run.sbatch` script.
+2. **Execution**, submitted through Slurm using the provided `src/test/sh/coarse/run.sbatch` script.
 
 ### Graph Coloring
 #### Preprocessing
@@ -281,7 +287,7 @@ podman run \
 
 #### Execute
 ```bash
-sbatch src/test/sh/coarse/coarse-run.sbatch \
+sbatch src/test/sh/coarse/run.sbatch \
     knapsack \
     src/test/resources/coarse/knapsack.mzn \
     src/test/resources/problems/knapsack/k.mzn
@@ -303,7 +309,7 @@ podman run \
 
 #### Execute
 ```bash
-sbatch src/test/sh/coarse/coarse-run.sbatch \
+sbatch src/test/sh/coarse/run.sbatch \
     radiation \
     src/test/resources/coarse/radiation.mzn \
     src/test/resources/problems/radiation/radiation.mzn
@@ -324,7 +330,7 @@ podman run \
 
 #### Execute
 ```bash
-sbatch src/test/sh/coarse/coarse-run.sbatch \
+sbatch src/test/sh/coarse/run.sbatch \
     mosp \
     src/test/resources/coarse/mosp.mzn \
     src/test/resources/problems/mosp/mosp.mzn
@@ -344,7 +350,7 @@ target/
             └─ <repetition>
                 ├─ 0-0.dzn
                 ├─ ...
-                ├─ 7-50.dzn
+                ├─ 6-50.dzn
                 ├─ chain.mzn
                 ├─ chain.txt
                 ├─ assumptions.txt
@@ -364,7 +370,7 @@ Tables are then stored in the `target/coarse/tables` folder.
 * **All commands are intended to be executed from the repository root**.
 * The repository root is mounted into the container as `/workspace`.
 * The preprocessing step must be executed before submitting the corresponding Slurm job.
-* The Slurm script `src/test/sh/recovery/run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
+* The Slurm script `src/test/sh/coarse/run.sbatch` is responsible for launching the actual experimental evaluation for the selected benchmark.
 * **You will need the forked version of huub** to reproduce this set of experiments, as presented in the paper.
 
 # Reproducibility of [IINGL](https://doi.org/10.1007/978-3-642-33558-7_19) paper
@@ -393,8 +399,8 @@ Note that a processed benchmark can be found in `results/reproduce/results.tar.x
 
 ## Step 1 - Fix the old dataset
 This dataset requires an old version of MiniZinc. In order to make it work, you need to run the scripts that fix the dataset. There are 2 scritps:
-- `src/test/python/fix_radiation.py`: python script **to be run inside the radiation folder**. It fixes a parameter called `Bt_max = 10` in every instance. This originally was a structural parameter derived from a variable, that is now prohibited by MiniZinc.
-- `target/reproduce/benchmarks/knapsack/fix.py`: python script **to be run inside the knapsack folder**. Arrays are declared to have length of 100 but actual length is sometimes shorter/longer than declared. There wasn't a check in MiniZinc at the time of writing the old paper so probably it slipped through.
+- `src/test/python/reproduce/fix_radiation.py`: python script **to be run inside the radiation folder**. It fixes the parameter `Bt_max` to `max(Intensity)` in every instance (this is `Bt_max = 10` for every instance of the benchmark). This originally was a structural parameter derived from a variable, that is now prohibited by MiniZinc. The script can be run more than once: an existing `Bt_max` assignment is replaced.
+- `src/test/python/reproduce/fix_knapsack.py`: python script **to be run inside the knapsack folder**. Arrays are declared to have length of 100 but actual length is sometimes shorter/longer than declared. There wasn't a check in MiniZinc at the time of writing the old paper so probably it slipped through.
 
 You can directly run these commands:
 ```bash
@@ -420,7 +426,7 @@ bash src/test/sh/reproduce/chainer.bash
 Note that this script uses java directly. If you need podman (or other containerization tool), you will need to modify the script. Refer to [the preprocessing section here](#step-2---run-1) and the script too.
 
 ## Step 4 - Run the experiments
-The experiments execution in once again done through `sbatch`, submitted through Slurm using the provided `src/sh/reproduce/run.sbatch` script.
+The experiments execution in once again done through `sbatch`, submitted through Slurm using the provided `src/test/sh/reproduce/run.sbatch` script.
 
 ### Graph Coloring
 ```bash
@@ -500,7 +506,7 @@ Tables are then stored in the `target/reproduce/tables` folder.
 
 # Finer IINGL
 
-Note that a processed benchmark can be found in `results/iingl/results.tar.xz`
+Note that a processed benchmark can be found in `results/iingl/problems.tar.xz`
 
 ## Prerequisites
 The experiments require:
@@ -517,6 +523,13 @@ All commands below assume that they are executed from the **root directory of th
 You can re-generate the dataset from scratch by running these commands:
 ```bash
 python3 src/test/python/iingl/generate_problems.py target/iingl/problems
+```
+
+This generates the colouring, knapsack, radiation and MOSP instances only: there is no generator for FREEDA. The FREEDA instances used in the paper are taken from the processed benchmark, keeping only the `.dzn` instances (`chain.mzn` is regenerated by the preprocessing and the `.txt` outputs would otherwise be appended to by the runs):
+```bash
+mkdir -p target/iingl
+tar -xJf results/iingl/problems.tar.xz -C target/iingl problems/FREEDA
+find target/iingl/problems/FREEDA \( -name '*.txt' -o -name 'chain.mzn' -o -name '.DS_Store' \) -delete
 ```
 
 ## Preprocessing

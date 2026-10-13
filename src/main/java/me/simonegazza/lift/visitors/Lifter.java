@@ -1,11 +1,13 @@
 package me.simonegazza.lift.visitors;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.simonegazza.antlr.minizinc.MiniZincBaseVisitor;
@@ -28,9 +30,13 @@ import me.simonegazza.lift.types.MiniZincArrayType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.utils.ParameterGraph;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.TokenStreamRewriter;
 import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.tree.Trees;
 
 /**
  * Applies the parameter lifting transformation to a MiniZinc model.
@@ -98,6 +104,12 @@ public class Lifter implements Callable<String> {
 	 * Whether this model has an output.
 	 */
 	private boolean hasOutput;
+
+	/**
+	 * Constraints that bind decision variables to the lifted parameters
+	 * appearing in the bounds of their domains.
+	 */
+	private final List<String> boundingConstraints;
 
 	/**
 	 * Computes the value of the given parameter by recursively evaluating all
@@ -175,6 +187,7 @@ public class Lifter implements Callable<String> {
 		env = new HashMap<String, Object>();
 		this.ctx = ctx;
 		hasOutput = false;
+		boundingConstraints = new ArrayList<>();
 
 		// collect all dependencies
 		Set<OriginalParameter> toLiftAll = toLift.stream()
@@ -302,6 +315,8 @@ public class Lifter implements Callable<String> {
 			lp.getConstraints().forEach(c -> model.append(c + "\n"));
 		}
 
+		boundingConstraints.forEach(c -> model.append(c + "\n"));
+
 		return model.toString();
 	}
 
@@ -365,6 +380,126 @@ public class Lifter implements Callable<String> {
 		}
 
 		/**
+		 * Returns the range of a domain, if the domain is a range expression
+		 * (e.g., {@code 0..a}).
+		 *
+		 * @param tree the domain expression
+		 *
+		 * @return an optional containing the range
+		 */
+		private Optional<RangeExprContext> getRange(ParseTree tree) {
+			while (tree != null) {
+				if (tree instanceof RangeExprContext range) {
+					return range.addExpr().size() == 2 ? Optional.of(range) : Optional.empty();
+				}
+				if (tree.getChildCount() != 1) {
+					return Optional.empty();
+				}
+				tree = tree.getChild(0);
+			}
+			return Optional.empty();
+		}
+
+		/**
+		 * Returns the original source text of a context, from its first to its
+		 * last consumed token.
+		 * <p>
+		 * The stop token of a context can be the token following it (e.g., the
+		 * {@code ..} of a range), so the tokens are taken from the terminal
+		 * nodes of the context.
+		 *
+		 * @param ctx the context
+		 *
+		 * @return the original source text
+		 */
+		private String getSourceText(ParserRuleContext ctx) {
+			List<Token> tokens = Trees.getDescendants(ctx).stream()
+				.filter(TerminalNode.class::isInstance)
+				.map(t -> ((TerminalNode) t).getSymbol())
+				.toList();
+			return ctx.getStart().getInputStream().getText(new Interval(
+				tokens.getFirst().getStartIndex(),
+				tokens.getLast().getStopIndex()));
+		}
+
+		/**
+		 * Replaces the lifted parameters in a MiniZinc expression with their
+		 * lifted names.
+		 *
+		 * @param expression the MiniZinc expression
+		 *
+		 * @return the expression with lifted names
+		 */
+		private String liftText(String expression) {
+			for (LiftedParameter l : lifted) {
+				expression = expression.replaceAll(
+					"\\b" + Pattern.quote(l.getOriginalName()) + "\\b",
+					l.getLiftedName());
+			}
+			return expression;
+		}
+
+		/**
+		 * Builds the constraints binding a decision variable to the lifted
+		 * parameters in the bounds of its domain.
+		 * <p>
+		 * The domain of a variable such as {@code var 0..a: b} is rewritten to
+		 * {@code var 0..ub(a_lifted): b}, which is not enough: the actual bound
+		 * is {@code constraint b <= a_lifted}. The same holds for lower bounds,
+		 * arrays (each element is bound) and sets (the set is a subset of the
+		 * range).
+		 *
+		 * @param name        the name of the decision variable
+		 * @param typeCtx     the type of the decision variable
+		 * @param declaration the domain of the decision variable
+		 *
+		 * @return the bounding constraints (possibly none)
+		 */
+		private List<String> getBoundingConstraints(
+			String name,
+			TiExprContext typeCtx,
+			BaseTiExprTailContext declaration) {
+
+			Optional<RangeExprContext> range = getRange(declaration.expr());
+			if (range.isEmpty()) {
+				return List.of();
+			}
+
+			String lower = getSourceText(range.get().addExpr(0));
+			String upper = getSourceText(range.get().addExpr(1));
+			String liftedLower = liftText(lower);
+			String liftedUpper = liftText(upper);
+			boolean isLowerLifted = !lower.equals(liftedLower);
+			boolean isUpperLifted = !upper.equals(liftedUpper);
+
+			boolean isArray = typeCtx.arrayTiExpr() != null;
+			boolean isSet = declaration.getParent() instanceof BaseTiExprContext base
+				&& base.children.stream()
+					.anyMatch(c -> c instanceof TerminalNode && c.getText().startsWith("set"));
+
+			String element = isArray ? "lifted_bound_element" : name;
+			List<String> conditions = new ArrayList<>();
+			if (isSet) {
+				if (isLowerLifted || isUpperLifted) {
+					conditions.add(element + " subset (" + liftedLower + ")..(" + liftedUpper + ")");
+				}
+			} else {
+				if (isLowerLifted) {
+					conditions.add(element + " >= (" + liftedLower + ")");
+				}
+				if (isUpperLifted) {
+					conditions.add(element + " <= (" + liftedUpper + ")");
+				}
+			}
+
+			return conditions.stream()
+				.map(c -> isArray
+					? "constraint forall(" + element + " in " + name + ")(" + c + ");"
+					: "constraint " + c + ";")
+				.toList();
+		}
+
+		/**
 		 * Jump the assignment completely. Prevent changing parameters in what
 		 * was the data file.
 		 *
@@ -408,6 +543,16 @@ public class Lifter implements Callable<String> {
 				// Visit it only if necessary
 				if (boundingHasLiftedParameter) {
 					visit(declaration);
+					boundingConstraints.addAll(getBoundingConstraints(
+						ctx.tiExprAndId().ident().getText(),
+						typeCtx,
+						declaration));
+				}
+
+				// The definition of the variable (e.g., var int: z = n + 1)
+				// must use the lifted parameters
+				if (ctx.expr() != null) {
+					visit(ctx.expr());
 				}
 			}
 

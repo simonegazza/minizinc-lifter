@@ -266,10 +266,15 @@ public class MiniZincArray {
 				return false;
 			}
 
-			return equals(os);
+			return os.equals(this);
 		}
 
 		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return data.hashCode();
 	}
 
 	/**
@@ -366,7 +371,8 @@ public class MiniZincArray {
 
 		int upperIndex = getDimensions().get(0).size() + other.getDimensions().get(0).size();
 
-		return new MiniZincArray(List.of(new IndexRange(0, upperIndex)), newData);
+		// In MiniZinc, the result of '++' is always indexed from 1
+		return new MiniZincArray(List.of(new IndexRange(1, upperIndex)), newData);
 	}
 
 }

@@ -67,8 +67,8 @@ while true; do
 
     mapfile -t core < <(
         grep '"type": "core"' "$output" |
-        sed -E 's/.*assumed\[([0-9]+)\].*/\1/g' |
-        tr ',' '\n'
+        grep -oE 'assumed\[[0-9]+\]' |
+        sed -E 's/assumed\[([0-9]+)\]/\1/'
     )
 
     if [[ ${#core[@]} -eq 0 ]]; then

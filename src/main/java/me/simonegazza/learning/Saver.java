@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
@@ -194,18 +195,21 @@ public class Saver implements Callable<Integer> {
 
 			List<String> allAggregatedParameters = new ArrayList<>();
 			for (LiftedParameter p : liftedParameters) {
-				// get the value string from each data file
+				// get the value string from each data file: the assignment
+				// starts with the exact parameter name followed by "=" (e.g.,
+				// "size =" must not match "sizes =")
+				Pattern assignment = Pattern.compile("^\\s*" + Pattern.quote(p.getOriginalName()) + "\\s*=");
 				List<String> parameterStrings = new ArrayList<>();
 				for (Path filePath : dataFiles) {
 					try {
 						List<String> lines = Files.lines(filePath).toList();
 
-						// take only the lines in each data file that starts
-						// with the current parameter name and ends with ";"
+						// take only the lines in each data file from the
+						// assignment of the current parameter to the ";"
 						List<String> fileParameterString = new ArrayList<>();
 						int i = 0;
 						for (; i < lines.size(); i++) {
-							if (lines.get(i).startsWith(p.getOriginalName())) {
+							if (assignment.matcher(lines.get(i)).find()) {
 								break;
 							}
 						}

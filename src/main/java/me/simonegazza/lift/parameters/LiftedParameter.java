@@ -97,21 +97,26 @@ public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 				Optional.of(resultType.toString())));
 		}
 
+		LiftedParameter result = null;
 		if (allChanges.get(0) instanceof SimpleLiftRequest slr) {
 			MiniZincType type = parameter.getType();
 			if (type instanceof MiniZincBasicType || type instanceof MiniZincExpressionType) {
-				return new LiftedSimpleParameter(parameter, slr, allLifts);
+				result = new LiftedSimpleParameter(parameter, slr, allLifts);
 			} else if (type instanceof MiniZincSetType) {
-				return new LiftedSetParameter(parameter, slr, allLifts);
+				result = new LiftedSetParameter(parameter, slr, allLifts);
 			} else if (type instanceof MiniZincArrayType) {
-				return new LiftedArrayParameter(parameter, slr, allLifts);
+				result = new LiftedArrayParameter(parameter, slr, allLifts);
 			}
 		} else if (changes.get(0) instanceof ArrayElementLiftRequest) {
-			return new LiftedArrayElementParameter(parameter, changes, allLifts);
+			result = new LiftedArrayElementParameter(parameter, changes, allLifts);
 		} else {
 			throw new IllegalStateException("Unkown type of lift request for " + parameter.getName());
 		}
-		return null;
+
+		if (result != null) {
+			result.requested = !changes.isEmpty();
+		}
+		return result;
 	}
 
 	/**
@@ -128,6 +133,45 @@ public abstract class LiftedParameter implements Comparable<LiftedParameter> {
 	 * Set of dependencies for this parameter.
 	 */
 	protected final Set<OriginalParameter> dependencies;
+
+	/**
+	 * Whether the lift of this parameter was requested by the user, or the
+	 * parameter is lifted only because it depends on a requested one.
+	 */
+	private boolean requested = true;
+
+	/**
+	 * Whether the lifted parameter is defined by its original expression, with
+	 * lifted parameters in place of the original ones.
+	 * <p>
+	 * This is the case of a parameter assigned at declaration and lifted only
+	 * because it depends on a requested one (e.g., {@code int: m = n + 1;} when
+	 * lifting {@code n}): its lifted version must be
+	 * {@code m_lifted = n_lifted + 1}. A parameter requested by the user is
+	 * instead free to change, even if assigned at declaration.
+	 *
+	 * @return true if the lifted parameter is defined by its expression
+	 */
+	public boolean isDefinedByExpression() {
+		return parameter.isAssignedAtDeclaration() && !requested;
+	}
+
+	/**
+	 * Rewrites the original expression of the parameter, replacing the lifted
+	 * parameters with their lifted names.
+	 *
+	 * @return the rewritten expression
+	 */
+	protected String getLiftedExpression() {
+		CharStream input = CharStreams.fromString(parameter.getExpressionText());
+		MiniZincLexer lexer = new MiniZincLexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		MiniZincParser parser = new MiniZincParser(tokens);
+
+		Rewriter rewriter = new Rewriter(tokens);
+		rewriter.visit(parser.expr());
+		return rewriter.getText();
+	}
 
 	/**
 	 * Internal rewriter used to rewrite identifiers.

@@ -3,6 +3,7 @@ package me.simonegazza.lift.expressions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -14,7 +15,9 @@ import java.util.List;
  * intersection.
  * <p>
  * Internally, this implementation stores the set as a deduplicated
- * {@link List}. Duplicate elements are removed during construction.
+ * {@link List}. Duplicate elements are removed during construction, and
+ * elements of the same comparable type (e.g., integers) are kept sorted, as
+ * MiniZinc does.
  * <p>
  * Equality follows MiniZinc semantics and is supported both against other
  * {@link MiniZincSet} instances and against one-dimensional
@@ -27,8 +30,16 @@ public class MiniZincSet {
 	 */
 	private final List<?> data;
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public MiniZincSet(Collection<?> data) {
-		this.data = List.copyOf(new HashSet<>(data));
+		List<Object> unique = new ArrayList<>(new LinkedHashSet<>(data));
+		boolean sortable = !unique.isEmpty()
+			&& unique.stream().allMatch(e -> e instanceof Comparable
+				&& e.getClass().equals(unique.getFirst().getClass()));
+		if (sortable) {
+			unique.sort((a, b) -> ((Comparable) a).compareTo(b));
+		}
+		this.data = List.copyOf(unique);
 	}
 
 	/**
@@ -180,18 +191,9 @@ public class MiniZincSet {
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof MiniZincArray oa) {
-			if (oa.getDimensions().size() == 1) {
-				boolean result = true;
-
-				for (Integer i : oa.getDimensions().get(0).toArray()) {
-					if (!data.contains(oa.getMiniZinc(i))) {
-						result = false;
-					}
-				}
-
-				return result;
-			}
-			return false;
+			// Same elements (both ways), not just the array included in the set
+			return oa.getDimensions().size() == 1
+				&& new HashSet<>(oa.flatten()).equals(new HashSet<>(data));
 		} else if (other instanceof MiniZincSet os) {
 			return os.data.size() == data.size()
 				&&
@@ -205,7 +207,8 @@ public class MiniZincSet {
 
 	@Override
 	public int hashCode() {
-		return data.hashCode();
+		// Independent from the order of the elements
+		return new HashSet<>(data).hashCode();
 	}
 
 	/**

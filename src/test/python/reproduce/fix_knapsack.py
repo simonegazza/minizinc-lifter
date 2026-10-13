@@ -26,7 +26,7 @@ for dzn_file in Path(".").glob("*.dzn"):
             if len(value) < n:
                 value.extend(int(sum(value) / n) for _ in range(n - len(value)))
             elif len(value) > n:
-                minizinc_vars[label] = value[:100]
+                minizinc_vars[label] = value[:n]
 
     if modified:
         new_text = ""

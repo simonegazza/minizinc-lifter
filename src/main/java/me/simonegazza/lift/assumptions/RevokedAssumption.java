@@ -67,7 +67,7 @@ public record RevokedAssumption(String name, List<Integer> indices) implements C
 			int thisInteger = indices.get(i);
 			int otherInteger = other.indices.get(i);
 			if (thisInteger != otherInteger) {
-				Integer.compare(thisInteger, otherInteger);
+				return Integer.compare(thisInteger, otherInteger);
 			}
 		}
 

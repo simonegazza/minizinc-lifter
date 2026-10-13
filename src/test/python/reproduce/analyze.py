@@ -29,7 +29,15 @@ def parse_chain(path):
     return {**initial, "path": str(path), "chain": [iterations[i] for i in sorted(iterations)]}
 
 
+ERROR_STATUS = "ERROR"
+
 def parse_one_by_one(path):
+    """
+    Every ".dzn" header line starts a new instance. An instance whose run
+    produced no final statistics (crash, OOM, podman or MiniZinc error) is
+    still appended, with status ERROR_STATUS and no metrics, so that the
+    position of the following instances is preserved.
+    """
     problems = []
     current = None
     with path.open(encoding="utf-8") as f:
@@ -40,6 +48,8 @@ def parse_one_by_one(path):
                 continue
 
             if line.endswith(".dzn"):
+                if current is not None:
+                    problems.append({"path": current["path"], "status": ERROR_STATUS})
                 current = {"path": line}
                 continue
 
@@ -70,6 +80,9 @@ def parse_one_by_one(path):
 
             elif message_type == "time":
                 current["time"] = obj.get("time")
+
+    if current is not None:
+        problems.append({"path": current["path"], "status": ERROR_STATUS})
 
     return problems
 

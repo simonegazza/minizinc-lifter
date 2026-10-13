@@ -43,11 +43,23 @@ public class RunStatistics {
 		SOLUTION_FOUND_VIA_RECOVERY,
 
 		/**
-		 * The procedure was aborted because neither a solution nor an UNSAT
-		 * core could be obtained even after invoking the recovery solver and
-		 * QuickXPlain.
+		 * The procedure was aborted because the main solver could not obtain a
+		 * solution or an UNSAT core, and the recovery solver proved the current
+		 * assumptions unsatisfiable.
 		 */
-		ABORTED
+		ABORTED,
+
+		/**
+		 * Neither the main solver nor the recovery solver could decide the
+		 * current model within the time limit.
+		 */
+		UNKNOWN,
+
+		/**
+		 * The procedure terminated with an error (e.g., an exception raised
+		 * while running MiniZinc).
+		 */
+		ERROR
 	}
 
 	/**

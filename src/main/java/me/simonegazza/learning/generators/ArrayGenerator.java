@@ -77,6 +77,32 @@ public final class ArrayGenerator<T> {
 	}
 
 	/**
+	 * Maximum number of attempts to draw a value different from the current
+	 * one.
+	 */
+	private static final int MAX_ATTEMPTS = 1000;
+
+	/**
+	 * Draws a value different from the given one, so that every perturbation
+	 * actually changes the array.
+	 *
+	 * @param old the current value
+	 *
+	 * @return a new value, different from {@code old}
+	 *
+	 * @throws IllegalStateException if the supplier keeps returning {@code old}
+	 */
+	private T change(T old) {
+		for (int attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+			T value = supplier.get();
+			if (!value.equals(old)) {
+				return value;
+			}
+		}
+		throw new IllegalStateException("Unable to generate a value different from " + old);
+	}
+
+	/**
 	 * Validates perturbation percentages.
 	 *
 	 * @param percentages perturbation levels
@@ -145,10 +171,12 @@ public final class ArrayGenerator<T> {
 				ArrayList::add,
 				ArrayList::addAll);
 
-		int previousPercentage = 0;
+		// The number of modifications is computed on the cumulative
+		// percentage, so that rounding errors do not add up
+		int alreadyModified = 0;
 		for (int percentage : percentages) {
-			int delta = percentage - previousPercentage;
-			int modifications = delta * length / 100;
+			int modifications = percentage * length / 100 - alreadyModified;
+			alreadyModified += modifications;
 
 			Collections.shuffle(available, R);
 
@@ -158,12 +186,10 @@ public final class ArrayGenerator<T> {
 
 			current = new ArrayList<>(current);
 			for (int index : modified) {
-				current.set(index, supplier.get());
+				current.set(index, change(current.get(index)));
 			}
 
 			result.add(current);
-
-			previousPercentage = percentage;
 		}
 
 		return result;

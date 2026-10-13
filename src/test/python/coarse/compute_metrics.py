@@ -1,58 +1,79 @@
 import argparse
 import json
 from collections import Counter
-from itertools import accumulate
 from statistics import geometric_mean, mean, StatisticsError
 
 ERROR_VALUE = "N/A"
 
 perturbations = dict(enumerate(["0%", "1%", "2%", "5%", "10%", "20%", "50%"]))
 
-metrics = {
-    "solveTime": {
-        "aggregator": geometric_mean,
-        "chain": [],
-        "assumptions": [],
-        "1by1": [],
-        "chainCumulative": [],
-        "assumptionsCumulative": [],
-        "1by1Cumulative": [],
-    },
-    "failures": {
-        "aggregator": mean,
-        "chain": [],
-        "assumptions": [],
-        "1by1": [],
-        "chainCumulative": [],
-        "assumptionsCumulative": [],
-        "1by1Cumulative": [],
-    },
-    "peakDepth": {
-        "aggregator": mean,
-        "chain": [],
-        "assumptions": [],
-        "1by1": [],
-        "chainCumulative": [],
-        "assumptionsCumulative": [],
-        "1by1Cumulative": [],
-    },
-    "cpPropagatorCalls": {
-        "aggregator": mean,
-        "chain": [],
-        "assumptions": [],
-        "1by1": [],
-        "chainCumulative": [],
-        "assumptionsCumulative": [],
-        "1by1Cumulative": [],
-    }
+METRIC_AGGREGATORS = {
+    "solveTime": geometric_mean,
+    "failures": mean,
+    "peakDepth": mean,
+    "cpPropagatorCalls": mean,
 }
+
+
+def new_metrics():
+    """Returns empty per-problem metric collectors."""
+    return {
+        name: {
+            "aggregator": aggregator,
+            "chain": [],
+            "assumptions": [],
+            "1by1": [],
+            "chainCumulative": [],
+            "assumptionsCumulative": [],
+            "1by1Cumulative": [],
+        }
+        for name, aggregator in METRIC_AGGREGATORS.items()
+    }
+
+def is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def numeric_values(values):
+    """Drops the entries of failed instances (ERROR_VALUE or missing)."""
+    return [value for value in values if is_number(value)]
+
+
+def solve_time(p):
+    """Solve time in seconds; "time" (ms) is used only when "solveTime" is missing.
+    ERROR_VALUE for instances whose run failed."""
+    if "solveTime" in p:
+        return p["solveTime"]
+    if is_number(p.get("time")) and is_number(p.get("flatTime")):
+        return p["time"] / 1000 - p["flatTime"]
+    return ERROR_VALUE
+
+
+def cumulative(values):
+    """Running sum of a series. A cumulative value is meaningless after a failed
+    instance, so every position from the first non-numeric value on is ERROR_VALUE
+    (and is then excluded from the aggregation of that position)."""
+    result = []
+    for value in values:
+        if not is_number(value):
+            return result + [ERROR_VALUE] * (len(values) - len(result))
+        result.append(value if not result else result[-1] + value)
+    return result
+
+
+def speedup(slow, fast):
+    """Ratio slow / fast, or ERROR_VALUE when it cannot be computed."""
+    if isinstance(slow, (int, float)) and isinstance(fast, (int, float)) and fast != 0:
+        return slow / fast
+    return ERROR_VALUE
+
 
 def aggregate_scalar(chain, assumptions, one_by_one, aggregator):
     try:
         return {
-            "chain": aggregator(chain),
-            "assumptions": aggregator(assumptions),
-            "1by1": aggregator(one_by_one),
+            "chain": aggregator(numeric_values(chain)),
+            "assumptions": aggregator(numeric_values(assumptions)),
+            "1by1": aggregator(numeric_values(one_by_one)),
         }
     except StatisticsError:
         return {
@@ -61,28 +82,31 @@ def aggregate_scalar(chain, assumptions, one_by_one, aggregator):
             "1by1": ERROR_VALUE,
         }
 
-def aggregate_series(chain, assumptions, one_by_one, aggregator):
+def aggregate_position(repetitions, i, aggregator):
+    """Aggregates position i over the repetitions, skipping failed (non-numeric)
+    or missing entries; ERROR_VALUE if no repetition has a value there."""
+    values = numeric_values(rep[i] for rep in repetitions if i < len(rep))
     try:
-        return {
-            "chain": [
-                aggregator([rep[i] for rep in chain])
-                for i in range(len(perturbations))
-            ],
-            "assumptions": [
-                aggregator([rep[i] for rep in assumptions])
-                for i in range(len(perturbations))
-            ],
-            "1by1": [
-                aggregator([rep[i] for rep in one_by_one])
-                for i in range(len(perturbations))
-            ],
-        }
-    except Exception:
-        return {
-            "chain": [ERROR_VALUE] * len(perturbations),
-            "assumptions": [ERROR_VALUE] * len(perturbations),
-            "1by1": [ERROR_VALUE] * len(perturbations),
-        }
+        return aggregator(values)
+    except (StatisticsError, ValueError):
+        return ERROR_VALUE
+
+
+def aggregate_series(chain, assumptions, one_by_one, aggregator):
+    return {
+        "chain": [
+            aggregate_position(chain, i, aggregator)
+            for i in range(len(perturbations))
+        ],
+        "assumptions": [
+            aggregate_position(assumptions, i, aggregator)
+            for i in range(len(perturbations))
+        ],
+        "1by1": [
+            aggregate_position(one_by_one, i, aggregator)
+            for i in range(len(perturbations))
+        ],
+    }
 
 
 def main(file):
@@ -112,6 +136,9 @@ def main(file):
         statuses_assumptions = []
         statuses_1by1 = []
 
+        # Collected separately for each problem
+        metrics = new_metrics()
+
         for repetition_index, repetition in repetitions.items():
             chain = repetition["chain.txt"]
             assumptions = repetition["assumptions.txt"]
@@ -130,39 +157,39 @@ def main(file):
                     f"one-by-one has {len(one_by_one)}"
                 )
 
-            flat_time_chain.append(chain["flatTime"])
-            flat_time_assumptions.extend(p["flatTime"] for p in assumptions)
-            flat_time_1by1.extend(p["flatTime"] for p in one_by_one)
+            flat_time_chain.append(chain.get("flatTime", ERROR_VALUE))
+            flat_time_assumptions.extend(p.get("flatTime", ERROR_VALUE) for p in assumptions)
+            flat_time_1by1.extend(p.get("flatTime", ERROR_VALUE) for p in one_by_one)
 
             solve_chain = [p["solveTime"] for p in chain["chain"]]
             solve_assumptions = [
-                p.get("solveTime", p["time"] - p["flatTime"])
+                solve_time(p)
                 for p in assumptions
             ]
             solve_1by1 = [
-                p.get("solveTime", p["time"] - p["flatTime"])
+                solve_time(p)
                 for p in one_by_one
             ]
 
             metrics["solveTime"]["chain"].append(solve_chain)
             metrics["solveTime"]["assumptions"].append(solve_assumptions)
             metrics["solveTime"]["1by1"].append(solve_1by1)
-            metrics["solveTime"]["chainCumulative"].append(list(accumulate(solve_chain)))
-            metrics["solveTime"]["assumptionsCumulative"].append(list(accumulate(solve_assumptions)))
-            metrics["solveTime"]["1by1Cumulative"].append(list(accumulate(solve_1by1)))
+            metrics["solveTime"]["chainCumulative"].append(cumulative(solve_chain))
+            metrics["solveTime"]["assumptionsCumulative"].append(cumulative(solve_assumptions))
+            metrics["solveTime"]["1by1Cumulative"].append(cumulative(solve_1by1))
 
 
             for metric in ["failures", "peakDepth", "cpPropagatorCalls"]:
                 chain_values = [p[metric] for p in chain["chain"]]
-                assumptions_values = [p.get(metric, "N/A") for p in assumptions]
-                one_values = [p.get(metric, "N/A") for p in one_by_one]
+                assumptions_values = [p.get(metric, ERROR_VALUE) for p in assumptions]
+                one_values = [p.get(metric, ERROR_VALUE) for p in one_by_one]
 
                 metrics[metric]["chain"].append(chain_values)
                 metrics[metric]["assumptions"].append(assumptions_values)
                 metrics[metric]["1by1"].append(one_values)
-                metrics[metric]["chainCumulative"].append(list(accumulate(chain_values)))
-                metrics[metric]["assumptionsCumulative"].append(list(accumulate(assumptions_values)))
-                metrics[metric]["1by1Cumulative"].append(list(accumulate(one_values)))
+                metrics[metric]["chainCumulative"].append(cumulative(chain_values))
+                metrics[metric]["assumptionsCumulative"].append(cumulative(assumptions_values))
+                metrics[metric]["1by1Cumulative"].append(cumulative(one_values))
 
             statuses_chain.extend(
                 p.get("status", ERROR_VALUE)
@@ -205,28 +232,28 @@ def main(file):
             )
 
         results[problem_name]["speedupOver1by1"] = [
-            o / c if o != 0 else ERROR_VALUE
+            speedup(o, c)
             for c, o in zip(
                 results[problem_name]["solveTime"]["chain"],
                 results[problem_name]["solveTime"]["1by1"]
             )
         ]
         results[problem_name]["speedupOverAssumptions"] = [
-            o / c if o != 0 else ERROR_VALUE
+            speedup(o, c)
             for c, o in zip(
                 results[problem_name]["solveTime"]["chain"],
                 results[problem_name]["solveTime"]["assumptions"]
             )
         ]
         results[problem_name]["speedupOver1by1Cumulative"] = [
-            o / c if o != 0 else ERROR_VALUE
+            speedup(o, c)
             for c, o in zip(
                 results[problem_name]["solveTimeCumulative"]["chain"],
                 results[problem_name]["solveTimeCumulative"]["1by1"]
             )
         ]
         results[problem_name]["speedupOverAssumptionsCumulative"] = [
-            o / c if o != 0 else ERROR_VALUE
+            speedup(o, c)
             for c, o in zip(
                 results[problem_name]["solveTimeCumulative"]["chain"],
                 results[problem_name]["solveTimeCumulative"]["assumptions"]

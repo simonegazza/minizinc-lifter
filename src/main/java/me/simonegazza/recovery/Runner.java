@@ -4,10 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.IntStream;
 import me.simonegazza.lift.utils.ApplicationLogger;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -78,8 +76,7 @@ public class Runner implements Callable<Integer> {
 	 * in the data folder, collects the per-run statistics, and prints the
 	 * aggregated JSON to standard output.
 	 *
-	 * @return {@code 0} if all runs completed without throwing an exception;
-	 *             {@code 1} otherwise
+	 * @return {@code 0} if all runs completed successfully; {@code 1} otherwise
 	 *
 	 * @throws Exception if the data folder cannot be listed or is empty
 	 */
@@ -101,7 +98,7 @@ public class Runner implements Callable<Integer> {
 		}
 
 		BatchRunStatistics batchStats = new BatchRunStatistics();
-		List<Optional<Throwable>> correct = new ArrayList<>(filesPath.size());
+		List<Path> failed = new ArrayList<>();
 		for (Path dznPath : filesPath) {
 			logger.info("Running data file " + dznPath.toString());
 
@@ -109,7 +106,10 @@ public class Runner implements Callable<Integer> {
 				.flatMap(n -> List.of("-p", n).stream())
 				.toList();
 
-			String filename = dznPath.getFileName().toString().split("\\.")[0];
+			// Only the .dzn extension is removed, so that, e.g., x.v1.dzn and
+			// x.v2.dzn have different output folders
+			String filename = dznPath.getFileName().toString();
+			filename = filename.substring(0, filename.length() - ".dzn".length());
 			Path mainOutPath = outputPath.toAbsolutePath().resolve(filename);
 
 			List<String> commandArgument = new ArrayList<>(ps);
@@ -120,12 +120,12 @@ public class Runner implements Callable<Integer> {
 			commandArgument.add("-o");
 			commandArgument.add(mainOutPath.toString());
 
+			// Picocli handles the exceptions of the run and returns an exit
+			// code instead of throwing
 			FeasibilityRecovery recovery = new FeasibilityRecovery();
-			try {
-				new CommandLine(recovery).execute(commandArgument.toArray(new String[0]));
-				correct.add(Optional.empty());
-			} catch (Throwable t) {
-				correct.add(Optional.of(t));
+			int exitCode = new CommandLine(recovery).execute(commandArgument.toArray(new String[0]));
+			if (exitCode != 0) {
+				failed.add(dznPath);
 			}
 			batchStats.add(dznPath, recovery.getStats());
 		}
@@ -133,12 +133,12 @@ public class Runner implements Callable<Integer> {
 		System.out.println("*********************************************");
 		System.out.println(batchStats);
 
-		if (correct.stream().allMatch(Optional::isEmpty)) {
+		if (failed.isEmpty()) {
 			return 0;
 		} else {
 			logger.info("Some run failed:");
-			IntStream.range(0, correct.size()).boxed()
-				.map(i -> "\nRun " + i + " with data file " + filesPath.get(i))
+			failed.stream()
+				.map(f -> "\nRun with data file " + f)
 				.forEach(logger::error);
 
 			return 1;

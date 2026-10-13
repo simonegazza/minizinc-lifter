@@ -13,6 +13,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import me.simonegazza.antlr.minizinc.MiniZincLexer;
 import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.expressions.MiniZincArray;
@@ -118,6 +119,79 @@ public class Randomizer implements Callable<Integer> {
 	}
 
 	/**
+	 * Draws an integer in {@code [min, max]} (both included) different from
+	 * {@code value}, so that a change is always an actual change.
+	 * <p>
+	 * If the range contains only {@code value}, the value is moved by one.
+	 *
+	 * @param value     the current value
+	 * @param min       the minimum of the range (included)
+	 * @param max       the maximum of the range (included)
+	 * @param generator a random number generator
+	 *
+	 * @return the new value
+	 */
+	private static int changeInt(int value, int min, int max, Random generator) {
+		boolean valueInRange = min <= value && value <= max;
+		int others = max - min + 1 - (valueInRange ? 1 : 0);
+		if (others <= 0) {
+			return generator.nextBoolean() ? value + 1 : value - 1;
+		}
+
+		int newValue = min + generator.nextInt(others);
+		if (valueInRange && newValue >= value) {
+			newValue++;
+		}
+		return newValue;
+	}
+
+	/**
+	 * Draws a double in {@code [min, max]} different from {@code value}.
+	 * <p>
+	 * If the range is empty, the value is moved by one.
+	 *
+	 * @param value     the current value
+	 * @param min       the minimum of the range
+	 * @param max       the maximum of the range
+	 * @param generator a random number generator
+	 *
+	 * @return the new value
+	 */
+	private static double changeDouble(double value, double min, double max, Random generator) {
+		if (max <= min) {
+			return generator.nextBoolean() ? value + 1 : value - 1;
+		}
+
+		double newValue;
+		do {
+			newValue = generator.nextDouble(min, max);
+		} while (newValue == value);
+		return newValue;
+	}
+
+	/**
+	 * Chooses {@code amount} distinct positions among {@code size}.
+	 *
+	 * @param size      the number of positions
+	 * @param amount    the number of positions to choose
+	 * @param generator a random number generator
+	 *
+	 * @return the chosen positions
+	 *
+	 * @throws IllegalStateException if {@code amount} is greater than
+	 *                                   {@code size}
+	 */
+	private static List<Integer> choosePositions(int size, int amount, Random generator) {
+		if (amount > size) {
+			throw new IllegalStateException("Too many changes asked");
+		}
+
+		List<Integer> positions = new ArrayList<>(IntStream.range(0, size).boxed().toList());
+		Collections.shuffle(positions, generator);
+		return positions.subList(0, amount);
+	}
+
+	/**
 	 * Randomize a given MiniZinc value object.
 	 * <p>
 	 * It does not support String as of now
@@ -140,20 +214,23 @@ public class Randomizer implements Callable<Integer> {
 		case Integer vi -> {
 			int newValue;
 			if (min.isEmpty() && max.isEmpty()) {
-				int variation = vi * 10 / 100;
-				newValue = generator.nextInt(vi - variation, vi + variation + 1);
+				// 10% of the value (at least 1, also for negative values)
+				int variation = Math.max(1, Math.abs(vi * 10 / 100));
+				newValue = changeInt(vi, vi - variation, vi + variation, generator);
 			} else {
-				newValue = generator.nextInt(min.get().intValue(), max.get().intValue());
+				newValue = changeInt(vi, min.get().intValue(), max.get().intValue(), generator);
 			}
 			yield newValue + "% CHANGED HERE from " + vi + " to " + newValue + "\n";
 		}
 		case Double vd -> {
 			double newValue;
 			if (min.isEmpty() && max.isEmpty()) {
-				double variation = vd * 10 / 100;
-				newValue = generator.nextDouble(vd - variation, vd + variation + 1);
+				// 10% of the value (at least 1, also for negative values)
+				double variation = Math.abs(vd * 10 / 100);
+				variation = variation == 0 ? 1 : variation;
+				newValue = changeDouble(vd, vd - variation, vd + variation, generator);
 			} else {
-				newValue = generator.nextDouble(min.get(), max.get());
+				newValue = changeDouble(vd, min.get(), max.get(), generator);
 			}
 			yield newValue + "% CHANGED HERE from " + vd + " to " + newValue + "\n";
 		}
@@ -161,20 +238,17 @@ public class Randomizer implements Callable<Integer> {
 			Object[] set = vs.toArray();
 
 			Optional<Double> newMin = Arrays.stream(set)
-				.map(Double.class::cast)
+				.map(Number.class::cast)
+				.map(Number::doubleValue)
 				.min(Double::compare);
 			Optional<Double> newMax = Arrays.stream(set)
-				.map(Double.class::cast)
+				.map(Number.class::cast)
+				.map(Number::doubleValue)
 				.max(Double::compare);
-
-			if (amount > set.length) {
-				throw new IllegalStateException("Too many changes asked");
-			}
 
 			// This for is fine since you cannot have set of anything except
 			// primitive variables
-			for (int i = 0; i < amount; i++) {
-				int index = generator.nextInt(set.length);
+			for (int index : choosePositions(set.length, amount, generator)) {
 				Object newValue = randomizeObject(set[index], newMin, newMax, amount, generator);
 				set[index] = newValue;
 			}
@@ -192,8 +266,7 @@ public class Randomizer implements Callable<Integer> {
 				.map(Number::doubleValue)
 				.max(Double::compare);
 
-			for (int i = 0; i < amount; i++) {
-				int index = generator.nextInt(flattenList.size());
+			for (int index : choosePositions(flattenList.size(), amount, generator)) {
 				Object newValue = randomizeObject(flattenList.get(index), newMin, newMax, 1, generator);
 				flattenList.set(index, newValue);
 			}
@@ -216,7 +289,7 @@ public class Randomizer implements Callable<Integer> {
 		return switch (value) {
 		case Integer vi -> vi.toString();
 		case Double vd -> vd.toString();
-		case MiniZincSet vs -> Arrays.asList(vs).stream()
+		case MiniZincSet vs -> Arrays.stream(vs.toArray())
 			.map(this::stringify)
 			.collect(Collectors.joining(", ", "{", "}"));
 		case MiniZincArray va -> {
@@ -317,7 +390,8 @@ public class Randomizer implements Callable<Integer> {
 				}).flatMap(f -> Arrays.stream(f.split(";")))
 				.filter(e -> !parameters.stream()
 					.map(RandomizeRequest::getName)
-					.anyMatch(n -> e.startsWith(n)))
+					// whitespaces are removed, so the assignment is "name=..."
+					.anyMatch(n -> e.startsWith(n + "=")))
 				.collect(Collectors.joining(";\n", "", ";"));
 
 			String finalOutput = redefinitions.stream()

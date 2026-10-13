@@ -140,7 +140,8 @@ public class FeasibilityRecovery implements Callable<Integer> {
 	 * @param args a {@link String} array from the command line as arguments
 	 */
 	public static void main(String[] args) {
-		new CommandLine(new FeasibilityRecovery()).execute(args);
+		int exitCode = new CommandLine(new FeasibilityRecovery()).execute(args);
+		System.exit(exitCode);
 	}
 
 	/**
@@ -184,79 +185,97 @@ public class FeasibilityRecovery implements Callable<Integer> {
 	}
 
 	/**
-	 * Interprets the output produced by a MiniZinc execution and determines
-	 * whether a solution, an unsatisfiable core, or no useful core was
-	 * obtained.
+	 * Outcome of a MiniZinc execution, determined from its output.
+	 */
+	private enum Outcome {
+
+		/**
+		 * A solution has been found.
+		 */
+		SOLUTION,
+
+		/**
+		 * The model is unsatisfiable.
+		 */
+		UNSATISFIABLE,
+
+		/**
+		 * The solver did not decide (e.g., time limit reached).
+		 */
+		UNKNOWN
+	}
+
+	/**
+	 * A MiniZinc core is printed as {@code %%%mzn-core: [assumed[6], ...]}.
+	 */
+	private static final String CORE_PREFIX = "%%%mzn-core:";
+
+	/**
+	 * An element of the core.
+	 */
+	private static final Pattern ASSUMPTION = Pattern.compile("assumed\\[(\\d+)\\]");
+
+	/**
+	 * Determines the outcome of a MiniZinc execution.
+	 * <p>
+	 * The output can also contain other lines (e.g., the traces of the model),
+	 * so the status lines are searched in the whole output.
+	 *
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)}
+	 *
+	 * @return the outcome of the execution
+	 */
+	private Outcome getOutcome(List<String> commandOutput) {
+		if (commandOutput.contains("----------")) {
+			return Outcome.SOLUTION;
+		} else if (commandOutput.contains("=====UNSATISFIABLE=====")) {
+			return Outcome.UNSATISFIABLE;
+		}
+		return Outcome.UNKNOWN;
+	}
+
+	/**
+	 * Interprets the output produced by the main solver and determines whether
+	 * a solution, an unsatisfiable core, or no useful core was obtained.
 	 *
 	 * @param commandOutput output lines returned by
 	 *                          {@link ModelRunner#run(Path, String)}
 	 *
 	 * @return an {@link Optional} containing the list of variable indices
-	 *             extracted from the reported nogood, or
-	 *             {@link Optional#empty()} if no core could be obtained
+	 *             extracted from the reported core, an empty list if no core
+	 *             could be obtained (the solver did not decide), or
+	 *             {@link Optional#empty()} if a solution was found or the core
+	 *             is empty (the whole problem class is unsatisfiable)
 	 */
 	private Optional<List<Integer>> analyzeOutput(List<String> commandOutput) {
-		if (commandOutput.size() > 2 && commandOutput.contains("----------")) {
+		Outcome outcome = getOutcome(commandOutput);
+		if (outcome == Outcome.SOLUTION) {
 			logger.info("A solution has been found!");
 			return Optional.empty();
-		} else {
-			if (commandOutput.size() == 1) {
-				throw new IllegalStateException("A core wasn't return");
-			}
-
-			if (commandOutput.get(0).contains("UNKNOWN")) {
-				return Optional.of(List.of());
-			}
-
-			String core = commandOutput.get(1);
-			core = core.substring(14, core.length() - 1);
-
-			if ("".equals(core)) {
-				return Optional.empty();
-			}
-
-			return Optional.of(Pattern.compile(", ").splitAsStream(core)
-				.map(s -> s.substring(8, s.length() - 1))
-				.map(Integer::valueOf)
-				.toList());
 		}
 
-	}
-
-	/**
-	 * Derives the {@link RunStatistics.FinalState} that corresponds to a solver
-	 * output for which {@link #analyzeOutput(List)} returned an empty
-	 * {@link Optional}.
-	 * <p>
-	 * Reuses the same output-pattern heuristics as
-	 * {@link #analyzeOutput(List)}.
-	 *
-	 * @param output     output lines returned by
-	 *                       {@link ModelRunner#run(Path, String)}
-	 * @param isRecovery {@code true} when the output comes from the recovery
-	 *                       solver; in that case a detected solution is mapped
-	 *                       to
-	 *                       {@link RunStatistics.FinalState#SOLUTION_FOUND_VIA_RECOVERY}
-	 *                       instead of
-	 *                       {@link RunStatistics.FinalState#SOLUTION_FOUND}
-	 *
-	 * @return {@link RunStatistics.FinalState#SOLUTION_FOUND} (or
-	 *             {@link RunStatistics.FinalState#SOLUTION_FOUND_VIA_RECOVERY}
-	 *             when {@code isRecovery} is {@code true}) when a solution
-	 *             separator is present in {@code output}; otherwise
-	 *             {@link RunStatistics.FinalState#UNSATISFIABLE}
-	 */
-	private RunStatistics.FinalState finalStateFromOutput(List<String> output, boolean isRecovery) {
-		if (output.size() > 2 && output.contains("----------")) {
-			return isRecovery
-				? RunStatistics.FinalState.SOLUTION_FOUND_VIA_RECOVERY
-				: RunStatistics.FinalState.SOLUTION_FOUND;
+		Optional<String> coreLine = commandOutput.stream()
+			.filter(l -> l.startsWith(CORE_PREFIX))
+			.findFirst();
+		if (outcome == Outcome.UNKNOWN || coreLine.isEmpty()) {
+			// Neither a solution nor a core
+			return Optional.of(List.of());
 		}
-		return RunStatistics.FinalState.UNSATISFIABLE;
+
+		List<Integer> core = ASSUMPTION.matcher(coreLine.get()).results()
+			.map(m -> Integer.valueOf(m.group(1)))
+			.toList();
+
+		return core.isEmpty() ? Optional.empty() : Optional.of(core);
 	}
 
 	/**
 	 * Executes the feasibility recovery pipeline.
+	 * <p>
+	 * The statistics are always completed, even if the execution fails: the
+	 * current iteration is recorded and the final state is set to
+	 * {@link RunStatistics.FinalState#ERROR}.
 	 *
 	 * @return {@code 0} if execution completes successfully
 	 *
@@ -269,6 +288,43 @@ public class FeasibilityRecovery implements Callable<Integer> {
 		stats = new RunStatistics();
 		stats.start();
 
+		try {
+			return recover();
+		} catch (Exception e) {
+			if (stats.getFinalState() == null) {
+				stats.endIteration(List.of(), "error");
+				stats.finish(RunStatistics.FinalState.ERROR);
+				System.out.println(stats);
+			}
+			throw e;
+		}
+	}
+
+	/**
+	 * Ends the procedure with the given final state, printing the statistics.
+	 *
+	 * @param state      the final state
+	 * @param solverUsed the solver used in the last iteration
+	 *
+	 * @return {@code 0}
+	 */
+	private int finish(RunStatistics.FinalState state, String solverUsed) {
+		stats.endIteration(List.of(), solverUsed);
+		stats.finish(state);
+		System.out.println(stats);
+		logger.info("Exiting with " + state);
+		return 0;
+	}
+
+	/**
+	 * Lifts the model and iteratively removes the assumptions in the cores
+	 * until a solution is found or no progress can be made.
+	 *
+	 * @return {@code 0} if execution completes successfully
+	 *
+	 * @throws Exception if parsing, transformation or execution fails
+	 */
+	private int recover() throws Exception {
 		outputPath = outputPath.toAbsolutePath();
 
 		// Parse cli arguments
@@ -320,16 +376,19 @@ public class FeasibilityRecovery implements Callable<Integer> {
 
 			// Run the .fzn
 			logger.info("Running the lifted model...");
-			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, "solutions.huub");
+			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, solverUsed);
 
 			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
 			if (coreAssumptionIndeces.isEmpty()) {
-				stats.endIteration(List.of(), solverUsed);
-				stats.finish(finalStateFromOutput(commandOutput, false));
-				System.out.println(stats);
-				logger.info("Exiting");
-				return 0;
+				return finish(
+					getOutcome(commandOutput) == Outcome.SOLUTION
+						? RunStatistics.FinalState.SOLUTION_FOUND
+						: RunStatistics.FinalState.UNSATISFIABLE,
+					solverUsed);
 			} else if (coreAssumptionIndeces.get().isEmpty()) {
+				// The recovery solver either gives a solution for the current
+				// assumptions or proves them unsatisfiable: it never gives a
+				// new core, so the procedure always ends here
 				logger.info("""
 					A solution or an unsat core cannot be found, \
 					trying by fixing parameters with another solver:
@@ -341,25 +400,14 @@ public class FeasibilityRecovery implements Callable<Integer> {
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
 
-				Optional<List<Integer>> recoveryAssumptions = analyzeOutput(recoveryOuput);
-				if (recoveryAssumptions.isEmpty()) {
-					stats.endIteration(List.of(), solverUsed);
-					stats.finish(finalStateFromOutput(recoveryOuput, true));
-					System.out.println(stats);
-					logger.info("Exiting");
-					return 0;
-				} else if (recoveryAssumptions.get().isEmpty()) {
+				return switch (getOutcome(recoveryOuput)) {
+				case SOLUTION -> finish(RunStatistics.FinalState.SOLUTION_FOUND_VIA_RECOVERY, solverUsed);
+				case UNSATISFIABLE -> finish(RunStatistics.FinalState.ABORTED, solverUsed);
+				case UNKNOWN -> {
 					logger.info("Unable to find a recovery given the time limit");
-				} else {
-					stats.endIteration(List.of(), solverUsed);
-					stats.finish(RunStatistics.FinalState.ABORTED);
-					System.out.println(stats);
-					logger.info("I've tried, sorry!");
-					throw new IllegalStateException("""
-						Tried to recover by running another solver and QuickXPlain \
-						but it was impossible to find a solution or get a core \
-						""");
+					yield finish(RunStatistics.FinalState.UNKNOWN, solverUsed);
 				}
+				};
 			}
 
 			List<Integer> newNogoodAssumptions = coreAssumptionIndeces.get();

@@ -7,7 +7,7 @@ EDGE_PROBABILITY = 0.72
 
 
 def is_connected(graph):
-    """Check weak connectivity of the directed graph."""
+    """Check connectivity of the (undirected) graph."""
     visited = [False] * N
     queue = deque([0])
     visited[0] = True
@@ -32,25 +32,21 @@ def generate_base_graph():
 
     # Create a connected backbone.
     for i in range(N - 1):
-        if random.random() < 0.5:
-            graph[i][i + 1] = True
-        else:
-            graph[i + 1][i] = True
+        graph[i][i + 1] = graph[i + 1][i] = True
 
-    # Add many additional directed edges.
+    # Add many additional undirected edges: the adjacency matrix is symmetric.
     for i in range(N):
-        for j in range(N):
-            if i == j:
-                continue
+        for j in range(i + 1, N):
             if not graph[i][j] and random.random() < EDGE_PROBABILITY:
-                graph[i][j] = True
+                graph[i][j] = graph[j][i] = True
 
     return graph
 
 def apply_changes(graph, percentage):
     new_graph = [row[:] for row in graph]
 
-    positions = [(i, j) for i in range(N) for j in range(N) if i != j]
+    # Undirected edges: changing (i, j) also changes (j, i).
+    positions = [(i, j) for i in range(N) for j in range(i + 1, N)]
     num_changes = max(1, round(len(positions) * percentage / 100))
 
     changed = 0
@@ -62,14 +58,14 @@ def apply_changes(graph, percentage):
         i, j = random.choice(positions)
 
         old_value = new_graph[i][j]
-        new_graph[i][j] = not old_value
+        new_graph[i][j] = new_graph[j][i] = not old_value
 
         if is_connected(new_graph):
             changed += 1
         else:
-            new_graph[i][j] = old_value
+            new_graph[i][j] = new_graph[j][i] = old_value
 
-    if max_attempts == attempts:
+    if changed < num_changes:
         raise RuntimeError("Too many attempts used")
 
     return new_graph

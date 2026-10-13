@@ -232,6 +232,7 @@ public class OriginalParameter {
 	public List<Integer> getDimensions() {
 		if (value instanceof Integer
 			|| value instanceof Double
+			|| value instanceof Boolean
 			|| value instanceof String) {
 			return List.of(1);
 		} else if (value instanceof MiniZincSet vs) {
@@ -242,7 +243,7 @@ public class OriginalParameter {
 				.toList();
 		}
 
-		throw new IllegalStateException("Unsupported value for dimension request: " + value.toString());
+		throw new IllegalStateException("Unsupported value for dimension request: " + value);
 	}
 
 }

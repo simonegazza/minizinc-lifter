@@ -43,7 +43,7 @@ def solve_time(instance):
     flat_time = instance.get("flatTime")
 
     if isinstance(time, (int, float)) and isinstance(flat_time, (int, float)):
-        t = time - flat_time
+        t = time / 1000 - flat_time
         return t if t < 60.0 else 60.0
 
     return ERROR_VALUE

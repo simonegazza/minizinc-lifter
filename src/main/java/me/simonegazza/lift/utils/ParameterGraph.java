@@ -33,7 +33,10 @@ public class ParameterGraph extends DirectedGraph<OriginalParameter> {
 		queue.add(parameter);
 		while (!queue.isEmpty()) {
 			OriginalParameter current = queue.poll();
-			visited.add(current);
+			if (!visited.add(current)) {
+				// Already expanded: avoids looping forever on cycles
+				continue;
+			}
 
 			Set<OriginalParameter> dependants = getNodes().stream()
 				.filter(p -> getAdjacent(p).contains(current))

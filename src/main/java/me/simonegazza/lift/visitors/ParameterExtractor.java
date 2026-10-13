@@ -13,8 +13,12 @@ import me.simonegazza.antlr.minizinc.MiniZincParser.BaseTiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.EnumCasesContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.EnumItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ExprContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.GeneratorContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.GeneratorListContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.IdentContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ItemContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.LetExprContext;
+import me.simonegazza.antlr.minizinc.MiniZincParser.LetItemContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.ModelContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.TiExprContext;
 import me.simonegazza.antlr.minizinc.MiniZincParser.VarDeclItemContext;
@@ -177,9 +181,51 @@ public class ParameterExtractor implements Callable<ParameterGraph> {
 			dependencies = new HashMap<>();
 		}
 
+		/**
+		 * Determines whether an identifier is a local name, i.e., a variable
+		 * bound by an enclosing generator (comprehensions, calls like
+		 * {@code sum(i in 1..n)(...)}) or declared in an enclosing {@code let}.
+		 * <p>
+		 * Local names are not parameters, even when they shadow one, so they
+		 * must not become dependencies.
+		 *
+		 * @param ctx the identifier context
+		 *
+		 * @return true if the identifier is a local name
+		 */
+		private boolean isLocal(IdentContext ctx) {
+			String name = ctx.getText();
+			for (ParserRuleContext p = ctx.getParent(); p != null; p = p.getParent()) {
+				if (p instanceof LetExprContext let) {
+					for (LetItemContext item : let.letItem()) {
+						VarDeclItemContext decl = item.varDeclItem();
+						IdentContext local = decl == null
+							? null
+							: decl.tiExprAndId() != null ? decl.tiExprAndId().ident() : decl.ident();
+						if (local != null && local.getText().equals(name)) {
+							return true;
+						}
+					}
+				}
+
+				GeneratorListContext generators = p.getRuleContext(GeneratorListContext.class, 0);
+				if (generators != null) {
+					for (GeneratorContext generator : generators.generator()) {
+						for (IdentContext local : generator.ident()) {
+							if (local.getText().equals(name)) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+
+			return false;
+		}
+
 		@Override
 		public Void visitIdent(IdentContext ctx) {
-			if (currentIdentifier != null) {
+			if (currentIdentifier != null && !isLocal(ctx)) {
 				addDependency(currentIdentifier, ctx.getText());
 			}
 			return null;
@@ -272,6 +318,36 @@ public class ParameterExtractor implements Callable<ParameterGraph> {
 			graph.addNode(parameter);
 
 			return null;
+		}
+
+		/**
+		 * Visits a {@code let} expression.
+		 * <p>
+		 * Local declarations are not parameters: they are not added to the
+		 * graph and they do not change {@link #currentIdentifier}. The
+		 * identifiers used in their types and values are dependencies of the
+		 * current identifier (local names excluded).
+		 *
+		 * @return null
+		 */
+		@Override
+		public Void visitLetExpr(LetExprContext ctx) {
+			for (LetItemContext item : ctx.letItem()) {
+				VarDeclItemContext decl = item.varDeclItem();
+				if (decl == null) {
+					visit(item.constraintItem());
+					continue;
+				}
+
+				if (decl.tiExprAndId() != null) {
+					visit(decl.tiExprAndId().tiExpr());
+				}
+				if (decl.expr() != null) {
+					visit(decl.expr());
+				}
+			}
+
+			return visit(ctx.expr());
 		}
 
 		@Override

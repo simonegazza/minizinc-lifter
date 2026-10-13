@@ -36,7 +36,9 @@ public class LiftedSimpleParameter extends LiftedParameter {
 			+ getLiftedName()
 			+ " :: doc_comment(\""
 			+ getLiftedName()
-			+ "\");";
+			+ "\")"
+			+ (isDefinedByExpression() ? " = " + getLiftedExpression() : "")
+			+ ";";
 	}
 
 	@Override
@@ -46,7 +48,10 @@ public class LiftedSimpleParameter extends LiftedParameter {
 
 	@Override
 	public String getSolvePiece() {
-		return "abs(" + getLiftedName() + " - " + getOriginalName() + ")";
+		// A parameter defined by its expression changes only as a consequence
+		// of the others, so it is not part of the objective
+		return (isDefinedByExpression() ? "0 %" : "")
+			+ "abs(" + getLiftedName() + " - " + getOriginalName() + ")";
 	}
 
 }

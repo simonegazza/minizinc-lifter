@@ -6,8 +6,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import me.simonegazza.antlr.minizinc.MiniZincLexer;
-import me.simonegazza.antlr.minizinc.MiniZincParser;
 import me.simonegazza.lift.expressions.MiniZincIdentifier;
 import me.simonegazza.lift.requests.LiftRequest;
 import me.simonegazza.lift.types.MiniZincArrayType;
@@ -16,9 +14,6 @@ import me.simonegazza.lift.types.MiniZincExpressionType;
 import me.simonegazza.lift.types.MiniZincSetType;
 import me.simonegazza.lift.types.MiniZincType;
 import me.simonegazza.lift.utils.exception.UnimplementedException;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
 
 /**
  * Represents a lifted version of an array parameter where the entire array is
@@ -76,16 +71,8 @@ public class LiftedArrayParameter extends LiftedParameter {
 			: Optional.empty();
 
 		String declaration = "";
-		if (parameter.isAssignedAtDeclaration()) {
-			CharStream input = CharStreams.fromString(parameter.getExpressionText());
-			MiniZincLexer lexer = new MiniZincLexer(input);
-			CommonTokenStream tokens = new CommonTokenStream(lexer);
-			MiniZincParser parser = new MiniZincParser(tokens);
-
-			Rewriter rewriter = new Rewriter(tokens);
-			rewriter.visit(parser.expr());
-
-			declaration = " = " + rewriter.getText();
+		if (isDefinedByExpression()) {
+			declaration = " = " + getLiftedExpression();
 		}
 
 		if (!(parameter.getType() instanceof MiniZincArrayType type)) {
@@ -104,7 +91,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 				if (dimensions.size() > 1) {
 					typeLifted.append(
 						"index_set_"
-							+ i
+							+ (i + 1)
 							+ "of"
 							+ dimensions.size() + "(" + getOriginalName() + ")");
 				} else {
@@ -128,7 +115,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 			+ ": "
 			+ getLiftedName()
 			+ declaration
-			+ (parameter.isAssignedAtDeclaration()
+			+ (isDefinedByExpression()
 				? ""
 				: " :: doc_comment(\"" + getLiftedName() + "\")")
 			+ ";";
@@ -193,7 +180,7 @@ public class LiftedArrayParameter extends LiftedParameter {
 				return result.toString();
 			}).collect(Collectors.joining(", "));
 
-		return (parameter.isAssignedAtDeclaration() ? "0 %" : "")
+		return (isDefinedByExpression() ? "0 %" : "")
 			+ "sum(["
 			+ firstPart
 			+ " | "

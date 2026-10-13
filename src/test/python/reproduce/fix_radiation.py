@@ -47,7 +47,13 @@ for dzn_file in Path(".").glob("*.dzn"):
 
     bt_max = max(values)
 
-    with dzn_file.open("a", encoding="utf-8") as f:
-        f.write(f"\nBt_max = {bt_max};")
+    # Idempotent: replace a Bt_max assignment written by a previous run
+    assignment = re.compile(r"^Bt_max\s*=\s*-?\d+\s*;", re.MULTILINE)
+    if assignment.search(text):
+        text = assignment.sub(f"Bt_max = {bt_max};", text)
+    else:
+        text += f"\nBt_max = {bt_max};"
+
+    dzn_file.write_text(text, encoding="utf-8")
 
     print(f"{dzn_file}: Bt_max = {bt_max}")

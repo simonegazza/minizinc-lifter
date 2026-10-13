@@ -8,11 +8,29 @@ ERROR_VALUE = "N/A"
 # Output order for the perturbations
 percentages = ["1", "2", "5", "10", "20", "50"]
 
+def is_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
 def aggregate_values(values, aggregator):
+    """Aggregates the numeric values only: entries of failed instances
+    (ERROR_VALUE) are excluded. ERROR_VALUE if nothing can be aggregated."""
     try:
-        return aggregator(values)
+        return aggregator([value for value in values if is_number(value)])
     except (StatisticsError, ValueError):
-        raise ValueError(f"Non-numeric value in aggregation: {values}")
+        return ERROR_VALUE
+
+def cumulative_total(values):
+    """Total of the series, or ERROR_VALUE if it is empty or any instance failed
+    (a partial total would not be comparable with the other method)."""
+    if not values or not all(is_number(value) for value in values):
+        return ERROR_VALUE
+    return list(accumulate(values))[-1]
+
+def speedup(slow, fast):
+    """Ratio slow / fast, or ERROR_VALUE when it cannot be computed."""
+    if is_number(slow) and is_number(fast) and fast != 0:
+        return slow / fast
+    return ERROR_VALUE
 
 def get_metric(problem, metric):
     chain = [
@@ -128,9 +146,9 @@ def main(file):
             # ---------------------------------------------------------
             # flatTime
             # ---------------------------------------------------------
-            chain_flat_times = [chain["flatTime"] for chain in chains]
+            chain_flat_times = [chain.get("flatTime", ERROR_VALUE) for chain in chains]
             one_by_one_flat_times = [
-                p["flatTime"]
+                p.get("flatTime", ERROR_VALUE)
                 for one_by_one in one_by_ones
                 for p in one_by_one
             ]
@@ -162,13 +180,13 @@ def main(file):
                     status = e["status"]
                     time_per_status["1by1"].setdefault(
                         status, []
-                    ).append(e["solveTime"])
+                    ).append(e.get("solveTime", ERROR_VALUE))
 
             for type_name in ["chain", "1by1"]:
                 time_per_status[type_name] = {
                     status: {
                         "count": len(times),
-                        "mean": geometric_mean(times),
+                        "mean": aggregate_values(times, geometric_mean),
                     }
                     for status, times
                     in time_per_status[type_name].items()
@@ -201,40 +219,33 @@ def main(file):
                 )
 
                 # Cumulative metric
-                chain_cumulative = list(accumulate(chain_values))
-                one_cumulative = list(accumulate(one_values))
-
                 results[problem_name][f"{metric}Cumulative"]["chain"].append(
-                    chain_cumulative[-1]
-                    if chain_cumulative
-                    else ERROR_VALUE
+                    cumulative_total(chain_values)
                 )
 
                 results[problem_name][f"{metric}Cumulative"]["1by1"].append(
-                    one_cumulative[-1]
-                    if one_cumulative
-                    else ERROR_VALUE
+                    cumulative_total(one_values)
                 )
 
         # -------------------------------------------------------------
         # Speedups
         # -------------------------------------------------------------
         results[problem_name]["speedupOver1by1"] = [
-            one_by_one / chain
+            speedup(one_by_one, chain)
             for chain, one_by_one in zip(
                 results[problem_name]["solveTime"]["chain"],
                 results[problem_name]["solveTime"]["1by1"],
             )
         ]
         results[problem_name]["speedupOver1by1Cumulative"] = [
-            one_by_one / chain
+            speedup(one_by_one, chain)
             for chain, one_by_one in zip(
                 results[problem_name]["solveTimeCumulative"]["chain"],
                 results[problem_name]["solveTimeCumulative"]["1by1"],
             )
         ]
         results[problem_name]["failureReductionRatio"] = [
-            one_by_one / chain
+            speedup(one_by_one, chain)
             for chain, one_by_one in zip(
                 results[problem_name]["failures"]["chain"],
                 results[problem_name]["failures"]["1by1"],

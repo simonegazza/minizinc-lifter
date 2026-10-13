@@ -40,6 +40,11 @@ def main():
     )
     parser.add_argument("input_folder", help="Folder containing .txt files to parse")
     parser.add_argument("output_file", help="Output combined JSON file path")
+    parser.add_argument(
+        "--allow-failures",
+        action="store_true",
+        help="Exit with 0 even if some problem or run failed (failures are still reported)",
+    )
     args = parser.parse_args()
 
     input_folder = args.input_folder
@@ -51,6 +56,9 @@ def main():
 
     combined_data = {}
     found_files = 0
+    # (file, reason) of every problem or run that did not complete: they are
+    # never dropped silently
+    failures = []
 
     # Sort filenames so the output JSON has a predictable order
     for filename in sorted(os.listdir(input_folder)):
@@ -58,10 +66,20 @@ def main():
             filepath = os.path.join(input_folder, filename)
             parsed_json = parse_file(filepath)
 
-            if parsed_json is not None:
-                # Store the parsed JSON using the filename as the key
-                combined_data[filename] = parsed_json
-                found_files += 1
+            if parsed_json is None:
+                # The runner crashed before printing the statistics (e.g., the
+                # instance generation failed)
+                failures.append((filename, "no statistics found"))
+                continue
+
+            # Store the parsed JSON using the filename as the key
+            combined_data[filename] = parsed_json
+            found_files += 1
+
+            for run in parsed_json.get("runs", []):
+                state = run.get("statistics", {}).get("finalState")
+                if state is None or state == "ERROR":
+                    failures.append((f"{filename}: {run.get('dataFile')}", f"final state {state}"))
 
     if found_files == 0:
         print("No valid JSON found after the specified pattern in any .txt files.", file=sys.stderr)
@@ -71,6 +89,13 @@ def main():
         json.dump(combined_data, out_f, indent=2)
 
     print(f"Successfully processed {found_files} files and saved to {output_file}.")
+
+    if failures:
+        print(f"{len(failures)} failure(s):", file=sys.stderr)
+        for name, reason in failures:
+            print(f"  {name}: {reason}", file=sys.stderr)
+        if not args.allow_failures:
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()

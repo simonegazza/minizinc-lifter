@@ -1,60 +1,44 @@
 import random
 
 C = 35  # number of customers
-P = 35  # number of products
 DENSITY = 0.20
 
 
 def generate_base_instance():
+    """
+    Symmetric graph of the customers that share at least one product: every
+    customer shares its products with itself.
+    """
     graph = [
-        [False for _ in range(P)]
-        for _ in range(C)
+        [i == j for j in range(C)]
+        for i in range(C)
     ]
 
     for i in range(C):
-        for j in range(P):
+        for j in range(i + 1, C):
             if random.random() < DENSITY:
-                graph[i][j] = True
-
-    # Ensure every customer requires at least one product.
-    for i in range(C):
-        if not any(graph[i]):
-            graph[i][random.randrange(P)] = True
-
-    # Ensure every product is required by at least one customer.
-    for j in range(P):
-        if not any(graph[i][j] for i in range(C)):
-            graph[random.randrange(C)][j] = True
+                graph[i][j] = graph[j][i] = True
 
     return graph
 
 def apply_changes(graph, percentage):
     new_graph = [row[:] for row in graph]
 
-    positions = [(i, j) for i in range(C) for j in range(P)]
+    # Undirected edges: changing (i, j) also changes (j, i).
+    positions = [(i, j) for i in range(C) for j in range(i + 1, C)]
     num_changes = max(1, round(len(positions) * percentage / 100))
 
     changed_positions = random.sample(positions, num_changes)
 
     for i, j in changed_positions:
-        new_graph[i][j] = not new_graph[i][j]
-
-    # Keep every customer with at least one required product.
-    for i in range(C):
-        if not any(new_graph[i]):
-            new_graph[i][random.randrange(P)] = True
-
-    # Keep every product required by at least one customer.
-    for j in range(P):
-        if not any(new_graph[i][j] for i in range(C)):
-            new_graph[random.randrange(C)][j] = True
+        new_graph[i][j] = new_graph[j][i] = not new_graph[i][j]
 
     return new_graph
 
 def flatten_graph(graph):
     flat = []
     for i in range(C):
-        for j in range(P):
+        for j in range(C):
             flat.append("true" if graph[i][j] else "false")
     return flat
 
@@ -62,7 +46,7 @@ def write_dzn(path, graph):
     flat = flatten_graph(graph)
     content = (
         f"c = {C};\n"
-        f"graph = array2d(1..{C}, 1..{P}, [{', '.join(flat)}]);\n"
+        f"graph = array2d(1..{C}, 1..{C}, [{', '.join(flat)}]);\n"
     )
     path.write_text(content, encoding="utf-8")
 

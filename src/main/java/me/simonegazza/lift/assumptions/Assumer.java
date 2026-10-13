@@ -2,10 +2,11 @@ package me.simonegazza.lift.assumptions;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import me.simonegazza.lift.expressions.MiniZincArray;
@@ -55,6 +56,44 @@ public class Assumer implements Callable<String> {
 	private final List<LiftedParameter> maxParameters;
 
 	/**
+	 * A MiniZinc float literal (e.g., {@code 1.5}, but not the range
+	 * {@code 1..5}).
+	 */
+	private static final Pattern FLOAT_LITERAL = Pattern.compile("\\d\\.\\d");
+
+	/**
+	 * Determines the base type ({@code int} or {@code float}) of a parameter
+	 * whose type is an expression (e.g., {@code 0.0..10.0: p} or
+	 * {@code 1..n: p}).
+	 * <p>
+	 * The value of the parameter is used if available, otherwise the type is
+	 * {@code float} if the expression contains a float literal.
+	 *
+	 * @param type the expression type
+	 * @param lp   the lifted parameter
+	 *
+	 * @return the base type as a string
+	 */
+	private static String getExpressionBaseType(MiniZincExpressionType type, LiftedParameter lp) {
+		if (lp.getParameter().hasValue()) {
+			Object value = lp.getParameter().getValue();
+			if (value instanceof MiniZincArray array) {
+				List<Object> elements = array.flatten();
+				value = elements.isEmpty() ? null : elements.getFirst();
+			}
+			if (value instanceof Double) {
+				return MiniZincBasicType.FLOAT.toString();
+			} else if (value instanceof Integer) {
+				return MiniZincBasicType.INT.toString();
+			}
+		}
+
+		return FLOAT_LITERAL.matcher(type.toString()).find()
+			? MiniZincBasicType.FLOAT.toString()
+			: MiniZincBasicType.INT.toString();
+	}
+
+	/**
 	 * Groups lifted parameters by their effective parameter type.
 	 * <p>
 	 * The grouping key is derived from the parameter's declared type when
@@ -63,6 +102,9 @@ public class Assumer implements Callable<String> {
 	 * the type is inferred from the parameter value (or assumed to be an
 	 * {@code int} when no value is available). Set types are grouped together
 	 * under a common discriminator.
+	 * <p>
+	 * The groups (and the parameters inside each group) follow the order of
+	 * {@code lifted}, so that the generated model is deterministic.
 	 *
 	 * @param lifted the lifted parameters to classify
 	 *
@@ -76,7 +118,7 @@ public class Assumer implements Callable<String> {
 	public static Map<Object, List<LiftedParameter>> collectParameterTypes(
 		Collection<LiftedParameter> lifted) {
 
-		Map<Object, List<LiftedParameter>> result = new HashMap<>();
+		Map<Object, List<LiftedParameter>> result = new LinkedHashMap<>();
 		for (LiftedParameter lp : lifted) {
 
 			Object mapDiscriminant = lp.getParameter().getType();
@@ -85,9 +127,8 @@ public class Assumer implements Callable<String> {
 				mapDiscriminant = mdb.toString();
 			}
 
-			// TODO: discriminate this case better
-			if (mapDiscriminant instanceof MiniZincExpressionType) {
-				mapDiscriminant = MiniZincBasicType.INT.toString();
+			if (mapDiscriminant instanceof MiniZincExpressionType et) {
+				mapDiscriminant = getExpressionBaseType(et, lp);
 			}
 
 			if (mapDiscriminant.getClass().equals(MiniZincSetType.class)) {
@@ -97,9 +138,11 @@ public class Assumer implements Callable<String> {
 			// TODO: to do this operation properly, it should be recursive
 			if (mapDiscriminant instanceof MiniZincArrayType mda) {
 				if (mda.getSubtype() instanceof MiniZincBasicType) {
-					mapDiscriminant = mda.getSubtype();
+					mapDiscriminant = mda.getSubtype().toString();
 				} else if (mda.getSubtype() instanceof MiniZincSetType) {
 					mapDiscriminant = MiniZincSetType.class;
+				} else if (mda.getSubtype() instanceof MiniZincExpressionType et) {
+					mapDiscriminant = getExpressionBaseType(et, lp);
 				} else if (!lp.getParameter().hasValue()) {
 					// Without data, assume an enum (that can be coerced to int)
 					mapDiscriminant = MiniZincBasicType.INT.toString();
@@ -166,7 +209,7 @@ public class Assumer implements Callable<String> {
 		paramArrayLiftedIdentifiers = new ArrayList<>();
 
 		parameterTypeCollector = collectParameterTypes(
-			lifted.stream().collect(Collectors.toSet()));
+			lifted.stream().sorted().toList());
 	}
 
 	/**
