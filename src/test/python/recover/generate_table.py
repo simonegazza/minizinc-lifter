@@ -27,42 +27,79 @@ def fmt_int(value):
 def fmt_float(value):
     return "N/A" if value is None else f"{value:.2f}"
 
-def fmt_number(value):
-    """Integers as they are, floats with two decimals, missing values as N/A."""
-    if value is None:
-        return "N/A"
-    if isinstance(value, int):
-        return str(value)
-    return f"{value:.2f}"
 
-# MiniZinc statuses and their column titles, in the order of the table: only
-# the statuses of at least one run are shown
-STATUSES = [
-    ("OPTIMAL", "OPT"),
-    ("SATISFIABLE", "SAT"),
-    ("UNKNOWN", "UNK"),
-    ("UNSATISFIABLE", "UNSAT"),
-    ("ERROR", "ERR"),
-]
+def fmt_mean(value):
+    """Mean with one decimal, missing values as N/A."""
+    return "N/A" if value is None else f"{value:.1f}"
 
 
-def collect_statuses(data):
-    """Statuses (and titles) with at least one run in the shown problems."""
-    present = set()
+def fmt_distance(value):
+    """Distance (in [0, 1]) with three decimals, missing values as N/A."""
+    return "N/A" if value is None else f"{value:.3f}"
+
+
+# Time limit (in seconds) of each solver call
+TIME_LIMIT = 60
+
+
+def fmt_runtime(value):
+    """Runtime in seconds, or TO when it exceeds the time limit."""
+    if value is not None and value > TIME_LIMIT:
+        return "TO"
+    return fmt_float(value)
+
+# MiniZinc statuses of the repairs, with the abbreviation and the description
+# used in the caption (only for the statuses that occur)
+STATUSES = {
+    "SATISFIABLE": ("SAT", "a repair found within the time limit but not proven optimal"),
+    "UNKNOWN": ("UNK", "no repair found within the time limit"),
+    "UNSATISFIABLE": ("UNSAT", "a proof that no repair exists"),
+    "ERROR": ("ERR", "an error during the recovery"),
+}
+
+
+def status_caption(data):
+    """
+    Sentence of the caption summarizing the statuses of the repairs: the
+    problems with instances whose repair is not proven optimal, with their
+    statuses.
+    """
+    exceptions = []
+    used = []
     for key in ORDER:
-        if key in data:
-            present |= {s for s, n in data[key]["statuses"].items() if n > 0}
+        if key not in data:
+            continue
+        counts = [
+            (status, n)
+            for status, n in sorted(data[key]["statuses"].items())
+            if n > 0 and status != "OPTIMAL"
+        ]
+        if counts:
+            parts = []
+            for status, n in counts:
+                abbreviation = STATUSES.get(status, (status, None))[0]
+                parts.append(f"{n} {abbreviation}")
+                if status not in used:
+                    used.append(status)
+            exceptions.append(f"{NAME_MAP[key]} ({', '.join(parts)})")
 
-    known = [s for s, _ in STATUSES]
-    columns = [(s, title) for s, title in STATUSES if s in present]
-    # Statuses not in the list are added at the end with their own name
-    columns += [(s, s) for s in sorted(present) if s not in known]
-    return columns
+    if not exceptions:
+        return "The repair is proven optimal on every instance."
+
+    def join(items):
+        return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+    known = [s for s in used if s in STATUSES]
+    legend = join([f"{STATUSES[s][0]} denotes {STATUSES[s][1]}" for s in known]) if known else ""
+    return (
+        "The repair is proven optimal on every instance except "
+        + join(exceptions)
+        + (f", where {legend}." if legend else ".")
+    )
 
 
 def generate_table(data):
-    statuses = collect_statuses(data)
-    groups = [2, 3, 3, 3] + ([len(statuses)] if statuses else [])
+    groups = [2, 3, 3, 2]
 
     def hhline(char):
         """Horizontal rule over all the column groups ("~" none, "-" all)."""
@@ -77,20 +114,13 @@ def generate_table(data):
         r"\multicolumn{2}{c|}{Parameters} &"
         r"\multicolumn{3}{c|}{Core Size} &"
         r"\multicolumn{3}{c|}{Runtime} &"
-        + (
-            r"\multicolumn{3}{c|}{Objectives} &"
-            + rf"\multicolumn{{{len(statuses)}}}{{c}}{{Statuses}}\\"
-            if statuses
-            else r"\multicolumn{3}{c}{Objectives}\\"
-        ),
+        r"\multicolumn{2}{c}{Objectives}\\",
         hhline("~"),
         r"&"
         r"Modified & Lifted &"
         r"Min & Avg & Max & "
         r"Min & Mean & Max & "
-        r"Min & Median & Max"
-        + "".join(f" & {title}" for _, title in statuses)
-        + r"\\",
+        r"Distance & Hamming\\",
         hhline("-"),
     ]
 
@@ -113,21 +143,18 @@ def generate_table(data):
             f' & {d["minCoreVariables"]}'
             f' & {d["meanCoreVariables"]}'
             f' & {d["maxCoreVariables"]}'
-            f' & {fmt_float(d["minTotalDuration"])}'
-            f' & {fmt_float(d["avgTotalDuration"])}'
-            f' & {fmt_float(d["maxTotalDuration"])}'
-            f' & {fmt_number(d.get("minObjective"))}'
-            f' & {fmt_number(d.get("medianObjective"))}'
-            f' & {fmt_number(d.get("maxObjective"))}'
-            + "".join(f' & {d["statuses"].get(status, 0)}' for status, _ in statuses)
-            + r"\\"
+            f' & {fmt_runtime(d["minTotalDuration"])}'
+            f' & {fmt_runtime(d["avgTotalDuration"])}'
+            f' & {fmt_runtime(d["maxTotalDuration"])}'
+            f' & {fmt_distance(d.get("meanDistance"))}'
+            f' & {fmt_mean(d.get("meanHamming"))}\\\\'
         )
 
     lines.extend(
         [
             hhline("~"),
             r"\end{tabular}",
-            r"\caption{Summary of feasibility-recovery experiments.}",
+            r"\caption{Summary of feasibility-recovery experiments. " + status_caption(data) + "}",
             r"\label{tab:recovery}",
             r"\end{table*}",
         ]

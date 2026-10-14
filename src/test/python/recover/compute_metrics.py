@@ -94,6 +94,26 @@ def main():
             if it["solverUsed"] not in ("solutions.huub", "error")
         )
 
+        # Distances of the repairs of the runs that found a solution, computed
+        # by recover.py: Hamming (number of changed parameters) and Distance
+        # (mean Gower distance |k - k'| / (u - l) over the changed parameters)
+        hammings = [
+            r["statistics"]["hamming"]
+            for r in runs
+            if r["statistics"].get("hamming") is not None
+        ]
+        distances = [
+            r["statistics"]["distance"]
+            for r in runs
+            if r["statistics"].get("distance") is not None
+        ]
+        if not any("hamming" in r["statistics"] for r in runs):
+            print(
+                f"Warning: {problem_name}: no Hamming/Distance in the input, "
+                "regenerate it with recover.py (or collect.sh)",
+                file=sys.stderr,
+            )
+
         # MiniZinc status of the last execution of each run (a run without
         # status ended with an error)
         statuses = Counter(r["statistics"].get("status") or "ERROR" for r in runs)
@@ -125,6 +145,8 @@ def main():
             "minObjective": min(objectives) if objectives else None,
             "medianObjective": statistics.median(objectives) if objectives else None,
             "maxObjective": max(objectives) if objectives else None,
+            "meanHamming": round(float(statistics.mean(hammings)), 2) if hammings else None,
+            "meanDistance": round(float(statistics.mean(distances)), 4) if distances else None,
 
             "statuses": dict(sorted(statuses.items())),
 
