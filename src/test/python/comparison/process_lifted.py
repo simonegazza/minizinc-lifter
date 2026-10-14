@@ -123,6 +123,8 @@ def main(raw_data):
         "gMean(iterationSumSolveTime)" : statistics.geometric_mean(solve_times),
         "statuses" : statuses,
         "objectives" : collect_objectives(raw_data),
+        # Cumulative solve time of each instance over all the iterations
+        "instanceSolveTimes" : solve_times,
         "failures" : statistics.geometric_mean(failures),
         "minIterations" : min(iterations),
         "medianIterations" : int(statistics.median(iterations)),

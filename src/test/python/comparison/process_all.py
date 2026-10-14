@@ -84,6 +84,51 @@ def compare_objectives(lifted_status, lifted_objective, soft_objective):
         return "worse"
     return "equal"
 
+def borda_points(status, objective, time, other_status, other_objective, other_time):
+    """
+    Points of a method against the other on an instance, following the Borda
+    count of the MiniZinc Challenge for optimization problems (the objective,
+    the L1 distance from the original parameters, is minimized): a method that
+    does not solve the instance scores 0; otherwise it scores 1 if it gives a
+    better answer, i.e. (in this order) it solves the instance and the other
+    does not, it proves optimality and the other does not, or its objective is
+    better; 0 if the answer is worse; and, if the answers are
+    indistinguishable, other_time / (other_time + time).
+    """
+    def solved(s, o):
+        return s in ("OPTIMAL_SOLUTION", "SATISFIABLE") and o is not None
+
+    if not solved(status, objective):
+        return 0
+    if not solved(other_status, other_objective):
+        return 1
+    optimal = status == "OPTIMAL_SOLUTION"
+    other_optimal = other_status == "OPTIMAL_SOLUTION"
+    if optimal != other_optimal:
+        return 1 if optimal else 0
+    if objective != other_objective:
+        return 1 if objective < other_objective else 0
+    if time + other_time == 0:
+        return 0.5
+    return other_time / (other_time + time)
+
+def borda(lifted, soft):
+    """Borda points of Lifted and CMPCS summed over the instances of a problem."""
+    instances = list(zip(
+        lifted["statuses"], lifted["objectives"], lifted["instanceSolveTimes"],
+        soft["statuses"], soft["objectives"], soft["instanceSolveTimes"]))
+    lifted_points = sum(borda_points(*i[:3], *i[3:]) for i in instances)
+    soft_points = sum(borda_points(*i[3:], *i[:3]) for i in instances)
+    return lifted_points, soft_points
+
+def status_counts(statuses, exclude=()):
+    """Number of instances for each final status."""
+    counts = {}
+    for s in statuses:
+        if s not in exclude:
+            counts[s] = counts.get(s, 0) + 1
+    return counts
+
 def main(main_folder : Path):
     result = {}
     for problem in PROBLEMS:
@@ -121,8 +166,19 @@ def main(main_folder : Path):
                 soft_processed["objectives"])
         ]
 
+        lifted_borda, soft_borda = borda(lifted_processed, soft_processed)
+        soft_processed["borda"] = soft_borda
+        lifted_processed["borda"] = lifted_borda
+
+        # Final statuses; for Lifted, UNSATISFIABLE means that the global budget
+        # expired while removing cores (reported as a global timeout)
+        soft_processed["statusCounts"] = status_counts(soft_processed["statuses"])
+        lifted_processed["statusCounts"] = status_counts(lifted_processed["statuses"], exclude=("UNSATISFIABLE",))
+
         del soft_processed["statuses"]
         del lifted_processed["statuses"]
+        del soft_processed["instanceSolveTimes"]
+        del lifted_processed["instanceSolveTimes"]
         del soft_processed["objectives"]
         del lifted_processed["objectives"]
 

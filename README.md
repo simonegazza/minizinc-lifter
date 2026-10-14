@@ -229,11 +229,7 @@ Generate the LaTeX table reported in the paper:
 python3 src/test/python/comparison/generate_table.py target/comparison/results > target/comparison/tables/table.tex
 ```
 
-By default, the table compare the values of the objective function of the two methods (column *Objective of Lifted vs CMPCS*). To remove it, use the `--no-objectives` flag:
-
-```bash
-python3 src/test/python/comparison/generate_table.py --no-objectives target/comparison/results > target/comparison/tables/table.tex
-```
+For each method, the table reports the final status of the instances (*Statuses of Lifted vs CMPCS*: optimal, satisfiable or unknown; the instances of Lifted stopped by the global budget are counted in the *Global* timeouts) and the Borda count of the [MiniZinc Challenge](https://www.minizinc.org/challenge/2026/rules/) for optimization problems, computed on the objective (the distance from the original parameters) and summed over the instances of each problem. The Borda count over all the problems (the sum of the rows of each method) is reported in the caption.
 
 # Coarse and increasing change Inter-Instances Nogood Learning (IINGL)
 
