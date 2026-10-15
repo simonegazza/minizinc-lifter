@@ -143,6 +143,7 @@ target/
     ├─ run.json                       # statistics of all the problems (recover.py)
     ├─ metrics.json                   # aggregated metrics (compute_metrics.py)
     ├─ table.tex                      # LaTeX table (generate_table.py)
+    ├─ flat_status_table.tex          # flattening times and statuses (generate_table.py)
     └─ results/
         ├─ <problem>.sh.txt           # output of src/test/sh/recovery/problems/<problem>.sh
         ├─ <problem>.sh.err           # its logs (only when executed with run.sbatch)
@@ -226,10 +227,12 @@ python3 src/test/python/comparison/process_all.py target/comparison/results
 
 Generate the LaTeX table reported in the paper:
 ```bash
-python3 src/test/python/comparison/generate_table.py target/comparison/results > target/comparison/tables/table.tex
+python3 src/test/python/comparison/generate_table.py target/comparison/results -o target/comparison/tables/table.tex
 ```
 
 For each method, the table reports the final status of the instances (*Statuses of Lifted vs CMPCS*: optimal, satisfiable or unknown; the instances of Lifted stopped by the global budget are counted in the *Global* timeouts) and the Borda count of the [MiniZinc Challenge](https://www.minizinc.org/challenge/2026/rules/) for optimization problems, computed on the objective (the distance from the original parameters) and summed over the instances of each problem. The Borda count over all the problems (the sum of the rows of each method) is reported in the caption.
+
+The script also writes `flat_status_table.tex` in the same folder: the flattening time (minimum, geometric mean and maximum over the instances; for Lifted, summed over the iterations of each instance) and the number of instances for each final status, for both methods.
 
 # Coarse and increasing change Inter-Instances Nogood Learning (IINGL)
 

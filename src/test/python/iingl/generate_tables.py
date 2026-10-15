@@ -6,14 +6,15 @@ from pathlib import Path
 # ==========================
 
 # Label for the first column and for the two compared methods
-DIFF_LABEL = "$k$"
-METHOD_LABELS = (r"\iingl", "Independently")
+DIFF_LABEL = "Diff"
+# (in the order of the columns: solving each instance independently, then IINGL)
+METHOD_LABELS = ("Independently", r"\iingl")
 
 # Each group: (data key, group title, ratio key or None, ratio label or None)
 # The ratio column, if present, is placed inside the group after the two methods.
 MAIN_TABLE_GROUPS = [
     ("solveTime",           "Mean Time",           "speedupOver1by1",       "Speedup"),
-    ("solveTimeCumulative", "Cumulative Time",     None,                    None),
+    ("solveTimeCumulative", "Cumulative Time",     "speedupOver1by1Cumulative", "Speedup"),
     ("failuresCumulative",  "Cumulative Failures", "failureReductionRatio", "Ratio"),
 ]
 
@@ -71,8 +72,8 @@ def generate_table(problem, data, groups, suffix):
     for i, diff in enumerate(DIFFS):
         values = [diff]
         for key, _, ratio_key, _ in groups:
-            values.append(data[key]["chain"][i])
             values.append(data[key]["1by1"][i])
+            values.append(data[key]["chain"][i])
             if ratio_key:
                 values.append(data[ratio_key][i])
         lines.append(row(values))
@@ -103,7 +104,7 @@ def generate_flat_status_table(data):
 
     lines.append(
         r"\multirow{2}{*}{\centering Problem} & "
-        r"\multirow{2}{*}{\centering Run k} & "
+        r"\multirow{2}{*}{\centering Inter Instance Variation} & "
         r"\multicolumn{2}{c|}{Flat Time} & "
         r"\multicolumn{4}{c|}{Status IINGL} & "
         r"\multicolumn{4}{c}{Status Original}\\"

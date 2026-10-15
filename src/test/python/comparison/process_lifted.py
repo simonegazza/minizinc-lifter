@@ -93,6 +93,9 @@ def main(raw_data):
     flat_times = []
     recursively_collect_key(raw_data, "flatTime", flat_times)
 
+    instance_flat_times = []
+    collect_in_array(raw_data, "flatTime", instance_flat_times)
+
     solve_times = []
     collect_in_array(raw_data, "solveTime", solve_times)
     solve_times = [
@@ -125,6 +128,8 @@ def main(raw_data):
         "objectives" : collect_objectives(raw_data),
         # Cumulative solve time of each instance over all the iterations
         "instanceSolveTimes" : solve_times,
+        # Cumulative flattening time of each instance over all the iterations
+        "instanceFlatTimes" : [sum(instance) for instance in instance_flat_times],
         "failures" : statistics.geometric_mean(failures),
         "minIterations" : min(iterations),
         "medianIterations" : int(statistics.median(iterations)),

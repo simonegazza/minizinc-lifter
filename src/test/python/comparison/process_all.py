@@ -1,4 +1,4 @@
-import argparse, json
+import argparse, json, statistics
 from pathlib import Path
 
 from combine_soft import main as combine_soft
@@ -166,6 +166,9 @@ def main(main_folder : Path):
                 soft_processed["objectives"])
         ]
 
+        soft_processed["statuses_all"] = list(soft_processed["statuses"])
+        lifted_processed["statuses_all"] = list(lifted_processed["statuses"])
+
         lifted_borda, soft_borda = borda(lifted_processed, soft_processed)
         soft_processed["borda"] = soft_borda
         lifted_processed["borda"] = lifted_borda
@@ -177,6 +180,18 @@ def main(main_folder : Path):
 
         del soft_processed["statuses"]
         del lifted_processed["statuses"]
+        # All the final statuses and the flattening time of each instance (for
+        # the flat/status table)
+        for processed in (soft_processed, lifted_processed):
+            processed["allStatusCounts"] = status_counts(processed["statuses_all"])
+            flat = processed.pop("instanceFlatTimes")
+            processed["flatTime"] = {
+                "min": min(flat),
+                "mean": statistics.geometric_mean(flat),
+                "max": max(flat),
+            }
+            del processed["statuses_all"]
+
         del soft_processed["instanceSolveTimes"]
         del lifted_processed["instanceSolveTimes"]
         del soft_processed["objectives"]

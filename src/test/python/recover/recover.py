@@ -83,6 +83,19 @@ def status_of_run(lines):
             last = STATUS_LINES[line.strip()]
     return last or "UNKNOWN"
 
+def flat_time_of_run(lines):
+    """
+    Flattening time of a run: sum of the "flatTime" statistics of its MiniZinc
+    executions (None if no statistic was recorded). Used for the runs whose
+    statistics have no "totalFlatTime".
+    """
+    times = [
+        float(m.group(1))
+        for m in (re.match(r"^%%%mzn-stat: flatTime=([0-9.eE+-]+)$", line.strip()) for line in lines)
+        if m
+    ]
+    return sum(times) if times else None
+
 def top_level_elements(value):
     """
     Elements of a value printed by MiniZinc: the elements of an array (sets are
@@ -282,6 +295,8 @@ def main():
             if len(log_runs) == len(runs):
                 for run, lines in zip(runs, log_runs):
                     run["statistics"].setdefault("status", status_of_run(lines))
+                    if "totalFlatTime" not in run["statistics"]:
+                        run["statistics"]["totalFlatTime"] = flat_time_of_run(lines)
                     if parameters is not None:
                         data_file = os.path.join(data_folder, run["dataFile"]) if data_folder and run.get("dataFile") else None
                         hamming, distance = repair_of_run(lines, parameters, data_file)

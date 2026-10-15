@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 from pathlib import Path
 
@@ -139,8 +140,56 @@ def generate_table(results):
 
     return table
 
+def generate_flat_status_table(results):
+    """
+    Table with the flattening time of each method (minimum, geometric mean and
+    maximum over the instances; for Lifted, summed over the iterations of each
+    instance) and the number of instances for each final status (for Lifted,
+    UNSAT means that the global budget expired).
+    """
+    method_names = {"soft": "CMPCS", "lifted": "Lifted"}
+    present = set()
+    for pdata in results.values():
+        for method in ("soft", "lifted"):
+            present |= {s for s, n in pdata[method]["allStatusCounts"].items() if n > 0}
+    known = [s for s, _ in STATUSES]
+    statuses = [(s, t) for s, t in STATUSES if s in present] + [(s, s) for s in sorted(present) if s not in known]
+
+    lines = [
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\begin{tabular}{c|c|rrr|" + "r" * len(statuses) + "}",
+        r"\multirow{2}{*}{Problem} & \multirow{2}{*}{Method} & \multicolumn{3}{c|}{Flat Time} & "
+        + rf"\multicolumn{{{len(statuses)}}}{{c}}{{Statuses}} \\",
+        r" & & Min & Mean & Max & " + " & ".join(t for _, t in statuses) + r" \\",
+        r"\hline",
+    ]
+    problems = list(results)
+    for problem, pdata in results.items():
+        for method in ("soft", "lifted"):
+            flat = pdata[method]["flatTime"]
+            row = [
+                rf"\multirow{{2}}{{*}}{{{problem}}}" if method == "soft" else "",
+                method_names[method],
+                f"{flat['min']:.2f}", f"{flat['mean']:.2f}", f"{flat['max']:.2f}",
+            ] + [str(pdata[method]["allStatusCounts"].get(s, 0)) for s, _ in statuses]
+            lines.append(" & ".join(row) + r" \\")
+        if problem != problems[-1]:
+            lines.append(r"\hline")
+    lines += [
+        r"\end{tabular}",
+        r"\caption{Flattening time (in seconds; for Lifted, summed over the iterations of each instance) "
+        r"and final status of the instances in the comparison with CMPCS "
+        r"(for Lifted, UNSAT denotes the instances stopped by the global budget).}",
+        r"\label{tab:comparison-flat-status}",
+        r"\end{table}",
+    ]
+    return "\n".join(lines)
+
+
 def main(folder):
-    return generate_table(process(folder))
+    results = process(folder)
+    return generate_table(results), generate_flat_status_table(results)
 
 if __name__ == "__main__":
     import argparse
@@ -160,10 +209,17 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    table = main(args.folder)
+    table, flat_status_table = main(args.folder)
 
     if args.output is None:
         print(table)
     else:
         with open(args.output, "w") as f:
             f.write(table)
+
+    # Flattening times and statuses, next to the table (or in the current
+    # folder if the table is printed)
+    flat_status = os.path.join(os.path.dirname(args.output) if args.output else ".", "flat_status_table.tex")
+    with open(flat_status, "w") as f:
+        f.write(flat_status_table)
+    print(f"Flattening times and statuses written to {flat_status}", file=sys.stderr)

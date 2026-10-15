@@ -79,6 +79,8 @@ public class RunStatistics {
 	 *                          flattening)
 	 * @param solveTime     time (in seconds) spent by the solvers in the search
 	 *                          during this iteration, as reported by MiniZinc
+	 * @param flatTime      time (in seconds) spent by MiniZinc in the
+	 *                          flattening during this iteration
 	 * @param coreVariables indexes of the lifted variables that belong to the
 	 *                          extracted UNSAT core; empty when no core was
 	 *                          produced
@@ -89,6 +91,7 @@ public class RunStatistics {
 		int iteration,
 		long durationMs,
 		double solveTime,
+		double flatTime,
 		List<Integer> coreVariables,
 		String solverUsed) {
 
@@ -103,6 +106,7 @@ public class RunStatistics {
 			json.put("iteration", iteration);
 			json.put("durationMs", durationMs);
 			json.put("solveTime", solveTime);
+			json.put("flatTime", flatTime);
 			json.put("coreVariables", new JSONArray(coreVariables));
 			json.put("solverUsed", solverUsed);
 
@@ -147,6 +151,12 @@ public class RunStatistics {
 	 * iteration.
 	 */
 	private double currentIterationSolveTime;
+
+	/**
+	 * Flattening time (in seconds) of the MiniZinc executions of the current
+	 * iteration.
+	 */
+	private double currentIterationFlatTime;
 
 	/**
 	 * Amount of changes originally introduced in the model, counted by scanning
@@ -223,6 +233,17 @@ public class RunStatistics {
 		currentIteration = iteration;
 		currentIterationStartNano = System.nanoTime();
 		currentIterationSolveTime = 0;
+		currentIterationFlatTime = 0;
+	}
+
+	/**
+	 * Adds the flattening time of a MiniZinc execution to the current
+	 * iteration.
+	 *
+	 * @param flatTime the time (in seconds) spent by MiniZinc in the flattening
+	 */
+	public void addFlatTime(double flatTime) {
+		currentIterationFlatTime += flatTime;
 	}
 
 	/**
@@ -255,6 +276,7 @@ public class RunStatistics {
 			currentIteration,
 			durationMs,
 			currentIterationSolveTime,
+			currentIterationFlatTime,
 			coreVariables,
 			solverUsed));
 	}
@@ -307,6 +329,16 @@ public class RunStatistics {
 	 */
 	public double getTotalSolveTime() {
 		return iterations.stream().mapToDouble(IterationRecord::solveTime).sum();
+	}
+
+	/**
+	 * Returns the time spent by MiniZinc in the flattening, summed over all the
+	 * iterations.
+	 *
+	 * @return total flattening time in seconds
+	 */
+	public double getTotalFlatTime() {
+		return iterations.stream().mapToDouble(IterationRecord::flatTime).sum();
 	}
 
 	/**
@@ -374,6 +406,7 @@ public class RunStatistics {
 
 		root.put("totalDurationMs", getTotalDurationMs());
 		root.put("totalSolveTime", getTotalSolveTime());
+		root.put("totalFlatTime", getTotalFlatTime());
 		root.put("liftedParameters", parameterNumber);
 		root.put("originalParameterModified", changes);
 		root.put("_objective", objective == null ? JSONObject.NULL : objective);

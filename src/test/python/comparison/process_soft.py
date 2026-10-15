@@ -39,6 +39,12 @@ def instance_solve_time(instance):
     recursively_collect_key(instance, "solveTime", times)
     return sum(times)
 
+def instance_flat_time(instance):
+    """Flattening time of an instance (sum over its statistics)."""
+    times = []
+    recursively_collect_key(instance, "flatTime", times)
+    return sum(times)
+
 def collect_objectives(raw_data):
     return [last_objective(instance["combined"]) for instance in raw_data]
 
@@ -63,6 +69,7 @@ def main(raw_data):
         "statuses" : statuses,
         "objectives" : collect_objectives(raw_data),
         "instanceSolveTimes" : [instance_solve_time(instance) for instance in raw_data],
+        "instanceFlatTimes" : [instance_flat_time(instance) for instance in raw_data],
         "failures": statistics.geometric_mean(failures),
         "cpPropagatorCalls": statistics.geometric_mean(cpPropagatorCalls)
     }

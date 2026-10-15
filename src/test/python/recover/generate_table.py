@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import os
 
 NAME_MAP = {
     "FREEDA": "FREEDA",
@@ -162,6 +163,60 @@ def generate_table(data):
 
     return "\n".join(lines)
 
+# Column titles of the MiniZinc statuses in the flat/status table, in order
+STATUS_TITLES = [
+    ("OPTIMAL", "OPT"),
+    ("SATISFIABLE", "SAT"),
+    ("UNKNOWN", "UNK"),
+    ("UNSATISFIABLE", "UNSAT"),
+    ("ERROR", "ERR"),
+]
+
+
+def generate_flat_status_table(data):
+    """
+    Table with the flattening time of the runs (minimum, geometric mean and
+    maximum, summed over the MiniZinc executions of each run) and the number
+    of runs for each MiniZinc status (only the statuses that occur).
+    """
+    present = set()
+    for key in ORDER:
+        if key in data:
+            present |= {s for s, n in data[key]["statuses"].items() if n > 0}
+    known = [s for s, _ in STATUS_TITLES]
+    statuses = [(s, t) for s, t in STATUS_TITLES if s in present] + [(s, s) for s in sorted(present) if s not in known]
+
+    lines = [
+        r"\begin{table}[t]",
+        r"\centering",
+        r"\begin{tabular}{l|ccc|" + "c" * len(statuses) + "}",
+        r"\multirow{2}{*}{Problem} & \multicolumn{3}{c|}{Flat Time} & "
+        + rf"\multicolumn{{{len(statuses)}}}{{c}}{{Statuses}}\\",
+        r"& Min & Mean & Max & " + " & ".join(t for _, t in statuses) + r"\\",
+        r"\hline",
+    ]
+    for key in ORDER:
+        if key not in data:
+            continue
+        d = data[key]
+        lines.append(
+            f'{NAME_MAP[key]}'
+            f' & {fmt_float(d.get("minFlatTime"))}'
+            f' & {fmt_float(d.get("meanFlatTime"))}'
+            f' & {fmt_float(d.get("maxFlatTime"))}'
+            + "".join(f' & {d["statuses"].get(s, 0)}' for s, _ in statuses)
+            + r"\\"
+        )
+    lines += [
+        r"\end{tabular}",
+        r"\caption{Flattening time (in seconds, summed over the MiniZinc executions of each instance) "
+        r"and final MiniZinc status of the feasibility-recovery experiments.}",
+        r"\label{tab:recovery-flat-status}",
+        r"\end{table}",
+    ]
+    return "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Generate a LaTeX table from the experiment summary JSON."
@@ -195,6 +250,11 @@ def main():
 
     with open(args.output_tex, "w") as f:
         f.write(latex)
+
+    # Flattening times and statuses, next to the table
+    flat_status = os.path.join(os.path.dirname(args.output_tex), "flat_status_table.tex")
+    with open(flat_status, "w") as f:
+        f.write(generate_flat_status_table(data))
 
 
 if __name__ == "__main__":

@@ -114,6 +114,13 @@ def main():
                 file=sys.stderr,
             )
 
+        # Flattening time of each run (sum over its MiniZinc executions)
+        flat_times = [
+            r["statistics"]["totalFlatTime"]
+            for r in runs
+            if r["statistics"].get("totalFlatTime") is not None
+        ]
+
         # MiniZinc status of the last execution of each run (a run without
         # status ended with an error)
         statuses = Counter(r["statistics"].get("status") or "ERROR" for r in runs)
@@ -149,6 +156,10 @@ def main():
             "meanDistance": round(float(statistics.mean(distances)), 4) if distances else None,
 
             "statuses": dict(sorted(statuses.items())),
+
+            "minFlatTime": min(flat_times) if flat_times else None,
+            "meanFlatTime": round(statistics.geometric_mean(flat_times), 2) if flat_times else None,
+            "maxFlatTime": max(flat_times) if flat_times else None,
 
             "totalSolverRuntime": round(total_solver_runtime, 2) if has_solve_time else None,
             "avgTotalSolverRuntime": round(avg_total_solver_runtime, 2) if has_solve_time else None,

@@ -225,6 +225,12 @@ public class FeasibilityRecovery implements Callable<Integer> {
 		.compile("^%%%mzn-stat: solveTime=([0-9.eE+-]+)$");
 
 	/**
+	 * The flattening time reported in the statistics of a MiniZinc execution.
+	 */
+	private static final Pattern FLAT_TIME = Pattern
+		.compile("^%%%mzn-stat: flatTime=([0-9.eE+-]+)$");
+
+	/**
 	 * An element of the core.
 	 */
 	private static final Pattern ASSUMPTION = Pattern.compile("assumed\\[(\\d+)\\]");
@@ -262,8 +268,35 @@ public class FeasibilityRecovery implements Callable<Integer> {
 	 * @return the search time in seconds ({@code 0} if not reported)
 	 */
 	private double getSolveTime(List<String> commandOutput) {
+		return sumStatistic(SOLVE_TIME, commandOutput);
+	}
+
+	/**
+	 * Reads the time spent by MiniZinc in the flattening from the statistics of
+	 * a MiniZinc execution.
+	 *
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)}
+	 *
+	 * @return the flattening time in seconds ({@code 0} if not reported)
+	 */
+	private double getFlatTime(List<String> commandOutput) {
+		return sumStatistic(FLAT_TIME, commandOutput);
+	}
+
+	/**
+	 * Sums the values of a statistic in the output of a MiniZinc execution.
+	 *
+	 * @param statistic     the pattern of the statistic, with the value as
+	 *                          first group
+	 * @param commandOutput output lines returned by
+	 *                          {@link ModelRunner#run(Path, String)}
+	 *
+	 * @return the sum of the values ({@code 0} if not reported)
+	 */
+	private static double sumStatistic(Pattern statistic, List<String> commandOutput) {
 		return commandOutput.stream()
-			.map(SOLVE_TIME::matcher)
+			.map(statistic::matcher)
 			.filter(Matcher::matches)
 			.mapToDouble(m -> Double.parseDouble(m.group(1)))
 			.sum();
@@ -450,6 +483,7 @@ public class FeasibilityRecovery implements Callable<Integer> {
 			logger.info("Running the lifted model...");
 			List<String> commandOutput = ModelRunner.run(ithBaseModelPath, solverUsed);
 			stats.addSolveTime(getSolveTime(commandOutput));
+			stats.addFlatTime(getFlatTime(commandOutput));
 
 			Optional<List<Integer>> coreAssumptionIndeces = analyzeOutput(commandOutput);
 			if (coreAssumptionIndeces.isEmpty()) {
@@ -475,6 +509,7 @@ public class FeasibilityRecovery implements Callable<Integer> {
 					Files.readString(ithMznModelPath),
 					ithModelNamePrefix);
 				stats.addSolveTime(getSolveTime(recoveryOuput));
+				stats.addFlatTime(getFlatTime(recoveryOuput));
 
 				getObjective(recoveryOuput).ifPresent(stats::setObjective);
 				stats.setStatus(getStatus(recoveryOuput));
