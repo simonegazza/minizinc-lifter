@@ -68,12 +68,18 @@ def global_timeouts(problem, pdata):
     return global_to
 
 
+# Statuses not shown among the statuses of the table: UNKNOWN is already
+# reported as call timeout (Timeouts > Call)
+EXCLUDED_STATUSES = {"UNKNOWN"}
+
+
 def collect_statuses(results):
     """Statuses (and titles) of at least one instance, for any method."""
     present = set()
     for pdata in results.values():
         for method in ("soft", "lifted"):
             present |= {s for s, n in pdata[method]["statusCounts"].items() if n > 0}
+    present -= EXCLUDED_STATUSES
     known = [s for s, _ in STATUSES]
     return [(s, t) for s, t in STATUSES if s in present] + [(s, s) for s in sorted(present) if s not in known]
 

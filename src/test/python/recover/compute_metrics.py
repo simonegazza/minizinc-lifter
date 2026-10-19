@@ -152,7 +152,7 @@ def main():
             "minObjective": min(objectives) if objectives else None,
             "medianObjective": statistics.median(objectives) if objectives else None,
             "maxObjective": max(objectives) if objectives else None,
-            "meanHamming": round(float(statistics.mean(hammings)), 2) if hammings else None,
+            "medianHamming": round(float(statistics.median(hammings)), 2) if hammings else None,
             "meanDistance": round(float(statistics.mean(distances)), 4) if distances else None,
 
             "statuses": dict(sorted(statuses.items())),

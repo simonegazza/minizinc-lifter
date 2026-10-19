@@ -29,9 +29,9 @@ def fmt_float(value):
     return "N/A" if value is None else f"{value:.2f}"
 
 
-def fmt_mean(value):
+def fmt_median(value):
     """Mean with one decimal, missing values as N/A."""
-    return "N/A" if value is None else f"{value:.1f}"
+    return "N/A" if value is None else f"{value:.0f}"
 
 
 def fmt_distance(value):
@@ -148,7 +148,7 @@ def generate_table(data):
             f' & {fmt_runtime(d["avgTotalDuration"])}'
             f' & {fmt_runtime(d["maxTotalDuration"])}'
             f' & {fmt_distance(d.get("meanDistance"))}'
-            f' & {fmt_mean(d.get("meanHamming"))}\\\\'
+            f' & {fmt_median(d.get("medianHamming"))}\\\\'
         )
 
     lines.extend(
