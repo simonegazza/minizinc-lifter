@@ -190,7 +190,7 @@ All commands below assume that they are executed from the **root directory of th
 Create the output directories and extract the benchmark models and data files (the archive has a top-level `data/` folder):
 
 ```bash
-mkdir -p target/comparison/{results,tables} logs
+mkdir -p target/comparison/{results,tables,logs}
 tar -xvf src/test/resources/comparison/data.tar.xz -C target/comparison
 ```
 

@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
 #SBATCH --time=00:02:00
-#SBATCH --output=logs/%x_%A_%a.out
-#SBATCH --error=logs/%x_%A_%a.err
+#SBATCH --output=target/comparison/logs/%x_%A_%a.out
+#SBATCH --error=target/comparison/logs/%x_%A_%a.err
 #SBATCH --requeue
 #SBATCH --nodelist=critical001
 
