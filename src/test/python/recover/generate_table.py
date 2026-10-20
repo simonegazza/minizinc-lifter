@@ -34,6 +34,20 @@ def fmt_median(value):
     return "N/A" if value is None else f"{value:.0f}"
 
 
+def fmt_hamming(hamming, lifted):
+    """
+    Hamming distance with, in parentheses, the percentage of changed
+    parameters over the lifted ones (two decimals).
+    """
+    if hamming is None:
+        return "N/A"
+    if not lifted:
+        return fmt_median(hamming)
+    percentage = 100 * hamming / lifted
+    percentage = f"{percentage:.2f}"
+    return rf"{fmt_median(hamming)} ({percentage}\%)"
+
+
 def fmt_distance(value):
     """Distance (in [0, 1]) with three decimals, missing values as N/A."""
     return "N/A" if value is None else f"{value:.3f}"
@@ -118,7 +132,7 @@ def generate_table(data):
         r"\multicolumn{2}{c}{Objectives}\\",
         hhline("~"),
         r"&"
-        r"Modified & Lifted &"
+        r"Perturbed & Lifted &"
         r"Min & Avg & Max & "
         r"Min & Mean & Max & "
         r"Distance & Hamming\\",
@@ -148,7 +162,7 @@ def generate_table(data):
             f' & {fmt_runtime(d["avgTotalDuration"])}'
             f' & {fmt_runtime(d["maxTotalDuration"])}'
             f' & {fmt_distance(d.get("meanDistance"))}'
-            f' & {fmt_median(d.get("medianHamming"))}\\\\'
+            f' & {fmt_hamming(d.get("medianHamming"), d["liftedParameters"])}\\\\'
         )
 
     lines.extend(

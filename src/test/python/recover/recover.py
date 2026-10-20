@@ -179,13 +179,16 @@ def repair_of_run(lines, parameters, data_file):
     - Distance: mean, over the changed parameters, of |k - k'| / (u - l)
       (Gower distance), where k is the original value, k' the repaired one and
       l..u the lifted domain (0 if u = l).
-    Returns (None, None) if the run has no solution.
+    Returns (hamming, distance, number of parameters), or (None, None, None)
+    if the run has no solution.
     """
     values = solution_values(lines)
     if values is None:
-        return None, None
+        return None, None, None
 
     hamming = 0
+    # Number of parameters (elements) considered by the Hamming distance
+    total = 0
     distances = []
     for name, domain in parameters.items():
         if ("original", name) not in values or ("lifted", name) not in values:
@@ -195,6 +198,7 @@ def repair_of_run(lines, parameters, data_file):
         lifted = top_level_elements(values[("lifted", name)])
         changed = [(o, l) for o, l in zip(original, lifted) if o != l]
         hamming += len(changed)
+        total += len(original)
         if not changed:
             continue
         try:
@@ -213,7 +217,7 @@ def repair_of_run(lines, parameters, data_file):
             distances.append(abs(k - k1) / width if width != 0 else 0)
 
     distance = sum(distances) / len(distances) if distances else (0 if hamming == 0 else None)
-    return hamming, distance
+    return hamming, distance, total
 
 def lifted_parameters(problem_script):
     """
@@ -299,8 +303,9 @@ def main():
                         run["statistics"]["totalFlatTime"] = flat_time_of_run(lines)
                     if parameters is not None:
                         data_file = os.path.join(data_folder, run["dataFile"]) if data_folder and run.get("dataFile") else None
-                        hamming, distance = repair_of_run(lines, parameters, data_file)
+                        hamming, distance, total = repair_of_run(lines, parameters, data_file)
                         run["statistics"]["hamming"] = hamming
+                        run["statistics"]["hammingTotal"] = total
                         run["statistics"]["distance"] = distance
             else:
                 print(f"{filename}: cannot match the runs with the log", file=sys.stderr)

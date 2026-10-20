@@ -107,6 +107,11 @@ def main():
             for r in runs
             if r["statistics"].get("distance") is not None
         ]
+        hamming_percentages = [
+            100 * r["statistics"]["hamming"] / r["statistics"]["hammingTotal"]
+            for r in runs
+            if r["statistics"].get("hamming") is not None and r["statistics"].get("hammingTotal")
+        ]
         if not any("hamming" in r["statistics"] for r in runs):
             print(
                 f"Warning: {problem_name}: no Hamming/Distance in the input, "
@@ -153,6 +158,9 @@ def main():
             "medianObjective": statistics.median(objectives) if objectives else None,
             "maxObjective": max(objectives) if objectives else None,
             "medianHamming": round(float(statistics.median(hammings)), 2) if hammings else None,
+            # Percentage of the parameters changed by the repair (median over
+            # the runs, as the number of parameters can differ between instances)
+            "medianHammingPercentage": round(float(statistics.median(hamming_percentages)), 2) if hamming_percentages else None,
             "meanDistance": round(float(statistics.mean(distances)), 4) if distances else None,
 
             "statuses": dict(sorted(statuses.items())),
