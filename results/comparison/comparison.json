@@ -1,21 +1,49 @@
 {
   "latin": {
     "soft": {
-      "flatTimeMean": 0.19485248883113387,
-      "solveTimeMean": 25.235800773440292,
-      "failures": 116995.30541047065,
-      "cpPropagatorCalls": 13811806.045545373,
-      "unknowns": 0
+      "flatTimeMean": 0.20345495720686402,
+      "solveTimeMean": 25.52079741683068,
+      "failures": 112897.02589591799,
+      "cpPropagatorCalls": 13331020.446722718,
+      "unknowns": 0,
+      "borda": 8.869507946305875,
+      "statusCounts": {
+        "SATISFIABLE": 32,
+        "OPTIMAL_SOLUTION": 18
+      },
+      "allStatusCounts": {
+        "SATISFIABLE": 32,
+        "OPTIMAL_SOLUTION": 18
+      },
+      "flatTime": {
+        "min": 0.187597,
+        "mean": 0.20345495720686402,
+        "max": 0.341009
+      }
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.18415571844181236,
-      "gMean(iterationSumSolveTime)": 1.4504031988984991,
-      "failures": 8544.995167768206,
+      "gMean(iterationSumFlatTime)": 0.18375235936282122,
+      "gMean(iterationSumSolveTime)": 1.4574511378244397,
+      "failures": 8524.16444403366,
       "minIterations": 6,
       "medianIterations": 14,
       "maxIterations": 20,
-      "cpPropagatorCalls": 791788.8530589403,
-      "unknowns": 0
+      "cpPropagatorCalls": 789770.554126134,
+      "unknowns": 0,
+      "borda": 41.13049205369412,
+      "statusCounts": {
+        "OPTIMAL_SOLUTION": 45,
+        "SATISFIABLE": 5
+      },
+      "allStatusCounts": {
+        "OPTIMAL_SOLUTION": 45,
+        "SATISFIABLE": 5
+      },
+      "flatTime": {
+        "min": 1.09147,
+        "mean": 2.4868715001706083,
+        "max": 3.717204
+      }
     },
     "better": {
       "total": 50,
@@ -34,34 +62,134 @@
     },
     "objective": {
       "better": 17,
-      "equal": 15,
-      "worse": 18,
+      "equal": 16,
+      "worse": 17,
       "globalTO": 0
     }
   },
   "TAP": {
     "soft": {
-      "flatTimeMean": 0.41382768258082914,
-      "solveTimeMean": 45.23748645116186,
-      "failures": 174579.5313417109,
-      "cpPropagatorCalls": 5322438.8232538095,
-      "unknowns": 37
+      "flatTimeMean": 0.42057778737514656,
+      "solveTimeMean": 47.21112255812499,
+      "failures": 165566.06087613036,
+      "cpPropagatorCalls": 5026897.983668294,
+      "unknowns": 37,
+      "borda": 13,
+      "statusCounts": {
+        "SATISFIABLE": 10,
+        "UNKNOWN": 37,
+        "OPTIMAL_SOLUTION": 3
+      },
+      "allStatusCounts": {
+        "SATISFIABLE": 10,
+        "UNKNOWN": 37,
+        "OPTIMAL_SOLUTION": 3
+      },
+      "flatTime": {
+        "min": 0.167749,
+        "mean": 0.42057778737514656,
+        "max": 3.53838
+      }
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.4066816797906405,
-      "gMean(iterationSumSolveTime)": 47.59039703577827,
-      "failures": 37523.89931008278,
+      "gMean(iterationSumFlatTime)": 0.4331548799420915,
+      "gMean(iterationSumSolveTime)": 48.490835515881756,
+      "failures": 36170.17029051025,
       "minIterations": 1,
       "medianIterations": 2,
       "maxIterations": 2,
-      "cpPropagatorCalls": 7692067.046611342,
-      "unknowns": 3
+      "cpPropagatorCalls": 7099131.6719569145,
+      "unknowns": 4,
+      "borda": 33,
+      "statusCounts": {
+        "SATISFIABLE": 40,
+        "UNKNOWN": 4,
+        "OPTIMAL_SOLUTION": 6
+      },
+      "allStatusCounts": {
+        "SATISFIABLE": 40,
+        "UNKNOWN": 4,
+        "OPTIMAL_SOLUTION": 6
+      },
+      "flatTime": {
+        "min": 0.183877,
+        "mean": 0.8106558466772098,
+        "max": 6.7256
+      }
     },
     "better": {
       "total": 50,
       "soft": {
-        "better": 46,
-        "worse": 4,
+        "better": 47,
+        "worse": 3,
+        "MUSes": 0,
+        "discordant": 0
+      },
+      "hard": {
+        "better": 33,
+        "worse": 17,
+        "MUSes": 0,
+        "discordant": 0
+      }
+    },
+    "objective": {
+      "better": 33,
+      "equal": 4,
+      "worse": 13,
+      "globalTO": 0
+    }
+  },
+  "RSBP": {
+    "soft": {
+      "flatTimeMean": 0.27004591027759434,
+      "solveTimeMean": 40.78528788316389,
+      "failures": 214331.86647407972,
+      "cpPropagatorCalls": 30580994.62484183,
+      "unknowns": 43,
+      "borda": 7,
+      "statusCounts": {
+        "UNKNOWN": 43,
+        "OPTIMAL_SOLUTION": 7
+      },
+      "allStatusCounts": {
+        "UNKNOWN": 43,
+        "OPTIMAL_SOLUTION": 7
+      },
+      "flatTime": {
+        "min": 0.204355,
+        "mean": 0.27004591027759434,
+        "max": 0.356623
+      }
+    },
+    "lifted": {
+      "gMean(iterationSumFlatTime)": 0.27056556284298283,
+      "gMean(iterationSumSolveTime)": 61.00619629646598,
+      "failures": 59544.31755649425,
+      "minIterations": 1,
+      "medianIterations": 2,
+      "maxIterations": 2,
+      "cpPropagatorCalls": 41912735.27857697,
+      "unknowns": 9,
+      "borda": 34,
+      "statusCounts": {
+        "UNKNOWN": 9,
+        "SATISFIABLE": 41
+      },
+      "allStatusCounts": {
+        "UNKNOWN": 9,
+        "SATISFIABLE": 41
+      },
+      "flatTime": {
+        "min": 0.209094,
+        "mean": 0.47134407186363797,
+        "max": 0.7304889999999999
+      }
+    },
+    "better": {
+      "total": 50,
+      "soft": {
+        "better": 43,
+        "worse": 7,
         "MUSes": 0,
         "discordant": 0
       },
@@ -74,81 +202,70 @@
     },
     "objective": {
       "better": 34,
-      "equal": 3,
-      "worse": 13,
-      "globalTO": 0
-    }
-  },
-  "RSBP": {
-    "soft": {
-      "flatTimeMean": 0.2647536925628857,
-      "solveTimeMean": 60.01075398745441,
-      "failures": 23093.423382806934,
-      "cpPropagatorCalls": 33567347.01341893,
-      "unknowns": 0
-    },
-    "lifted": {
-      "gMean(iterationSumFlatTime)": 0.2746540692507984,
-      "gMean(iterationSumSolveTime)": 61.02102304596906,
-      "failures": 54370.01633938689,
-      "minIterations": 1,
-      "medianIterations": 2,
-      "maxIterations": 2,
-      "cpPropagatorCalls": 38350601.71793748,
-      "unknowns": 9
-    },
-    "better": {
-      "total": 50,
-      "soft": {
-        "better": 41,
-        "worse": 9,
-        "MUSes": 0,
-        "discordant": 0
-      },
-      "hard": {
-        "better": 0,
-        "worse": 50,
-        "MUSes": 0,
-        "discordant": 0
-      }
-    },
-    "objective": {
-      "better": 19,
-      "equal": 0,
-      "worse": 31,
+      "equal": 9,
+      "worse": 7,
       "globalTO": 0
     }
   },
   "RCPSP": {
     "soft": {
-      "flatTimeMean": 0.19065947966390023,
-      "solveTimeMean": 3.467956789083479,
-      "failures": 11101.707764280472,
-      "cpPropagatorCalls": 1955720.0956603088,
-      "unknowns": 0
+      "flatTimeMean": 0.18807565731410364,
+      "solveTimeMean": 0.15135889506545613,
+      "failures": 808.836316402707,
+      "cpPropagatorCalls": 37932.02596978023,
+      "unknowns": 7,
+      "borda": 43,
+      "statusCounts": {
+        "UNKNOWN": 7,
+        "SATISFIABLE": 4,
+        "OPTIMAL_SOLUTION": 39
+      },
+      "allStatusCounts": {
+        "UNKNOWN": 7,
+        "SATISFIABLE": 4,
+        "OPTIMAL_SOLUTION": 39
+      },
+      "flatTime": {
+        "min": 0.171765,
+        "mean": 0.18807565731410364,
+        "max": 0.21856
+      }
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 1.6069727076570735,
-      "gMean(iterationSumSolveTime)": 73.83364849460777,
-      "failures": 2639.6660645163834,
+      "gMean(iterationSumFlatTime)": 1.5803915519447373,
+      "gMean(iterationSumSolveTime)": 69.12589270121869,
+      "failures": 2709.0435066655846,
       "minIterations": 12,
-      "medianIterations": 41,
-      "maxIterations": 54,
-      "cpPropagatorCalls": 319552484.4054909,
-      "unknowns": 0
+      "medianIterations": 42,
+      "maxIterations": 55,
+      "cpPropagatorCalls": 328876962.912408,
+      "unknowns": 0,
+      "borda": 0,
+      "statusCounts": {
+        "OPTIMAL_SOLUTION": 10
+      },
+      "allStatusCounts": {
+        "UNSATISFIABLE": 40,
+        "OPTIMAL_SOLUTION": 10
+      },
+      "flatTime": {
+        "min": 8.080705,
+        "mean": 66.7271442886707,
+        "max": 275.4302
+      }
     },
     "better": {
       "total": 50,
       "soft": {
-        "better": 10,
+        "better": 17,
         "worse": 0,
-        "MUSes": 40,
+        "MUSes": 33,
         "discordant": 0
       },
       "hard": {
         "better": 0,
-        "worse": 10,
-        "MUSes": 40,
+        "worse": 17,
+        "MUSes": 33,
         "discordant": 0
       }
     },

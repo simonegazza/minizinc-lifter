@@ -55,17 +55,11 @@ def fmt(x):
 
 def global_timeouts(problem, pdata):
     """
-    Instances for which the global budget of the lifted procedure expired
-    (the same count must result from the comparison of the statuses).
+    Instances for which the global budget of the lifted procedure expired,
+    i.e. whose last solver call ended with UNSATISFIABLE while removing cores
+    (independently of the status of CMPCS on the same instance).
     """
-    global_to = pdata["objective"]["globalTO"]
-    if global_to != pdata["better"]["soft"]["MUSes"]:
-        print(
-            f"Warning: {problem}: {global_to} global timeouts from the objectives, "
-            f"{pdata['better']['soft']['MUSes']} from the statuses",
-            file=sys.stderr,
-        )
-    return global_to
+    return pdata["lifted"]["allStatusCounts"].get("UNSATISFIABLE", 0)
 
 
 # Statuses not shown among the statuses of the table: UNKNOWN is already
@@ -210,8 +204,8 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-o", "--output",
-        metavar="FILE",
-        help="Write the generated LaTeX table to FILE instead of stdout."
+        metavar="DIR",
+        help="Write the generated LaTeX table into DIR."
     )
     args = parser.parse_args()
 
@@ -219,13 +213,14 @@ if __name__ == "__main__":
 
     if args.output is None:
         print(table)
+        print()
+        print(flat_status_table)
     else:
-        with open(args.output, "w") as f:
+        folder = Path(args.output)
+        location = folder / "table.tex"
+        with open(location, "w") as f:
             f.write(table)
-
-    # Flattening times and statuses, next to the table (or in the current
-    # folder if the table is printed)
-    flat_status = os.path.join(os.path.dirname(args.output) if args.output else ".", "flat_status_table.tex")
-    with open(flat_status, "w") as f:
-        f.write(flat_status_table)
-    print(f"Flattening times and statuses written to {flat_status}", file=sys.stderr)
+        flat_status = folder / "flat_status_table.tex"
+        with open(flat_status, "w") as f:
+            f.write(flat_status_table)
+        print(f"Flattening times and statuses written to {flat_status}", file=sys.stderr)
