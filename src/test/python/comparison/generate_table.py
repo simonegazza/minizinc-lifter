@@ -100,7 +100,7 @@ def generate_table(results):
         + " &\n".join(rf"\multirow{{2}}{{*}}{{{title}}}" for _, title in METHOD_COLUMNS["soft"])
         + " &\n" + rf"\multicolumn{{{len(timeouts_cols)}}}{{c|}}{{{timeouts_title}}}"
         + " &\n" + rf"\multicolumn{{{len(statuses)}}}{{c|}}{{{STATUS_TITLE}}}"
-        + " &\n" + r"\multirow{2}{*}{Borda} \\",
+        + " &\n" + r"\multirow{2}{*}{Points} \\",
         " & " * (2 + len(METHOD_COLUMNS["soft"]))
         + " & ".join([title for title, _ in timeouts_cols] + [title for _, title in statuses])
         + r" & \\",
@@ -120,19 +120,19 @@ def generate_table(results):
             # The global budget exists only for Lifted
             row.append("N/A" if method == "soft" else str(global_timeouts(problem, pdata)))
             row += [str(metrics["statusCounts"].get(status, 0)) for status, _ in statuses]
-            row.append(f"{metrics['borda']:.2f}")
-            totals[method] += metrics["borda"]
+            row.append(f"{metrics['points']:.2f}")
+            totals[method] += metrics["points"]
             lines.append(" & ".join(row) + r" \\")
         if problem != list(results)[-1]:
             lines.append(r"\hline")
 
     lines.append(r"\end{tabular}")
 
-    # Borda count over all the problems (sum of the rows) in the caption
+    # Points over all the problems (sum of the rows) in the caption
     table = "\n".join(lines)
     table += (
         "\n\\caption{Results of the comparison with CMPCS. "
-        f"Over all the problems, the Borda count is {totals['lifted']:.2f} for Lifted "
+        f"Over all the problems, the points are {totals['lifted']:.2f} for Lifted "
         f"and {totals['soft']:.2f} for CMPCS.}}\n"
         "\\label{tab:comparison}\n"
         "\\end{table*}"

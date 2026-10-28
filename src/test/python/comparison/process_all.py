@@ -84,41 +84,40 @@ def compare_objectives(lifted_status, lifted_objective, soft_objective):
         return "worse"
     return "equal"
 
-def borda_points(status, objective, time, other_status, other_objective, other_time):
-    """
-    Points of a method against the other on an instance, following the Borda
-    count of the MiniZinc Challenge for optimization problems (the objective,
-    the L1 distance from the original parameters, is minimized): a method that
-    does not solve the instance scores 0; otherwise it scores 1 if it gives a
-    better answer, i.e. (in this order) it solves the instance and the other
-    does not, it proves optimality and the other does not, or its objective is
-    better; 0 if the answer is worse; and, if the answers are
-    indistinguishable, other_time / (other_time + time).
-    """
-    def solved(s, o):
-        return s in ("OPTIMAL_SOLUTION", "SATISFIABLE") and o is not None
+# Rank of the final statuses in the points (higher is better): a proven
+# optimal repair, a repair not proven optimal, no repair
+STATUS_RANK = {"OPTIMAL_SOLUTION": 2, "SATISFIABLE": 1}
 
-    if not solved(status, objective):
+def instance_points(status, objective, time, other_status, other_objective, other_time):
+    """
+    Points of a method against the other on an instance, computed on the
+    final statuses only (the values of the objectives are not compared, as the
+    two methods do not optimize the same objective):
+    - a better status (OPT over SAT over no repair) scores 1, a worse one 0;
+    - both SAT: 0.5 each;
+    - both OPT: other_time / (other_time + time), as in the MiniZinc Challenge;
+    - both without a repair: 0 each (as in the MiniZinc Challenge, a method that
+      does not solve the instance never scores).
+    """
+    rank = STATUS_RANK.get(status, 0)
+    other_rank = STATUS_RANK.get(other_status, 0)
+    if rank != other_rank:
+        return 1 if rank > other_rank else 0
+    if rank == 0:
         return 0
-    if not solved(other_status, other_objective):
-        return 1
-    optimal = status == "OPTIMAL_SOLUTION"
-    other_optimal = other_status == "OPTIMAL_SOLUTION"
-    if optimal != other_optimal:
-        return 1 if optimal else 0
-    if objective != other_objective:
-        return 1 if objective < other_objective else 0
+    if rank == 1:
+        return 0.5
     if time + other_time == 0:
         return 0.5
     return other_time / (other_time + time)
 
-def borda(lifted, soft):
-    """Borda points of Lifted and CMPCS summed over the instances of a problem."""
+def problem_points(lifted, soft):
+    """Points of Lifted and CMPCS summed over the instances of a problem."""
     instances = list(zip(
         lifted["statuses"], lifted["objectives"], lifted["instanceSolveTimes"],
         soft["statuses"], soft["objectives"], soft["instanceSolveTimes"]))
-    lifted_points = sum(borda_points(*i[:3], *i[3:]) for i in instances)
-    soft_points = sum(borda_points(*i[3:], *i[:3]) for i in instances)
+    lifted_points = sum(instance_points(*i[:3], *i[3:]) for i in instances)
+    soft_points = sum(instance_points(*i[3:], *i[:3]) for i in instances)
     return lifted_points, soft_points
 
 def status_counts(statuses, exclude=()):
@@ -169,9 +168,9 @@ def main(main_folder : Path):
         soft_processed["statuses_all"] = list(soft_processed["statuses"])
         lifted_processed["statuses_all"] = list(lifted_processed["statuses"])
 
-        lifted_borda, soft_borda = borda(lifted_processed, soft_processed)
-        soft_processed["borda"] = soft_borda
-        lifted_processed["borda"] = lifted_borda
+        lifted_points, soft_points = problem_points(lifted_processed, soft_processed)
+        soft_processed["points"] = soft_points
+        lifted_processed["points"] = lifted_points
 
         # Final statuses; for Lifted, UNSATISFIABLE means that the global budget
         # expired while removing cores (reported as a global timeout)

@@ -6,7 +6,7 @@
       "failures": 112897.02589591799,
       "cpPropagatorCalls": 13331020.446722718,
       "unknowns": 0,
-      "borda": 8.869507946305875,
+      "points": 3.6794843678064604,
       "statusCounts": {
         "SATISFIABLE": 32,
         "OPTIMAL_SOLUTION": 18
@@ -30,7 +30,7 @@
       "maxIterations": 20,
       "cpPropagatorCalls": 789770.554126134,
       "unknowns": 0,
-      "borda": 41.13049205369412,
+      "points": 46.32051563219354,
       "statusCounts": {
         "OPTIMAL_SOLUTION": 45,
         "SATISFIABLE": 5
@@ -74,7 +74,7 @@
       "failures": 165566.06087613036,
       "cpPropagatorCalls": 5026897.983668294,
       "unknowns": 37,
-      "borda": 13,
+      "points": 8.0,
       "statusCounts": {
         "SATISFIABLE": 10,
         "UNKNOWN": 37,
@@ -100,7 +100,7 @@
       "maxIterations": 2,
       "cpPropagatorCalls": 7099131.6719569145,
       "unknowns": 4,
-      "borda": 33,
+      "points": 38.0,
       "statusCounts": {
         "SATISFIABLE": 40,
         "UNKNOWN": 4,
@@ -146,7 +146,7 @@
       "failures": 214331.86647407972,
       "cpPropagatorCalls": 30580994.62484183,
       "unknowns": 43,
-      "borda": 7,
+      "points": 7,
       "statusCounts": {
         "UNKNOWN": 43,
         "OPTIMAL_SOLUTION": 7
@@ -170,7 +170,7 @@
       "maxIterations": 2,
       "cpPropagatorCalls": 41912735.27857697,
       "unknowns": 9,
-      "borda": 34,
+      "points": 34,
       "statusCounts": {
         "UNKNOWN": 9,
         "SATISFIABLE": 41
@@ -214,7 +214,7 @@
       "failures": 808.836316402707,
       "cpPropagatorCalls": 37932.02596978023,
       "unknowns": 7,
-      "borda": 43,
+      "points": 42.693435241738314,
       "statusCounts": {
         "UNKNOWN": 7,
         "SATISFIABLE": 4,
@@ -240,7 +240,7 @@
       "maxIterations": 55,
       "cpPropagatorCalls": 328876962.912408,
       "unknowns": 0,
-      "borda": 0,
+      "points": 0.3065647582616891,
       "statusCounts": {
         "OPTIMAL_SOLUTION": 10
       },
