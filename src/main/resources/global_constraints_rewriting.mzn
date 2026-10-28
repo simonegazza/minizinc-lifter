@@ -21,21 +21,20 @@ predicate cumulative(
         array[index_set(s)] of var 0..ub(max(d)): d_deopt;
         array[index_set(s)] of var 0..ub(max(r)): r_deopt;
     } in
-    % If s occurs than also d and r must occur, and viceversa
-    forall(i in index_set(s))(occurs(s[i]) = occurs(d[i]) /\ occurs(s[i]) = occurs(r[i]))
+    % If s occurs than also d and r must occur (d and r may be non-optional,
+    % so an absent task must not force them to be absent)
+    forall(i in index_set(s))(occurs(s[i]) -> (occurs(d[i]) /\ occurs(r[i])))
     /\
     % "channeling" from d to define d_deopt
-    d_deopt = [
-        if occurs(d[i]) then d_deopt[i] = deopt(d[i]) else d_deopt[i] = 0 endif
-        | i in index_set(s)]
+    forall(i in index_set(s))(
+        if occurs(d[i]) then d_deopt[i] = deopt(d[i]) else d_deopt[i] = 0 endif)
     /\
     % "channeling" from r to define r_deopt
-    r_deopt = [
-        if occurs(r[i]) then r_deopt[i] = deopt(r[i]) else r_deopt[i] = 0 endif
-        | i in index_set(s)]
+    forall(i in index_set(s))(
+        if occurs(r[i]) then r_deopt[i] = deopt(r[i]) else r_deopt[i] = 0 endif)
     /\
     % Nonnegativity only when present
-    forall(i in index_set(s))(occurs(d[i]) -> d[i] >= 0 /\ occurs(r[i]) -> r[i] >= 0)
+    forall(i in index_set(s))((occurs(d[i]) -> d[i] >= 0) /\ (occurs(r[i]) -> r[i] >= 0))
     /\
     cumulative(s, d_deopt, r_deopt, b)
 );
