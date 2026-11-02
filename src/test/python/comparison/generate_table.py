@@ -144,24 +144,16 @@ def generate_flat_status_table(results):
     """
     Table with the flattening time of each method (minimum, geometric mean and
     maximum over the instances; for Lifted, summed over the iterations of each
-    instance) and the number of instances for each final status (for Lifted,
-    UNSAT means that the global budget expired).
+    instance) and the fraction of the overall time spent in flattening.
     """
     method_names = {"soft": "CMPCS", "lifted": "Lifted"}
-    present = set()
-    for pdata in results.values():
-        for method in ("soft", "lifted"):
-            present |= {s for s, n in pdata[method]["allStatusCounts"].items() if n > 0}
-    known = [s for s, _ in STATUSES]
-    statuses = [(s, t) for s, t in STATUSES if s in present] + [(s, s) for s in sorted(present) if s not in known]
 
     lines = [
-        r"\begin{table}[t]",
+        r"\begin{table*}[t]",
         r"\centering",
-        r"\begin{tabular}{c|c|rrr|" + "r" * len(statuses) + "}",
-        r"\multirow{2}{*}{Problem} & \multirow{2}{*}{Method} & \multicolumn{3}{c|}{Flat Time} & "
-        + rf"\multicolumn{{{len(statuses)}}}{{c}}{{Statuses}} \\",
-        r" & & Min & Mean & Max & " + " & ".join(t for _, t in statuses) + r" \\",
+        r"\begin{tabular}{c|c|ccc|c}",
+        r"\multirow{2}{*}{Problem} & \multirow{2}{*}{Method} & \multicolumn{3}{c|}{Flat Time} & \multirow{2}{*}{Flat Share}\\",
+        r"& & Min & Mean & Max & \\",
         r"\hline",
     ]
     problems = list(results)
@@ -172,17 +164,21 @@ def generate_flat_status_table(results):
                 rf"\multirow{{2}}{{*}}{{{problem}}}" if method == "soft" else "",
                 method_names[method],
                 f"{flat['min']:.2f}", f"{flat['mean']:.2f}", f"{flat['max']:.2f}",
-            ] + [str(pdata[method]["allStatusCounts"].get(s, 0)) for s, _ in statuses]
-            lines.append(" & ".join(row) + r" \\")
+                f"{100 * pdata[method]['flatShare']:.1f}\\%",
+            ]
+            lines.append(" & ".join(row) + r"\\")
         if problem != problems[-1]:
             lines.append(r"\hline")
     lines += [
         r"\end{tabular}",
-        r"\caption{Flattening time (in seconds; for Lifted, summed over the iterations of each instance) "
-        r"and final status of the instances in the comparison with CMPCS "
-        r"(for Lifted, UNSAT denotes the instances stopped by the global budget).}",
-        r"\label{tab:comparison-flat-status}",
-        r"\end{table}",
+        r"\caption{Flattening times of the comparison with CMPCS (\Cref{tab:comparison}) over the 50",
+        r"instances of each benchmark. \emph{Flat Time} is the flattening time of each",
+        r"instance, summed over its iterations for Lifted, aggregated over the instances",
+        r"by minimum, geometric mean, and maximum; \emph{Flat Share} is the fraction of",
+        r"the overall time (flattening and search), summed over the instances, spent in",
+        r"flattening.}",
+        r"\label{tab:comparison-flat}",
+        r"\end{table*}",
     ]
     return "\n".join(lines)
 
@@ -223,4 +219,4 @@ if __name__ == "__main__":
         flat_status = folder / "flat_status_table.tex"
         with open(flat_status, "w") as f:
             f.write(flat_status_table)
-        print(f"Flattening times and statuses written to {flat_status}", file=sys.stderr)
+        print(f"Flattening times written to {flat_status}", file=sys.stderr)

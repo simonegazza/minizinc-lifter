@@ -93,32 +93,71 @@ def row(values):
             vs.append(str(v))
     return " & ".join(v for v in vs) + r" \\"
 
+# Statuses of the flat/status table, with their column titles, in order
+STATUS_COLUMNS = [
+    ("SATISFIABLE", "SAT"),
+    ("OPTIMAL_SOLUTION", "OPT"),
+    ("UNSATISFIABLE", "UNSAT"),
+    ("UNKNOWN", "UNK"),
+]
+
+def present_statuses(data, method):
+    """Statuses (and titles) of at least one instance of the method, in any
+    problem and percentage: the other statuses have no column."""
+    return [
+        (status, title)
+        for status, title in STATUS_COLUMNS
+        if any(
+            counts.get(status, 0) > 0
+            for problem_data in data.values()
+            for counts in problem_data["statuses"][method]
+        )
+    ]
+
+def fmt_share(value):
+    """Percentage with one decimal, or the value itself if not a number."""
+    try:
+        return f"{float(value):.1f}\\%"
+    except ValueError:
+        return str(value)
+
 def generate_flat_status_table(data):
+    chain_statuses = present_statuses(data, "chain")
+    onebyone_statuses = present_statuses(data, "1by1")
+    rule = lambda char: (
+        rf"\hhline{{{char * 2}|{char * 2}|{char * 2}|{char * len(onebyone_statuses)}"
+        rf"|{char * len(chain_statuses)}}}"
+    )
+
     lines = []
 
     lines.append(r"\begin{table*}[t]")
     lines.append(r"\centering")
 
-    lines.append(r"\begin{tabular}{cc|cc|cccc|cccc}")
-    lines.append(r"\hhline{~~|~~|~~~~|~~~~}")
+    lines.append(
+        r"\begin{tabular}{cc|cc|cc|" + "c" * len(onebyone_statuses)
+        + "|" + "c" * len(chain_statuses) + "}"
+    )
+    lines.append(rule("~"))
 
     lines.append(
         r"\multirow{2}{*}{\centering Problem} & "
-        r"\multirow{2}{*}{\centering Inter Instance Variation} & "
+        r"\multirow{2}{*}{\centering Diff} & "
         r"\multicolumn{2}{c|}{Flat Time} & "
-        r"\multicolumn{4}{c|}{Status IINGL} & "
-        r"\multicolumn{4}{c}{Status Original}\\"
+        r"\multicolumn{2}{c|}{Flat Time Share} & "
+        rf"\multicolumn{{{len(onebyone_statuses)}}}{{c|}}{{Status Independently}} & "
+        rf"\multicolumn{{{len(chain_statuses)}}}{{c}}{{Status \iingl}}\\"
     )
 
-    lines.append(r"\hhline{~~|~~|~~~~|~~~~}")
+    lines.append(rule("~"))
 
     lines.append(
-        r"& & IINGL & Original & "
-        r"SAT & OPT & UNSAT & UNK & "
-        r"SAT & OPT & UNSAT & UNK\\"
+        r"& & Independently & \iingl & Independently & \iingl & "
+        + " & ".join(title for _, title in onebyone_statuses + chain_statuses)
+        + r"\\"
     )
 
-    lines.append(r"\hhline{--|--|----|----}")
+    lines.append(rule("-"))
 
     for problem, problem_data in data.items():
         for i, diff in enumerate(DIFFS):
@@ -135,26 +174,22 @@ def generate_flat_status_table(data):
 
             # Flat times per percentage
             row.extend([
-                problem_data["flatTime"]["chain"][i],
                 problem_data["flatTime"]["1by1"][i],
+                problem_data["flatTime"]["chain"][i],
             ])
+
+            # Flat shares (percentages) per percentage
+            row.extend(
+                fmt_share(problem_data["flatShare"][type_name][i])
+                for type_name in ("1by1", "chain")
+            )
 
             # Statuses per percentage
-            chain_status = problem_data["statuses"]["chain"][i]
-            row.extend([
-                chain_status.get("SATISFIABLE", 0),
-                chain_status.get("OPTIMAL_SOLUTION", 0),
-                chain_status.get("UNSATISFIABLE", 0),
-                chain_status.get("UNKNOWN", 0),
-            ])
-
             onebyone_status = problem_data["statuses"]["1by1"][i]
-            row.extend([
-                onebyone_status.get("SATISFIABLE", 0),
-                onebyone_status.get("OPTIMAL_SOLUTION", 0),
-                onebyone_status.get("UNSATISFIABLE", 0),
-                onebyone_status.get("UNKNOWN", 0),
-            ])
+            row.extend(onebyone_status.get(status, 0) for status, _ in onebyone_statuses)
+
+            chain_status = problem_data["statuses"]["chain"][i]
+            row.extend(chain_status.get(status, 0) for status, _ in chain_statuses)
 
             lines.append(" & ".join(str(value) for value in row) + r"\\")
 
@@ -162,7 +197,14 @@ def generate_flat_status_table(data):
 
     lines.append(r"\end{tabular}")
     lines.append(
-        r"\caption{Flat solving time and status distribution per perturbation percentage for all benchmark problems.}"
+        r"\caption{Flattening time and final status of the \iingl experiments for each "
+        r"perturbation rate. \emph{Flat Time} is the flattening time of each chain of 20 "
+        r"instances, \ie of the lifted model once for \iingl and of the 20 instances of "
+        r"the original model, summed, for the baseline, aggregated over the five chains "
+        r"by geometric mean; \emph{Flat Time Share} is the fraction of the overall time "
+        r"(flattening and search), summed over the 100 instances of each configuration, "
+        r"spent in flattening by each approach; the statuses count the 100 instances of "
+        r"each configuration.}"
     )
     lines.append(r"\label{tab:flat-status-results}")
     lines.append(r"\end{table*}")

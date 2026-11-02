@@ -177,36 +177,32 @@ def generate_table(data):
 
     return "\n".join(lines)
 
-# Column titles of the MiniZinc statuses in the flat/status table, in order
-STATUS_TITLES = [
-    ("OPTIMAL", "OPT"),
-    ("SATISFIABLE", "SAT"),
-    ("UNKNOWN", "UNK"),
-    ("UNSATISFIABLE", "UNSAT"),
-    ("ERROR", "ERR"),
-]
+def fmt_iterations(minimum, maximum):
+    """Range of iterations, or a single value when it does not vary."""
+    return str(minimum) if minimum == maximum else f"{minimum}--{maximum}"
+
+
+def fmt_percentage(value):
+    """Fraction as a percentage with one decimal, missing values as N/A."""
+    return "N/A" if value is None else f"{100 * value:.1f}\\%"
 
 
 def generate_flat_status_table(data):
     """
-    Table with the flattening time of the runs (minimum, geometric mean and
-    maximum, summed over the MiniZinc executions of each run) and the number
-    of runs for each MiniZinc status (only the statuses that occur).
+    Table with the iterations of the runs (i.e. the flattenings of the lifted
+    model), their flattening time (minimum, geometric mean and maximum, summed
+    over the MiniZinc executions of each run) and the fraction of the overall
+    time spent in flattening.
     """
-    present = set()
-    for key in ORDER:
-        if key in data:
-            present |= {s for s, n in data[key]["statuses"].items() if n > 0}
-    known = [s for s, _ in STATUS_TITLES]
-    statuses = [(s, t) for s, t in STATUS_TITLES if s in present] + [(s, s) for s in sorted(present) if s not in known]
-
     lines = [
-        r"\begin{table}[t]",
+        r"\begin{table*}[t]",
         r"\centering",
-        r"\begin{tabular}{l|ccc|" + "c" * len(statuses) + "}",
-        r"\multirow{2}{*}{Problem} & \multicolumn{3}{c|}{Flat Time} & "
-        + rf"\multicolumn{{{len(statuses)}}}{{c}}{{Statuses}}\\",
-        r"& Min & Mean & Max & " + " & ".join(t for _, t in statuses) + r"\\",
+        r"\begin{tabular}{l|c|ccc|c}",
+        r"\multirow{2}{*}{Problem}",
+        r"& \multirow{2}{*}{Iter.}",
+        r"& \multicolumn{3}{c|}{Flat Time}",
+        r"& \multirow{2}{*}{Flat Share}\\",
+        r"& & Min & Mean & Max & \\",
         r"\hline",
     ]
     for key in ORDER:
@@ -215,18 +211,24 @@ def generate_flat_status_table(data):
         d = data[key]
         lines.append(
             f'{NAME_MAP[key]}'
+            f' & {fmt_iterations(d["minIterations"], d["maxIterations"])}'
             f' & {fmt_float(d.get("minFlatTime"))}'
             f' & {fmt_float(d.get("meanFlatTime"))}'
             f' & {fmt_float(d.get("maxFlatTime"))}'
-            + "".join(f' & {d["statuses"].get(s, 0)}' for s, _ in statuses)
-            + r"\\"
+            f' & {fmt_percentage(d.get("flatShare"))}'
+            r"\\"
         )
     lines += [
         r"\end{tabular}",
-        r"\caption{Flattening time (in seconds, summed over the MiniZinc executions of each instance) "
-        r"and final MiniZinc status of the feasibility-recovery experiments.}",
-        r"\label{tab:recovery-flat-status}",
-        r"\end{table}",
+        r"\caption{Flattening times of the feasibility-recovery experiments of",
+        r"\Cref{tab:recovery}. \emph{Iter.}\ is the range of iterations of \fr, \ie of",
+        r"flattenings of the lifted model, per run; \emph{Flat Time} is the flattening",
+        r"time of each run, summed over its iterations, aggregated over the five runs",
+        r"by minimum, geometric mean, and maximum; \emph{Flat Share} is the fraction of",
+        r"the overall time (flattening and search), summed over the five runs, spent in",
+        r"flattening.}",
+        r"\label{tab:recovery-flat}",
+        r"\end{table*}",
     ]
     return "\n".join(lines)
 
@@ -265,7 +267,7 @@ def main():
     with open(args.output_tex, "w") as f:
         f.write(latex)
 
-    # Flattening times and statuses, next to the table
+    # Flattening times and shares, next to the table
     flat_status = os.path.join(os.path.dirname(args.output_tex), "flat_status_table.tex")
     with open(flat_status, "w") as f:
         f.write(generate_flat_status_table(data))

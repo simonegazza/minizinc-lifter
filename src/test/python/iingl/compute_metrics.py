@@ -104,6 +104,10 @@ def main(file):
                 "chain": [],
                 "1by1": [],
             },
+            "flatShare": {
+                "chain": [],
+                "1by1": [],
+            },
         }
 
         for percentage in percentages:
@@ -146,11 +150,13 @@ def main(file):
             # ---------------------------------------------------------
             # flatTime
             # ---------------------------------------------------------
+            # Flattening time of each chain: the lifted model is flattened once
+            # for the whole chain, the original model once per instance (summed
+            # over the instances of the chain)
             chain_flat_times = [chain.get("flatTime", ERROR_VALUE) for chain in chains]
             one_by_one_flat_times = [
-                p.get("flatTime", ERROR_VALUE)
+                cumulative_total([p.get("flatTime", ERROR_VALUE) for p in one_by_one])
                 for one_by_one in one_by_ones
-                for p in one_by_one
             ]
 
             results[problem_name]["flatTime"]["chain"].append(
@@ -226,6 +232,20 @@ def main(file):
                 results[problem_name][f"{metric}Cumulative"]["1by1"].append(
                     cumulative_total(one_values)
                 )
+
+            # ---------------------------------------------------------
+            # flat share: percentage of the overall time (flattening and
+            # search, summed over the instances of all the chains) spent in
+            # flattening
+            # ---------------------------------------------------------
+            for type_name, flat_times in (("chain", chain_flat_times), ("1by1", one_by_one_flat_times)):
+                flat_total = cumulative_total(flat_times)
+                solve_total = results[problem_name]["solveTimeCumulative"][type_name][-1]
+                if is_number(flat_total) and is_number(solve_total) and flat_total + solve_total > 0:
+                    share = 100 * flat_total / (flat_total + solve_total)
+                else:
+                    share = ERROR_VALUE
+                results[problem_name]["flatShare"][type_name].append(share)
 
         # -------------------------------------------------------------
         # Speedups

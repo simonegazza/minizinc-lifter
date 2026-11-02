@@ -126,6 +126,13 @@ def main():
             if r["statistics"].get("totalFlatTime") is not None
         ]
 
+        # Fraction of the overall time (flattening and search, summed over the
+        # runs) spent in flattening, only if both are known for every run
+        if duration and len(flat_times) == len(runs):
+            flat_share = sum(flat_times) / (sum(flat_times) + sum(duration))
+        else:
+            flat_share = None
+
         # MiniZinc status of the last execution of each run (a run without
         # status ended with an error)
         statuses = Counter(r["statistics"].get("status") or "ERROR" for r in runs)
@@ -168,6 +175,7 @@ def main():
             "minFlatTime": min(flat_times) if flat_times else None,
             "meanFlatTime": round(statistics.geometric_mean(flat_times), 2) if flat_times else None,
             "maxFlatTime": max(flat_times) if flat_times else None,
+            "flatShare": round(flat_share, 4) if flat_share is not None else None,
 
             "totalSolverRuntime": round(total_solver_runtime, 2) if has_solve_time else None,
             "avgTotalSolverRuntime": round(avg_total_solver_runtime, 2) if has_solve_time else None,

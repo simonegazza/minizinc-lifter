@@ -180,15 +180,18 @@ def main(main_folder : Path):
         del soft_processed["statuses"]
         del lifted_processed["statuses"]
         # All the final statuses and the flattening time of each instance (for
-        # the flat/status table)
+        # the flat table), with the fraction of the overall time (flattening
+        # and search, summed over the instances) spent in flattening
         for processed in (soft_processed, lifted_processed):
             processed["allStatusCounts"] = status_counts(processed["statuses_all"])
             flat = processed.pop("instanceFlatTimes")
+            solve = processed["instanceSolveTimes"]
             processed["flatTime"] = {
                 "min": min(flat),
                 "mean": statistics.geometric_mean(flat),
                 "max": max(flat),
             }
+            processed["flatShare"] = sum(flat) / (sum(flat) + sum(solve))
             del processed["statuses_all"]
 
         del soft_processed["instanceSolveTimes"]

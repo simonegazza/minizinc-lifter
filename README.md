@@ -143,7 +143,7 @@ target/
     ├─ run.json                       # statistics of all the problems (recover.py)
     ├─ metrics.json                   # aggregated metrics (compute_metrics.py)
     ├─ table.tex                      # LaTeX table (generate_table.py)
-    ├─ flat_status_table.tex          # flattening times and statuses (generate_table.py)
+    ├─ flat_status_table.tex          # flattening times and shares (generate_table.py)
     └─ results/
         ├─ <problem>.sh.txt           # output of src/test/sh/recovery/problems/<problem>.sh
         ├─ <problem>.sh.err           # its logs (only when executed with run.sbatch)
@@ -227,12 +227,12 @@ python3 src/test/python/comparison/process_all.py target/comparison/results
 
 Generate the LaTeX table reported in the paper:
 ```bash
-python3 src/test/python/comparison/generate_table.py target/comparison/results -o target/comparison/tables/table.tex
+python3 src/test/python/comparison/generate_table.py target/comparison/results -o target/comparison/tables
 ```
 
 For each method, the table reports the final status of the instances (*Statuses of Lifted vs CMPCS*: optimal, satisfiable or unknown; the instances of Lifted stopped by the global budget are counted in the *Global* timeouts) and the points computed on the final statuses only, summed over the instances of each problem: on each instance, the method with the better status (optimal over satisfiable over no repair) scores 1 and the other 0; if both are satisfiable they score 0.5 each; if both are optimal the point is split by time as in the [MiniZinc Challenge](https://www.minizinc.org/challenge/2026/rules/) (the other's time over the sum of the two times); if neither finds a repair both score 0. The points over all the problems (the sum of the rows of each method) are reported in the caption.
 
-The script also writes `flat_status_table.tex` in the same folder: the flattening time (minimum, geometric mean and maximum over the instances; for Lifted, summed over the iterations of each instance) and the number of instances for each final status, for both methods.
+The script also writes `flat_status_table.tex` in the same folder: the flattening time (minimum, geometric mean and maximum over the instances; for Lifted, summed over the iterations of each instance) and the fraction of the overall time (flattening and search, summed over the instances) spent in flattening, for both methods.
 
 # Coarse and increasing change Inter-Instances Nogood Learning (IINGL)
 
