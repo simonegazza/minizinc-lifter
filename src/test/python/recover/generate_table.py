@@ -129,13 +129,13 @@ def generate_table(data):
         r"\multicolumn{2}{c|}{Parameters} &"
         r"\multicolumn{3}{c|}{Core Size} &"
         r"\multicolumn{3}{c|}{Runtime} &"
-        r"\multicolumn{2}{c}{Objectives}\\",
+        r"\multicolumn{2}{c}{Distance}\\",
         hhline("~"),
         r"&"
         r"Perturbed & Lifted &"
         r"Min & Avg & Max & "
         r"Min & Mean & Max & "
-        r"Distance & Hamming\\",
+        r"Norm. $\ell_1$ & Hamming\\",
         hhline("-"),
     ]
 
@@ -169,7 +169,7 @@ def generate_table(data):
         [
             hhline("~"),
             r"\end{tabular}",
-            r"\caption{Summary of feasibility-recovery experiments. " + status_caption(data) + "}",
+            r"\caption{Feasibility-recovery results. $T$ means timeout reached (\ie \Cref{alg:fr} returns $SAT$).}",
             r"\label{tab:recovery}",
             r"\end{table*}",
         ]
