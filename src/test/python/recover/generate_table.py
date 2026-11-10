@@ -29,23 +29,16 @@ def fmt_float(value):
     return "N/A" if value is None else f"{value:.2f}"
 
 
-def fmt_median(value):
-    """Mean with one decimal, missing values as N/A."""
-    return "N/A" if value is None else f"{value:.0f}"
-
-
-def fmt_hamming(hamming, lifted):
+def fmt_hamming(hamming, percentage):
     """
-    Hamming distance with, in parentheses, the percentage of changed
-    parameters over the lifted ones (two decimals).
+    Mean Hamming distance (as the mean core size) with, in parentheses, the
+    mean percentage of changed parameters over the lifted ones (two decimals).
     """
     if hamming is None:
         return "N/A"
-    if not lifted:
-        return fmt_median(hamming)
-    percentage = 100 * hamming / lifted
-    percentage = f"{percentage:.2f}"
-    return rf"{fmt_median(hamming)} ({percentage}\%)"
+    if percentage is None:
+        return f"{hamming}"
+    return rf"{hamming} ({percentage:.2f}\%)"
 
 
 def fmt_distance(value):
@@ -58,9 +51,9 @@ TIME_LIMIT = 60
 
 
 def fmt_runtime(value):
-    """Runtime in seconds, or TO when it exceeds the time limit."""
+    """Runtime in seconds, or $T$ when it exceeds the time limit."""
     if value is not None and value > TIME_LIMIT:
-        return "TO"
+        return "$T$"
     return fmt_float(value)
 
 # MiniZinc statuses of the repairs, with the abbreviation and the description
@@ -162,7 +155,7 @@ def generate_table(data):
             f' & {fmt_runtime(d["avgTotalDuration"])}'
             f' & {fmt_runtime(d["maxTotalDuration"])}'
             f' & {fmt_distance(d.get("meanDistance"))}'
-            f' & {fmt_hamming(d.get("medianHamming"), d["liftedParameters"])}\\\\'
+            f' & {fmt_hamming(d.get("meanHamming"), d.get("meanHammingPercentage"))}\\\\'
         )
 
     lines.extend(

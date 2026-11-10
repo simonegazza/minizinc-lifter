@@ -168,6 +168,10 @@ def main():
             # Percentage of the parameters changed by the repair (median over
             # the runs, as the number of parameters can differ between instances)
             "medianHammingPercentage": round(float(statistics.median(hamming_percentages)), 2) if hamming_percentages else None,
+            # Arithmetic mean, as for the core size, so that the two can be
+            # compared (the percentage is computed on each run, then averaged)
+            "meanHamming": round(statistics.mean(hammings), 2) if hammings else None,
+            "meanHammingPercentage": round(float(statistics.mean(hamming_percentages)), 2) if hamming_percentages else None,
             "meanDistance": round(float(statistics.mean(distances)), 4) if distances else None,
 
             "statuses": dict(sorted(statuses.items())),
