@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, json, os, argparse, re, shlex
+import sys, json, os, argparse, re, shlex, ast
 
 def parse_file(filepath):
     """
@@ -154,12 +154,40 @@ def bound_value(term, values, data_file):
     if m and ("original", m.group(2)) in values:
         numbers = [as_number(e) for e in top_level_elements(values[("original", m.group(2))])]
         return (min if m.group(1) == "min" else max)(numbers)
-    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", term) and data_file and os.path.isfile(data_file):
-        with open(data_file, encoding="utf-8") as f:
-            m = re.search(rf"^\s*{term}\s*=\s*(-?[0-9.]+)\s*;", f.read(), re.M)
-        if m:
-            return float(m.group(1))
+    if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", term):
+        if ("original", term) in values and as_number(values[("original", term)]) is not None:
+            return as_number(values[("original", term)])
+        if data_file and os.path.isfile(data_file):
+            with open(data_file, encoding="utf-8") as f:
+                m = re.search(rf"^\s*{term}\s*=\s*(-?[0-9.]+)\s*;", f.read(), re.M)
+            if m:
+                return float(m.group(1))
+    # Arithmetic over the terms above, e.g. the 10% bounds of a scalar
+    # "x - abs(x) div 10" (with abs, the MiniZinc div is the floor division)
+    if re.search(r"[-+*()]|\bdiv\b", term):
+        return evaluate_bound(ast.parse(re.sub(r"\bdiv\b", "//", term), mode="eval").body, values, data_file)
     raise ValueError(f"cannot evaluate the bound {term}")
+
+def evaluate_bound(node, values, data_file):
+    """Value of an arithmetic bound (+, -, *, div, abs, min, max) of a domain."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    if isinstance(node, ast.Name):
+        return bound_value(node.id, values, data_file)
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
+        return -evaluate_bound(node.operand, values, data_file)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(node.args) == 1:
+        if node.func.id == "abs":
+            return abs(evaluate_bound(node.args[0], values, data_file))
+        if node.func.id in ("min", "max") and isinstance(node.args[0], ast.Name):
+            return bound_value(f"{node.func.id}({node.args[0].id})", values, data_file)
+    if isinstance(node, ast.BinOp):
+        operators = {ast.Add: lambda a, b: a + b, ast.Sub: lambda a, b: a - b,
+                     ast.Mult: lambda a, b: a * b, ast.FloorDiv: lambda a, b: a // b}
+        if type(node.op) in operators:
+            return operators[type(node.op)](evaluate_bound(node.left, values, data_file),
+                                            evaluate_bound(node.right, values, data_file))
+    raise ValueError(f"cannot evaluate the bound {ast.unparse(node)}")
 
 def domain_width(domain, values, data_file):
     """Width u - l of a lifted domain "l..u" or "{v1, ..., vn}"."""

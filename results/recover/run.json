@@ -5,8 +5,9 @@
         "dataFile": "0-12-12-0-1_7-modified.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 18525,
-          "_objective": 15,
+          "totalDurationMs": 32247,
+          "totalFlatTime": 1.078233,
+          "_objective": 8,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -25,19 +26,22 @@
                 155,
                 156
               ],
-              "solveTime": 0.358199208,
+              "solveTime": 0.380778917,
               "iteration": 1,
-              "durationMs": 1099
+              "durationMs": 1087,
+              "flatTime": 0.308068
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
                 157,
-                158
+                158,
+                159
               ],
-              "solveTime": 0.421124292,
+              "solveTime": 0.260242958,
               "iteration": 2,
-              "durationMs": 1030
+              "durationMs": 772,
+              "flatTime": 0.25975
             },
             {
               "solverUsed": "solutions.huub",
@@ -54,29 +58,35 @@
                 250,
                 251
               ],
-              "solveTime": 1.060234958,
+              "solveTime": 0.977428416,
               "iteration": 3,
-              "durationMs": 1590
+              "durationMs": 1557,
+              "flatTime": 0.275486
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 14.082596083,
+              "solveTime": 28.071173583,
               "iteration": 4,
-              "durationMs": 14629
+              "durationMs": 28646,
+              "flatTime": 0.234929
             }
           ],
-          "totalSolveTime": 15.922154541,
+          "totalSolveTime": 29.689623874,
           "liftedParameters": 432,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 4,
+          "hammingTotal": 432,
+          "distance": 0.15384615384615385
         }
       },
       {
         "dataFile": "1-12-12-0-1_7-modified.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 48953,
-          "_objective": 11,
+          "totalDurationMs": 46390,
+          "totalFlatTime": 0.9551959999999999,
+          "_objective": 10,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -95,9 +105,10 @@
                 155,
                 156
               ],
-              "solveTime": 0.462123417,
+              "solveTime": 0.381259958,
               "iteration": 1,
-              "durationMs": 967
+              "durationMs": 941,
+              "flatTime": 0.249109
             },
             {
               "solverUsed": "solutions.huub",
@@ -108,9 +119,10 @@
                 196,
                 197
               ],
-              "solveTime": 0.371084667,
+              "solveTime": 0.269278125,
               "iteration": 2,
-              "durationMs": 854
+              "durationMs": 732,
+              "flatTime": 0.236379
             },
             {
               "solverUsed": "solutions.huub",
@@ -122,31 +134,40 @@
                 269,
                 270,
                 271,
-                272
+                272,
+                273,
+                274,
+                275
               ],
-              "solveTime": 0.587727125,
+              "solveTime": 0.823884167,
               "iteration": 3,
-              "durationMs": 1067
+              "durationMs": 1335,
+              "flatTime": 0.237282
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 45.477443875,
+              "solveTime": 42.705034875,
               "iteration": 4,
-              "durationMs": 46036
+              "durationMs": 43344,
+              "flatTime": 0.232426
             }
           ],
-          "totalSolveTime": 46.898379084,
+          "totalSolveTime": 44.179457125000006,
           "liftedParameters": 432,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 4,
+          "hammingTotal": 432,
+          "distance": 0.19230769230769232
         }
       },
       {
         "dataFile": "2-12-12-0-1_7-modified.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 37101,
-          "_objective": 7,
+          "totalDurationMs": 64239,
+          "totalFlatTime": 0.963074,
+          "_objective": 19,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -165,148 +186,10 @@
                 155,
                 156
               ],
-              "solveTime": 0.339720708,
+              "solveTime": 0.35229375,
               "iteration": 1,
-              "durationMs": 826
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                205,
-                206,
-                207
-              ],
-              "solveTime": 0.237162041,
-              "iteration": 2,
-              "durationMs": 686
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                265,
-                266,
-                267,
-                268,
-                269,
-                270,
-                271,
-                272
-              ],
-              "solveTime": 0.717756334,
-              "iteration": 3,
-              "durationMs": 1176
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [],
-              "solveTime": 33.875545083,
-              "iteration": 4,
-              "durationMs": 34397
-            }
-          ],
-          "totalSolveTime": 35.170184166,
-          "liftedParameters": 432,
-          "status": "OPTIMAL"
-        }
-      },
-      {
-        "dataFile": "3-12-12-0-1_7-modified.dzn",
-        "statistics": {
-          "originalParameterModified": 8,
-          "totalDurationMs": 21875,
-          "_objective": 5,
-          "finalState": "SOLUTION_FOUND",
-          "iterations": [
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                145,
-                146,
-                147,
-                148,
-                149,
-                150,
-                151,
-                152,
-                153,
-                154,
-                155,
-                156
-              ],
-              "solveTime": 0.344593042,
-              "iteration": 1,
-              "durationMs": 853
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                241,
-                242,
-                243,
-                244,
-                245,
-                246
-              ],
-              "solveTime": 0.412322625,
-              "iteration": 2,
-              "durationMs": 878
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                265,
-                266,
-                267,
-                268,
-                269,
-                270,
-                271,
-                272
-              ],
-              "solveTime": 0.527289958,
-              "iteration": 3,
-              "durationMs": 1018
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [],
-              "solveTime": 18.588506208,
-              "iteration": 4,
-              "durationMs": 19109
-            }
-          ],
-          "totalSolveTime": 19.872711832999997,
-          "liftedParameters": 432,
-          "status": "OPTIMAL"
-        }
-      },
-      {
-        "dataFile": "4-12-12-0-1_7-modified.dzn",
-        "statistics": {
-          "originalParameterModified": 8,
-          "totalDurationMs": 63736,
-          "_objective": 20,
-          "finalState": "SOLUTION_FOUND",
-          "iterations": [
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                145,
-                146,
-                147,
-                148,
-                149,
-                150,
-                151,
-                152,
-                153,
-                154,
-                155,
-                156
-              ],
-              "solveTime": 0.34235125,
-              "iteration": 1,
-              "durationMs": 823
+              "durationMs": 844,
+              "flatTime": 0.247882
             },
             {
               "solverUsed": "solutions.huub",
@@ -320,13 +203,78 @@
                 211,
                 212,
                 213,
-                214,
-                215,
-                216
+                214
               ],
-              "solveTime": 0.756867708,
+              "solveTime": 0.758485209,
               "iteration": 2,
-              "durationMs": 1231
+              "durationMs": 1241,
+              "flatTime": 0.236537
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                265,
+                266,
+                267,
+                268,
+                269,
+                270,
+                271,
+                272,
+                273,
+                274
+              ],
+              "solveTime": 0.99220475,
+              "iteration": 3,
+              "durationMs": 1487,
+              "flatTime": 0.23734
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [],
+              "solveTime": 60.0075255,
+              "iteration": 4,
+              "durationMs": 60641,
+              "flatTime": 0.241315
+            }
+          ],
+          "totalSolveTime": 62.110509209,
+          "liftedParameters": 432,
+          "status": "SATISFIABLE",
+          "hamming": 8,
+          "hammingTotal": 432,
+          "distance": 0.1826923076923077
+        }
+      },
+      {
+        "dataFile": "3-12-12-0-1_7-modified.dzn",
+        "statistics": {
+          "originalParameterModified": 8,
+          "totalDurationMs": 58476,
+          "totalFlatTime": 0.9600150000000001,
+          "_objective": 9,
+          "finalState": "SOLUTION_FOUND",
+          "iterations": [
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                145,
+                146,
+                147,
+                148,
+                149,
+                150,
+                151,
+                152,
+                153,
+                154,
+                155,
+                156
+              ],
+              "solveTime": 0.35688075,
+              "iteration": 1,
+              "durationMs": 869,
+              "flatTime": 0.253462
             },
             {
               "solverUsed": "solutions.huub",
@@ -337,23 +285,112 @@
                 244,
                 245,
                 246,
-                247
+                247,
+                248
               ],
-              "solveTime": 0.598097167,
+              "solveTime": 0.589828042,
+              "iteration": 2,
+              "durationMs": 1057,
+              "flatTime": 0.235439
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                265,
+                266,
+                267,
+                268,
+                269,
+                270,
+                271,
+                272
+              ],
+              "solveTime": 0.534448666,
               "iteration": 3,
-              "durationMs": 1075
+              "durationMs": 1038,
+              "flatTime": 0.242334
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.017105167,
+              "solveTime": 54.887090583,
               "iteration": 4,
-              "durationMs": 60593
+              "durationMs": 55495,
+              "flatTime": 0.22878
             }
           ],
-          "totalSolveTime": 61.714421292,
+          "totalSolveTime": 56.368248041,
           "liftedParameters": 432,
-          "status": "SATISFIABLE"
+          "status": "OPTIMAL",
+          "hamming": 4,
+          "hammingTotal": 432,
+          "distance": 0.17307692307692307
+        }
+      },
+      {
+        "dataFile": "4-12-12-0-1_7-modified.dzn",
+        "statistics": {
+          "originalParameterModified": 8,
+          "totalDurationMs": 19839,
+          "totalFlatTime": 0.7287429999999999,
+          "_objective": 4,
+          "finalState": "SOLUTION_FOUND",
+          "iterations": [
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                145,
+                146,
+                147,
+                148,
+                149,
+                150,
+                151,
+                152,
+                153,
+                154,
+                155,
+                156
+              ],
+              "solveTime": 0.38331375,
+              "iteration": 1,
+              "durationMs": 889,
+              "flatTime": 0.253084
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                205,
+                206,
+                207,
+                208,
+                209,
+                210,
+                211,
+                212,
+                213,
+                214
+              ],
+              "solveTime": 0.845496417,
+              "iteration": 2,
+              "durationMs": 1322,
+              "flatTime": 0.23723
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [],
+              "solveTime": 17.03220125,
+              "iteration": 3,
+              "durationMs": 17611,
+              "flatTime": 0.238429
+            }
+          ],
+          "totalSolveTime": 18.261011417,
+          "liftedParameters": 432,
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 432,
+          "distance": 0.10256410256410257
         }
       }
     ]
@@ -364,48 +401,53 @@
         "dataFile": "c-5-n-5.dzn",
         "statistics": {
           "originalParameterModified": 0,
-          "totalDurationMs": 65689,
-          "_objective": 423,
+          "totalDurationMs": 41247,
+          "totalFlatTime": 0.823116,
+          "_objective": 6,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
                 1,
-                60,
                 62,
                 64,
                 65,
                 66,
                 68,
                 71,
-                1684,
                 1732,
                 2780
               ],
-              "solveTime": 0.04033925,
+              "solveTime": 0.025353,
               "iteration": 1,
-              "durationMs": 2650
+              "durationMs": 644,
+              "flatTime": 0.42227
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.000160792,
+              "solveTime": 39.595865542,
               "iteration": 2,
-              "durationMs": 62637
+              "durationMs": 40236,
+              "flatTime": 0.400846
             }
           ],
-          "totalSolveTime": 60.040500042000005,
+          "totalSolveTime": 39.621218542,
           "liftedParameters": 2829,
-          "status": "SATISFIABLE"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 2768,
+          "distance": 0.2505020080321285
         }
       },
       {
         "dataFile": "c-5-n-6.dzn",
         "statistics": {
           "originalParameterModified": 0,
-          "totalDurationMs": 63455,
-          "_objective": 774,
+          "totalDurationMs": 63785,
+          "totalFlatTime": 2.576869,
+          "_objective": 164,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -427,20 +469,16 @@
                 905,
                 942
               ],
-              "solveTime": 0.021716291,
+              "solveTime": 0.03972475,
               "iteration": 1,
-              "durationMs": 1101
+              "durationMs": 1321,
+              "flatTime": 0.933725
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
                 3,
                 4,
-                57,
-                58,
-                60,
-                61,
-                62,
                 87,
                 99,
                 100,
@@ -454,57 +492,42 @@
                 1652,
                 1665
               ],
-              "solveTime": 0.052347458,
+              "solveTime": 0.077569666,
               "iteration": 2,
-              "durationMs": 1082
+              "durationMs": 1218,
+              "flatTime": 0.84407
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.000589667,
+              "solveTime": 60.000529583,
               "iteration": 3,
-              "durationMs": 61177
+              "durationMs": 61137,
+              "flatTime": 0.799074
             }
           ],
-          "totalSolveTime": 60.074653416,
+          "totalSolveTime": 60.117823999,
           "liftedParameters": 1674,
-          "status": "SATISFIABLE"
+          "status": "SATISFIABLE",
+          "hamming": 14,
+          "hammingTotal": 1612,
+          "distance": 0.27850219955483113
         }
       },
       {
         "dataFile": "c-5-n-7.dzn",
         "statistics": {
           "originalParameterModified": 0,
-          "totalDurationMs": 73188,
-          "_objective": 895,
+          "totalDurationMs": 69293,
+          "totalFlatTime": 5.87047,
+          "_objective": 65,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
-                6,
-                229,
-                291,
-                323,
-                354,
-                385,
-                416,
-                447,
-                478,
-                509
-              ],
-              "solveTime": 0.366240375,
-              "iteration": 1,
-              "durationMs": 4062
-            },
-            {
-              "solverUsed": "solutions.huub",
-              "coreVariables": [
-                1,
-                3,
                 4,
-                7,
-                58,
+                5,
                 65,
                 67,
                 68,
@@ -513,56 +536,52 @@
                 71,
                 72,
                 73,
-                95,
-                137,
-                188,
-                246,
-                250,
-                262,
+                167,
+                198,
+                291,
+                323,
+                354,
+                385,
+                416,
+                447,
+                478,
+                509,
                 2092,
                 2093,
-                2096,
-                2097,
-                2098,
-                2102,
-                2103,
                 2119,
-                2122,
                 2140,
-                2141,
-                2142,
                 2143,
-                2144,
-                2145,
-                2146,
-                4163,
-                4183,
-                4226,
-                4272
+                2144
               ],
-              "solveTime": 0.454013792,
-              "iteration": 2,
-              "durationMs": 4050
+              "solveTime": 1.640999125,
+              "iteration": 1,
+              "durationMs": 5457,
+              "flatTime": 3.0431
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.000621708,
-              "iteration": 3,
-              "durationMs": 64930
+              "solveTime": 60.0018435,
+              "iteration": 2,
+              "durationMs": 63703,
+              "flatTime": 2.82737
             }
           ],
-          "totalSolveTime": 60.820875875,
+          "totalSolveTime": 61.642842625,
           "liftedParameters": 4378,
-          "status": "SATISFIABLE"
+          "status": "SATISFIABLE",
+          "hamming": 12,
+          "hammingTotal": 4314,
+          "distance": 0.4940161654162432
         }
       },
       {
         "dataFile": "c-6-n-5.dzn",
         "statistics": {
           "originalParameterModified": 0,
-          "totalDurationMs": 68378,
-          "_objective": 4700,
+          "totalDurationMs": 61985,
+          "totalFlatTime": 1.2490999999999999,
+          "_objective": 3239,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -574,9 +593,6 @@
                 5,
                 7,
                 8,
-                81,
-                82,
-                83,
                 86,
                 89,
                 90,
@@ -588,9 +604,6 @@
                 178,
                 220,
                 241,
-                1949,
-                1953,
-                1962,
                 1973,
                 1974,
                 1975,
@@ -601,15 +614,14 @@
                 2779,
                 2800
               ],
-              "solveTime": 0.104495292,
+              "solveTime": 0.048370291,
               "iteration": 1,
-              "durationMs": 2736
+              "durationMs": 656,
+              "flatTime": 0.445009
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
-                84,
-                85,
                 116,
                 117,
                 118,
@@ -618,6 +630,7 @@
                 139,
                 159,
                 160,
+                179,
                 180,
                 181,
                 221,
@@ -628,6 +641,7 @@
                 261,
                 287,
                 308,
+                329,
                 350,
                 371,
                 2759,
@@ -637,29 +651,35 @@
                 2822,
                 2844
               ],
-              "solveTime": 0.118512833,
+              "solveTime": 0.065992083,
               "iteration": 2,
-              "durationMs": 2883
+              "durationMs": 633,
+              "flatTime": 0.40419
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.000613875,
+              "solveTime": 60.000016458,
               "iteration": 3,
-              "durationMs": 62668
+              "durationMs": 60604,
+              "flatTime": 0.399901
             }
           ],
-          "totalSolveTime": 60.223622,
+          "totalSolveTime": 60.114378832,
           "liftedParameters": 2861,
-          "status": "SATISFIABLE"
+          "status": "SATISFIABLE",
+          "hamming": 32,
+          "hammingTotal": 2776,
+          "distance": 0.31059076980836503
         }
       },
       {
         "dataFile": "c-6-n-6.dzn",
         "statistics": {
           "originalParameterModified": 0,
-          "totalDurationMs": 64258,
-          "_objective": 142,
+          "totalDurationMs": 64686,
+          "totalFlatTime": 3.26626,
+          "_objective": 2244,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -670,8 +690,7 @@
                 7,
                 8,
                 9,
-                118,
-                123,
+                50,
                 124,
                 126,
                 127,
@@ -681,11 +700,16 @@
                 131,
                 187,
                 199,
+                202,
+                208,
                 209,
                 210,
                 223,
+                234,
+                235,
                 238,
                 248,
+                865,
                 1782,
                 1784,
                 1785,
@@ -694,29 +718,41 @@
                 1839,
                 1857,
                 1858,
-                1859,
                 1860,
                 1861,
+                2295,
                 2514,
                 2515,
+                2524,
+                2536,
+                2537,
+                2550,
                 2563,
-                2577
+                2569,
+                2576,
+                2577,
+                2589
               ],
-              "solveTime": 0.114369,
+              "solveTime": 0.153925959,
               "iteration": 1,
-              "durationMs": 2073
+              "durationMs": 2451,
+              "flatTime": 1.74295
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.000333208,
+              "solveTime": 60.008318833,
               "iteration": 2,
-              "durationMs": 62105
+              "durationMs": 62156,
+              "flatTime": 1.52331
             }
           ],
-          "totalSolveTime": 60.114702208000004,
+          "totalSolveTime": 60.162244791999996,
           "liftedParameters": 2589,
-          "status": "SATISFIABLE"
+          "status": "SATISFIABLE",
+          "hamming": 22,
+          "hammingTotal": 2466,
+          "distance": 0.3461548064408497
         }
       }
     ]
@@ -727,7 +763,8 @@
         "dataFile": "0-B737NG-600-04-Anon.json.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 9311,
+          "totalDurationMs": 13329,
+          "totalFlatTime": 5.40685,
           "_objective": 3,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -736,33 +773,49 @@
               "coreVariables": [
                 1,
                 2,
-                3,
                 21,
                 31,
                 33
               ],
-              "solveTime": 0.504219125,
+              "solveTime": 0.328970709,
               "iteration": 1,
-              "durationMs": 3101
+              "durationMs": 3246,
+              "flatTime": 1.86318
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                3,
+                24
+              ],
+              "solveTime": 0.7473795,
+              "iteration": 2,
+              "durationMs": 3457,
+              "flatTime": 1.68544
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 3.532764875,
-              "iteration": 2,
-              "durationMs": 5895
+              "solveTime": 3.253808,
+              "iteration": 3,
+              "durationMs": 6233,
+              "flatTime": 1.85823
             }
           ],
-          "totalSolveTime": 4.036984,
+          "totalSolveTime": 4.330158209,
           "liftedParameters": 316,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 316,
+          "distance": 0.02040816326530612
         }
       },
       {
         "dataFile": "1-B737NG-600-04-Anon.json.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 6175,
+          "totalDurationMs": 7472,
+          "totalFlatTime": 3.77983,
           "_objective": 1,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -774,28 +827,34 @@
                 31,
                 33
               ],
-              "solveTime": 0.275371666,
+              "solveTime": 0.331923417,
               "iteration": 1,
-              "durationMs": 2480
+              "durationMs": 3021,
+              "flatTime": 1.79997
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 1.43498925,
+              "solveTime": 1.5326306669999998,
               "iteration": 2,
-              "durationMs": 3614
+              "durationMs": 4362,
+              "flatTime": 1.97986
             }
           ],
-          "totalSolveTime": 1.7103609160000002,
+          "totalSolveTime": 1.864554084,
           "liftedParameters": 316,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 1,
+          "hammingTotal": 316,
+          "distance": 0.02040816326530612
         }
       },
       {
         "dataFile": "2-B737NG-600-04-Anon.json.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 6493,
+          "totalDurationMs": 7182,
+          "totalFlatTime": 3.41554,
           "_objective": 2,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -808,28 +867,34 @@
                 31,
                 33
               ],
-              "solveTime": 0.31564175,
+              "solveTime": 0.329401542,
               "iteration": 1,
-              "durationMs": 2487
+              "durationMs": 2925,
+              "flatTime": 1.69232
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 1.663116083,
+              "solveTime": 1.6046462080000001,
               "iteration": 2,
-              "durationMs": 3934
+              "durationMs": 4179,
+              "flatTime": 1.72322
             }
           ],
-          "totalSolveTime": 1.978757833,
+          "totalSolveTime": 1.9340477500000002,
           "liftedParameters": 316,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 316,
+          "distance": 0.02040816326530612
         }
       },
       {
         "dataFile": "3-B737NG-600-04-Anon.json.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 6556,
+          "totalDurationMs": 9565,
+          "totalFlatTime": 4.70874,
           "_objective": 3,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -838,33 +903,49 @@
               "coreVariables": [
                 1,
                 2,
-                3,
                 21,
                 31,
                 33
               ],
-              "solveTime": 0.309098958,
+              "solveTime": 0.324333042,
               "iteration": 1,
-              "durationMs": 2589
+              "durationMs": 2794,
+              "flatTime": 1.57732
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
+                3,
+                32
+              ],
+              "solveTime": 0.448947875,
+              "iteration": 2,
+              "durationMs": 2955,
+              "flatTime": 1.56903
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 1.641551583,
-              "iteration": 2,
-              "durationMs": 3905
+              "solveTime": 1.362511042,
+              "iteration": 3,
+              "durationMs": 3703,
+              "flatTime": 1.56239
             }
           ],
-          "totalSolveTime": 1.950650541,
+          "totalSolveTime": 2.135791959,
           "liftedParameters": 316,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 316,
+          "distance": 0.014705882352941175
         }
       },
       {
         "dataFile": "4-B737NG-600-04-Anon.json.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 7802,
+          "totalDurationMs": 7103,
+          "totalFlatTime": 3.12864,
           "_objective": 2,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -877,21 +958,26 @@
                 31,
                 33
               ],
-              "solveTime": 0.316521041,
+              "solveTime": 0.363203125,
               "iteration": 1,
-              "durationMs": 2660
+              "durationMs": 2802,
+              "flatTime": 1.57514
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 2.367117459,
+              "solveTime": 1.913086292,
               "iteration": 2,
-              "durationMs": 5082
+              "durationMs": 4257,
+              "flatTime": 1.5535
             }
           ],
-          "totalSolveTime": 2.6836385000000003,
+          "totalSolveTime": 2.276289417,
           "liftedParameters": 316,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 316,
+          "distance": 0.02564102564102564
         }
       }
     ]
@@ -902,155 +988,255 @@
         "dataFile": "0-coffee_table.dzn",
         "statistics": {
           "originalParameterModified": 2,
-          "totalDurationMs": 5231,
-          "_objective": 3462,
+          "totalDurationMs": 1273,
+          "totalFlatTime": 0.57223,
+          "_objective": 288,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
+                1,
+                2,
+                3
+              ],
+              "solveTime": 0.001044542,
+              "iteration": 1,
+              "durationMs": 279,
+              "flatTime": 0.205057
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
                 4,
+                5,
+                6,
                 8
               ],
-              "solveTime": 0.000279041,
-              "iteration": 1,
-              "durationMs": 273
+              "solveTime": 0.043011917,
+              "iteration": 2,
+              "durationMs": 259,
+              "flatTime": 0.156673
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 4.458842833,
-              "iteration": 2,
-              "durationMs": 4690
+              "solveTime": 0.250199208,
+              "iteration": 3,
+              "durationMs": 523,
+              "flatTime": 0.2105
             }
           ],
-          "totalSolveTime": 4.459121874,
+          "totalSolveTime": 0.294255667,
           "liftedParameters": 11,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 11,
+          "distance": 0.5977011494252874
         }
       },
       {
         "dataFile": "1-coffee_table.dzn",
         "statistics": {
           "originalParameterModified": 2,
-          "totalDurationMs": 5035,
-          "_objective": 2899,
+          "totalDurationMs": 1174,
+          "totalFlatTime": 0.528087,
+          "_objective": 288,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
+                1,
+                2,
+                3
+              ],
+              "solveTime": 0.001117792,
+              "iteration": 1,
+              "durationMs": 252,
+              "flatTime": 0.174468
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
                 4,
+                5,
+                6,
                 8
               ],
-              "solveTime": 0.000238292,
-              "iteration": 1,
-              "durationMs": 243
+              "solveTime": 0.017617709,
+              "iteration": 2,
+              "durationMs": 270,
+              "flatTime": 0.180269
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 4.494932209,
-              "iteration": 2,
-              "durationMs": 4731
+              "solveTime": 0.355903708,
+              "iteration": 3,
+              "durationMs": 608,
+              "flatTime": 0.17335
             }
           ],
-          "totalSolveTime": 4.495170501,
+          "totalSolveTime": 0.374639209,
           "liftedParameters": 11,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 11,
+          "distance": 0.5977011494252874
         }
       },
       {
         "dataFile": "2-coffee_table.dzn",
         "statistics": {
           "originalParameterModified": 2,
-          "totalDurationMs": 5291,
-          "_objective": 3464,
+          "totalDurationMs": 1092,
+          "totalFlatTime": 0.5356380000000001,
+          "_objective": 288,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
+                1,
+                2,
+                3
+              ],
+              "solveTime": 0.001157708,
+              "iteration": 1,
+              "durationMs": 263,
+              "flatTime": 0.182232
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
                 4,
+                5,
+                6,
                 8
               ],
-              "solveTime": 0.000243292,
-              "iteration": 1,
-              "durationMs": 229
+              "solveTime": 0.0099985,
+              "iteration": 2,
+              "durationMs": 240,
+              "flatTime": 0.162392
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 4.780393417,
-              "iteration": 2,
-              "durationMs": 5014
+              "solveTime": 0.285985625,
+              "iteration": 3,
+              "durationMs": 544,
+              "flatTime": 0.191014
             }
           ],
-          "totalSolveTime": 4.780636709,
+          "totalSolveTime": 0.297141833,
           "liftedParameters": 11,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 11,
+          "distance": 0.5977011494252874
         }
       },
       {
         "dataFile": "3-coffee_table.dzn",
         "statistics": {
           "originalParameterModified": 2,
-          "totalDurationMs": 4847,
-          "_objective": 3191,
+          "totalDurationMs": 974,
+          "totalFlatTime": 0.534281,
+          "_objective": 87,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
+                1,
+                2,
+                3
+              ],
+              "solveTime": 0.001007875,
+              "iteration": 1,
+              "durationMs": 268,
+              "flatTime": 0.193852
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
                 4,
+                5,
+                6,
                 8
               ],
-              "solveTime": 0.000234417,
-              "iteration": 1,
-              "durationMs": 223
+              "solveTime": 0.021992166,
+              "iteration": 2,
+              "durationMs": 300,
+              "flatTime": 0.166624
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 4.342870042,
-              "iteration": 2,
-              "durationMs": 4578
+              "solveTime": 0.126411625,
+              "iteration": 3,
+              "durationMs": 365,
+              "flatTime": 0.173805
             }
           ],
-          "totalSolveTime": 4.343104459,
+          "totalSolveTime": 0.149411666,
           "liftedParameters": 11,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 11,
+          "distance": 0.42931034482758623
         }
       },
       {
         "dataFile": "4-coffee_table.dzn",
         "statistics": {
           "originalParameterModified": 2,
-          "totalDurationMs": 4737,
-          "_objective": 3180,
+          "totalDurationMs": 1159,
+          "totalFlatTime": 0.5348040000000001,
+          "_objective": 288,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [
+                1,
+                2,
+                3
+              ],
+              "solveTime": 0.000981,
+              "iteration": 1,
+              "durationMs": 259,
+              "flatTime": 0.189045
+            },
+            {
+              "solverUsed": "solutions.huub",
+              "coreVariables": [
                 4,
+                5,
+                6,
                 8
               ],
-              "solveTime": 0.000236042,
-              "iteration": 1,
-              "durationMs": 220
+              "solveTime": 0.017371125,
+              "iteration": 2,
+              "durationMs": 261,
+              "flatTime": 0.177535
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 4.239524042,
-              "iteration": 2,
-              "durationMs": 4473
+              "solveTime": 0.356049167,
+              "iteration": 3,
+              "durationMs": 597,
+              "flatTime": 0.168224
             }
           ],
-          "totalSolveTime": 4.239760084,
+          "totalSolveTime": 0.374401292,
           "liftedParameters": 11,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 3,
+          "hammingTotal": 11,
+          "distance": 0.5977011494252874
         }
       }
     ]
@@ -1061,7 +1247,8 @@
         "dataFile": "0-i07.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 4948,
+          "totalDurationMs": 2821,
+          "totalFlatTime": 1.1885249999999998,
           "_objective": 5,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1071,28 +1258,34 @@
                 6,
                 20
               ],
-              "solveTime": 3.7375e-05,
+              "solveTime": 4.2542e-05,
               "iteration": 1,
-              "durationMs": 906
+              "durationMs": 907,
+              "flatTime": 0.621112
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 3.06002875,
+              "solveTime": 0.78413125,
               "iteration": 2,
-              "durationMs": 3859
+              "durationMs": 1657,
+              "flatTime": 0.567413
             }
           ],
-          "totalSolveTime": 3.0600661249999996,
+          "totalSolveTime": 0.7841737919999999,
           "liftedParameters": 269,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 269,
+          "distance": 0.39285714285714285
         }
       },
       {
         "dataFile": "1-i07.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 2561,
+          "totalDurationMs": 2836,
+          "totalFlatTime": 1.175148,
           "_objective": 5,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1102,28 +1295,34 @@
                 8,
                 20
               ],
-              "solveTime": 3.1833e-05,
+              "solveTime": 3.9583e-05,
               "iteration": 1,
-              "durationMs": 828
+              "durationMs": 916,
+              "flatTime": 0.609033
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 0.903951959,
+              "solveTime": 0.988337959,
               "iteration": 2,
-              "durationMs": 1689
+              "durationMs": 1870,
+              "flatTime": 0.566115
             }
           ],
-          "totalSolveTime": 0.903983792,
+          "totalSolveTime": 0.9883775419999999,
           "liftedParameters": 269,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 269,
+          "distance": 0.39285714285714285
         }
       },
       {
         "dataFile": "2-i07.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 2655,
+          "totalDurationMs": 4927,
+          "totalFlatTime": 1.22199,
           "_objective": 5,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1133,28 +1332,34 @@
                 6,
                 20
               ],
-              "solveTime": 3.2166e-05,
+              "solveTime": 3.6292e-05,
               "iteration": 1,
-              "durationMs": 772
+              "durationMs": 911,
+              "flatTime": 0.581714
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 1.0077015,
+              "solveTime": 3.028004375,
               "iteration": 2,
-              "durationMs": 1853
+              "durationMs": 3983,
+              "flatTime": 0.640276
             }
           ],
-          "totalSolveTime": 1.007733666,
+          "totalSolveTime": 3.028040667,
           "liftedParameters": 269,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 269,
+          "distance": 0.39285714285714285
         }
       },
       {
         "dataFile": "3-i07.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 1913,
+          "totalDurationMs": 1949,
+          "totalFlatTime": 1.092867,
           "_objective": 4,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1163,28 +1368,34 @@
               "coreVariables": [
                 20
               ],
-              "solveTime": 3.1375e-05,
+              "solveTime": 4.8125e-05,
               "iteration": 1,
-              "durationMs": 801
+              "durationMs": 791,
+              "flatTime": 0.547943
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 0.3151185,
+              "solveTime": 0.346325291,
               "iteration": 2,
-              "durationMs": 1090
+              "durationMs": 1136,
+              "flatTime": 0.544924
             }
           ],
-          "totalSolveTime": 0.315149875,
+          "totalSolveTime": 0.346373416,
           "liftedParameters": 269,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 1,
+          "hammingTotal": 269,
+          "distance": 0.2857142857142857
         }
       },
       {
         "dataFile": "4-i07.dzn",
         "statistics": {
           "originalParameterModified": 8,
-          "totalDurationMs": 2721,
+          "totalDurationMs": 2871,
+          "totalFlatTime": 1.692272,
           "_objective": 13,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1193,9 +1404,10 @@
               "coreVariables": [
                 20
               ],
-              "solveTime": 3.1916e-05,
+              "solveTime": 4.1e-05,
               "iteration": 1,
-              "durationMs": 789
+              "durationMs": 842,
+              "flatTime": 0.563778
             },
             {
               "solverUsed": "solutions.huub",
@@ -1203,21 +1415,26 @@
                 82,
                 259
               ],
-              "solveTime": 0.005102917,
+              "solveTime": 0.005059959,
               "iteration": 2,
-              "durationMs": 867
+              "durationMs": 823,
+              "flatTime": 0.561461
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 0.280013334,
+              "solveTime": 0.326183208,
               "iteration": 3,
-              "durationMs": 1044
+              "durationMs": 1185,
+              "flatTime": 0.567033
             }
           ],
-          "totalSolveTime": 0.285148167,
+          "totalSolveTime": 0.331284167,
           "liftedParameters": 269,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 269,
+          "distance": 0.4642857142857143
         }
       }
     ]
@@ -1228,7 +1445,8 @@
         "dataFile": "0-n20w160.001.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 14751,
+          "totalDurationMs": 22958,
+          "totalFlatTime": 0.35220700000000005,
           "_objective": 101,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1238,28 +1456,34 @@
                 459,
                 480
               ],
-              "solveTime": 0.014486083,
+              "solveTime": 0.013319875,
               "iteration": 1,
-              "durationMs": 269
+              "durationMs": 271,
+              "flatTime": 0.177188
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 14.020445833,
+              "solveTime": 22.288732042,
               "iteration": 2,
-              "durationMs": 14357
+              "durationMs": 22553,
+              "flatTime": 0.175019
             }
           ],
-          "totalSolveTime": 14.034931916,
+          "totalSolveTime": 22.302051917,
           "liftedParameters": 483,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 1,
+          "hammingTotal": 483,
+          "distance": 0.24396135265700483
         }
       },
       {
         "dataFile": "1-n20w160.001.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 18847,
+          "totalDurationMs": 9548,
+          "totalFlatTime": 0.428632,
           "_objective": 30,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1269,28 +1493,34 @@
                 450,
                 471
               ],
-              "solveTime": 0.012586042,
+              "solveTime": 0.013315084,
               "iteration": 1,
-              "durationMs": 297
+              "durationMs": 309,
+              "flatTime": 0.213732
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 18.254300666,
+              "solveTime": 8.8869765,
               "iteration": 2,
-              "durationMs": 18517
+              "durationMs": 9204,
+              "flatTime": 0.2149
             }
           ],
-          "totalSolveTime": 18.266886707999998,
+          "totalSolveTime": 8.900291584,
           "liftedParameters": 483,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 483,
+          "distance": 0.049632352941176475
         }
       },
       {
         "dataFile": "2-n20w160.001.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 7342,
+          "totalDurationMs": 10247,
+          "totalFlatTime": 0.354835,
           "_objective": 129,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1300,29 +1530,35 @@
                 459,
                 480
               ],
-              "solveTime": 0.013122792,
+              "solveTime": 0.013111417,
               "iteration": 1,
-              "durationMs": 311
+              "durationMs": 264,
+              "flatTime": 0.176632
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 6.74797375,
+              "solveTime": 9.694956375,
               "iteration": 2,
-              "durationMs": 7004
+              "durationMs": 9958,
+              "flatTime": 0.178203
             }
           ],
-          "totalSolveTime": 6.761096542,
+          "totalSolveTime": 9.708067792,
           "liftedParameters": 483,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 483,
+          "distance": 0.22830527138391588
         }
       },
       {
         "dataFile": "3-n20w160.001.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 60537,
-          "_objective": 461,
+          "totalDurationMs": 60639,
+          "totalFlatTime": 0.388179,
+          "_objective": 235,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
             {
@@ -1331,28 +1567,34 @@
                 459,
                 480
               ],
-              "solveTime": 0.013066875,
+              "solveTime": 0.013162625,
               "iteration": 1,
-              "durationMs": 259
+              "durationMs": 298,
+              "flatTime": 0.213666
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 60.000811167,
+              "solveTime": 60.001320084,
               "iteration": 2,
-              "durationMs": 60264
+              "durationMs": 60326,
+              "flatTime": 0.174513
             }
           ],
-          "totalSolveTime": 60.013878042,
+          "totalSolveTime": 60.014482709,
           "liftedParameters": 483,
-          "status": "SATISFIABLE"
+          "status": "SATISFIABLE",
+          "hamming": 2,
+          "hammingTotal": 483,
+          "distance": 0.3848596256684492
         }
       },
       {
         "dataFile": "4-n20w160.001.dzn",
         "statistics": {
           "originalParameterModified": 5,
-          "totalDurationMs": 3136,
+          "totalDurationMs": 7838,
+          "totalFlatTime": 0.40798599999999996,
           "_objective": 197,
           "finalState": "SOLUTION_FOUND",
           "iterations": [
@@ -1362,21 +1604,26 @@
                 459,
                 480
               ],
-              "solveTime": 0.013045792,
+              "solveTime": 0.015149834,
               "iteration": 1,
-              "durationMs": 300
+              "durationMs": 325,
+              "flatTime": 0.22033
             },
             {
               "solverUsed": "solutions.huub",
               "coreVariables": [],
-              "solveTime": 2.567509166,
+              "solveTime": 7.21316,
               "iteration": 2,
-              "durationMs": 2821
+              "durationMs": 7498,
+              "flatTime": 0.187656
             }
           ],
-          "totalSolveTime": 2.5805549579999996,
+          "totalSolveTime": 7.228309834,
           "liftedParameters": 483,
-          "status": "OPTIMAL"
+          "status": "OPTIMAL",
+          "hamming": 2,
+          "hammingTotal": 483,
+          "distance": 0.3438476840011367
         }
       }
     ]
