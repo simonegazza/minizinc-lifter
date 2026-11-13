@@ -100,7 +100,7 @@ def generate_table(results):
         + " &\n".join(rf"\multirow{{2}}{{*}}{{{title}}}" for _, title in METHOD_COLUMNS["soft"])
         + " &\n" + rf"\multicolumn{{{len(timeouts_cols)}}}{{c|}}{{{timeouts_title}}}"
         + " &\n" + rf"\multicolumn{{{len(statuses)}}}{{c|}}{{{STATUS_TITLE}}}"
-        + " &\n" + r"\multirow{2}{*}{Points} \\",
+        + " &\n" + r"\multirow{2}{*}{Score} \\",
         " & " * (2 + len(METHOD_COLUMNS["soft"]))
         + " & ".join([title for title, _ in timeouts_cols] + [title for _, title in statuses])
         + r" & \\",

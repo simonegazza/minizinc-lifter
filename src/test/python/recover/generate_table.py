@@ -126,7 +126,7 @@ def generate_table(data):
         hhline("~"),
         r"&"
         r"Perturbed & Lifted &"
-        r"Min & Avg & Max & "
+        r"Min & Mean & Max & "
         r"Min & Mean & Max & "
         r"Norm. $\ell_1$ & Hamming\\",
         hhline("-"),
