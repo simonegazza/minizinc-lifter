@@ -3,7 +3,7 @@
 #SBATCH --array=0-49%2
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=8G
-#SBATCH --time=00:20:00
+#SBATCH --time=00:06:00
 #SBATCH --output=target/comparison/logs/%x_%A_%a.out
 #SBATCH --error=target/comparison/logs/%x_%A_%a.err
 #SBATCH --requeue

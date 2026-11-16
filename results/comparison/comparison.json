@@ -1,131 +1,204 @@
 {
   "latin": {
     "soft": {
-      "flatTimeMean": 0.20345495720686402,
-      "solveTimeMean": 25.52079741683068,
-      "failures": 112897.02589591799,
-      "cpPropagatorCalls": 13331020.446722718,
+      "flatTimeMean": 0.19533301190581678,
+      "solveTimeMean": 63.05054450736968,
+      "failures": 229403.45905155764,
+      "cpPropagatorCalls": 27530728.836942594,
       "unknowns": 0,
-      "points": 3.6794843678064604,
+      "points": 8.857259021937754,
       "statusCounts": {
-        "SATISFIABLE": 32,
-        "OPTIMAL_SOLUTION": 18
+        "OPTIMAL_SOLUTION": 25,
+        "SATISFIABLE": 25
       },
       "allStatusCounts": {
-        "SATISFIABLE": 32,
-        "OPTIMAL_SOLUTION": 18
+        "OPTIMAL_SOLUTION": 25,
+        "SATISFIABLE": 25
       },
       "flatTime": {
-        "min": 0.187597,
-        "mean": 0.20345495720686402,
-        "max": 0.341009
+        "min": 0.184797,
+        "mean": 0.19533301190581678,
+        "max": 0.206013
       },
-      "flatShare": 0.0046982928350695445
+      "flatShare": 0.0011300026057212264
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.18375235936282122,
-      "gMean(iterationSumSolveTime)": 1.4574511378244397,
-      "failures": 8524.16444403366,
+      "gMean(iterationSumFlatTime)": 0.19093428982704136,
+      "gMean(iterationSumSolveTime)": 0.52744565822717,
+      "failures": 2399.7034265842094,
       "minIterations": 6,
       "medianIterations": 14,
-      "maxIterations": 20,
-      "cpPropagatorCalls": 789770.554126134,
+      "maxIterations": 18,
+      "cpPropagatorCalls": 292784.4479841254,
       "unknowns": 0,
-      "points": 46.32051563219354,
+      "points": 41.14274097806224,
       "statusCounts": {
-        "OPTIMAL_SOLUTION": 45,
-        "SATISFIABLE": 5
+        "OPTIMAL_SOLUTION": 42,
+        "SATISFIABLE": 1
       },
       "allStatusCounts": {
-        "OPTIMAL_SOLUTION": 45,
-        "SATISFIABLE": 5
+        "OPTIMAL_SOLUTION": 42,
+        "UNSATISFIABLE": 7,
+        "SATISFIABLE": 1
       },
       "flatTime": {
-        "min": 1.09147,
-        "mean": 2.4868715001706083,
-        "max": 3.717204
+        "min": 1.119838,
+        "mean": 2.568031441886407,
+        "max": 3.519341
       },
-      "flatShare": 0.19955545428028854
+      "flatShare": 0.404571558789838
     },
     "better": {
       "total": 50,
       "soft": {
-        "better": 50,
+        "better": 43,
         "worse": 0,
+        "MUSes": 7,
+        "discordant": 0
+      },
+      "hard": {
+        "better": 17,
+        "worse": 26,
+        "MUSes": 7,
+        "discordant": 0
+      }
+    },
+    "objective": {
+      "better": 6,
+      "equal": 18,
+      "worse": 19,
+      "globalTO": 7
+    }
+  },
+  "TAP": {
+    "soft": {
+      "flatTimeMean": 0.4278743785402785,
+      "solveTimeMean": 211.19066984981114,
+      "failures": 447367.45932926115,
+      "cpPropagatorCalls": 14633820.841774546,
+      "unknowns": 35,
+      "points": 10.0,
+      "statusCounts": {
+        "OPTIMAL_SOLUTION": 5,
+        "UNKNOWN": 35,
+        "SATISFIABLE": 10
+      },
+      "allStatusCounts": {
+        "OPTIMAL_SOLUTION": 5,
+        "UNKNOWN": 35,
+        "SATISFIABLE": 10
+      },
+      "flatTime": {
+        "min": 0.168432,
+        "mean": 0.4278743785402785,
+        "max": 3.58316
+      },
+      "flatShare": 0.002733409906661845
+    },
+    "lifted": {
+      "gMean(iterationSumFlatTime)": 0.4342452994526702,
+      "gMean(iterationSumSolveTime)": 48.49440866501139,
+      "failures": 35162.363618074414,
+      "minIterations": 1,
+      "medianIterations": 2,
+      "maxIterations": 2,
+      "cpPropagatorCalls": 6800209.000618078,
+      "unknowns": 4,
+      "points": 36.0,
+      "statusCounts": {
+        "SATISFIABLE": 40,
+        "UNKNOWN": 4,
+        "OPTIMAL_SOLUTION": 6
+      },
+      "allStatusCounts": {
+        "SATISFIABLE": 40,
+        "UNKNOWN": 4,
+        "OPTIMAL_SOLUTION": 6
+      },
+      "flatTime": {
+        "min": 0.189069,
+        "mean": 0.8104748397038912,
+        "max": 6.69326
+      },
+      "flatShare": 0.023863081097177562
+    },
+    "better": {
+      "total": 50,
+      "soft": {
+        "better": 45,
+        "worse": 5,
         "MUSes": 0,
         "discordant": 0
       },
       "hard": {
-        "better": 27,
-        "worse": 23,
+        "better": 31,
+        "worse": 19,
         "MUSes": 0,
         "discordant": 0
       }
     },
     "objective": {
-      "better": 17,
-      "equal": 16,
-      "worse": 17,
+      "better": 31,
+      "equal": 4,
+      "worse": 15,
       "globalTO": 0
     }
   },
-  "TAP": {
+  "RSBP": {
     "soft": {
-      "flatTimeMean": 0.42057778737514656,
-      "solveTimeMean": 47.21112255812499,
-      "failures": 165566.06087613036,
-      "cpPropagatorCalls": 5026897.983668294,
-      "unknowns": 37,
-      "points": 8.0,
+      "flatTimeMean": 0.2634446288184167,
+      "solveTimeMean": 162.38903235179143,
+      "failures": 667826.3090098324,
+      "cpPropagatorCalls": 100641777.4139878,
+      "unknowns": 42,
+      "points": 7.5,
       "statusCounts": {
-        "SATISFIABLE": 10,
-        "UNKNOWN": 37,
-        "OPTIMAL_SOLUTION": 3
+        "UNKNOWN": 42,
+        "OPTIMAL_SOLUTION": 7,
+        "SATISFIABLE": 1
       },
       "allStatusCounts": {
-        "SATISFIABLE": 10,
-        "UNKNOWN": 37,
-        "OPTIMAL_SOLUTION": 3
+        "UNKNOWN": 42,
+        "OPTIMAL_SOLUTION": 7,
+        "SATISFIABLE": 1
       },
       "flatTime": {
-        "min": 0.167749,
-        "mean": 0.42057778737514656,
-        "max": 3.53838
+        "min": 0.197835,
+        "mean": 0.2634446288184167,
+        "max": 0.356796
       },
-      "flatShare": 0.013082693860283151
+      "flatShare": 0.0010325333320129974
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 0.4331548799420915,
-      "gMean(iterationSumSolveTime)": 48.490835515881756,
-      "failures": 36170.17029051025,
+      "gMean(iterationSumFlatTime)": 0.2850892203445198,
+      "gMean(iterationSumSolveTime)": 61.075753052147654,
+      "failures": 50549.042554154636,
       "minIterations": 1,
       "medianIterations": 2,
       "maxIterations": 2,
-      "cpPropagatorCalls": 7099131.6719569145,
-      "unknowns": 4,
-      "points": 38.0,
+      "cpPropagatorCalls": 35846871.80330445,
+      "unknowns": 9,
+      "points": 33.5,
       "statusCounts": {
-        "SATISFIABLE": 40,
-        "UNKNOWN": 4,
-        "OPTIMAL_SOLUTION": 6
+        "UNKNOWN": 9,
+        "SATISFIABLE": 41
       },
       "allStatusCounts": {
-        "SATISFIABLE": 40,
-        "UNKNOWN": 4,
-        "OPTIMAL_SOLUTION": 6
+        "UNKNOWN": 9,
+        "SATISFIABLE": 41
       },
       "flatTime": {
-        "min": 0.183877,
-        "mean": 0.8106558466772098,
-        "max": 6.7256
+        "min": 0.209102,
+        "mean": 0.49553327048968704,
+        "max": 0.763317
       },
-      "flatShare": 0.023925552853626384
+      "flatShare": 0.008591524230707859
     },
     "better": {
       "total": 50,
       "soft": {
-        "better": 47,
-        "worse": 3,
+        "better": 43,
+        "worse": 7,
         "MUSes": 0,
         "discordant": 0
       },
@@ -138,89 +211,19 @@
     },
     "objective": {
       "better": 33,
-      "equal": 4,
-      "worse": 13,
-      "globalTO": 0
-    }
-  },
-  "RSBP": {
-    "soft": {
-      "flatTimeMean": 0.27004591027759434,
-      "solveTimeMean": 40.78528788316389,
-      "failures": 214331.86647407972,
-      "cpPropagatorCalls": 30580994.62484183,
-      "unknowns": 43,
-      "points": 7,
-      "statusCounts": {
-        "UNKNOWN": 43,
-        "OPTIMAL_SOLUTION": 7
-      },
-      "allStatusCounts": {
-        "UNKNOWN": 43,
-        "OPTIMAL_SOLUTION": 7
-      },
-      "flatTime": {
-        "min": 0.204355,
-        "mean": 0.27004591027759434,
-        "max": 0.356623
-      },
-      "flatShare": 0.005104556406451624
-    },
-    "lifted": {
-      "gMean(iterationSumFlatTime)": 0.27056556284298283,
-      "gMean(iterationSumSolveTime)": 61.00619629646598,
-      "failures": 59544.31755649425,
-      "minIterations": 1,
-      "medianIterations": 2,
-      "maxIterations": 2,
-      "cpPropagatorCalls": 41912735.27857697,
-      "unknowns": 9,
-      "points": 34,
-      "statusCounts": {
-        "UNKNOWN": 9,
-        "SATISFIABLE": 41
-      },
-      "allStatusCounts": {
-        "UNKNOWN": 9,
-        "SATISFIABLE": 41
-      },
-      "flatTime": {
-        "min": 0.209094,
-        "mean": 0.47134407186363797,
-        "max": 0.7304889999999999
-      },
-      "flatShare": 0.008168871944431564
-    },
-    "better": {
-      "total": 50,
-      "soft": {
-        "better": 43,
-        "worse": 7,
-        "MUSes": 0,
-        "discordant": 0
-      },
-      "hard": {
-        "better": 34,
-        "worse": 16,
-        "MUSes": 0,
-        "discordant": 0
-      }
-    },
-    "objective": {
-      "better": 34,
       "equal": 9,
-      "worse": 7,
+      "worse": 8,
       "globalTO": 0
     }
   },
   "RCPSP": {
     "soft": {
-      "flatTimeMean": 0.18807565731410364,
-      "solveTimeMean": 0.15135889506545613,
-      "failures": 808.836316402707,
-      "cpPropagatorCalls": 37932.02596978023,
+      "flatTimeMean": 0.1844465878496457,
+      "solveTimeMean": 0.2151524998483045,
+      "failures": 1080.7380730077407,
+      "cpPropagatorCalls": 50953.8434672448,
       "unknowns": 7,
-      "points": 42.693435241738314,
+      "points": 42.7780527746555,
       "statusCounts": {
         "UNKNOWN": 7,
         "SATISFIABLE": 4,
@@ -232,56 +235,56 @@
         "OPTIMAL_SOLUTION": 39
       },
       "flatTime": {
-        "min": 0.171765,
-        "mean": 0.18807565731410364,
-        "max": 0.21856
+        "min": 0.168036,
+        "mean": 0.1844465878496457,
+        "max": 0.212106
       },
-      "flatShare": 0.013254499464795143
+      "flatShare": 0.0027557696249565673
     },
     "lifted": {
-      "gMean(iterationSumFlatTime)": 1.5803915519447373,
-      "gMean(iterationSumSolveTime)": 69.12589270121869,
-      "failures": 2709.0435066655846,
-      "minIterations": 12,
-      "medianIterations": 42,
-      "maxIterations": 55,
-      "cpPropagatorCalls": 328876962.912408,
+      "gMean(iterationSumFlatTime)": 1.6508146840144529,
+      "gMean(iterationSumSolveTime)": 14.777323896278958,
+      "failures": 495.2509875375108,
+      "minIterations": 8,
+      "medianIterations": 15,
+      "maxIterations": 18,
+      "cpPropagatorCalls": 50601700.68681099,
       "unknowns": 0,
-      "points": 0.3065647582616891,
+      "points": 0.22194722534450198,
       "statusCounts": {
-        "OPTIMAL_SOLUTION": 10
+        "OPTIMAL_SOLUTION": 5
       },
       "allStatusCounts": {
-        "UNSATISFIABLE": 40,
-        "OPTIMAL_SOLUTION": 10
+        "UNSATISFIABLE": 45,
+        "OPTIMAL_SOLUTION": 5
       },
       "flatTime": {
-        "min": 8.080705,
-        "mean": 66.7271442886707,
-        "max": 275.4302
+        "min": 9.227585,
+        "mean": 27.77942792593957,
+        "max": 102.8133
       },
-      "flatShare": 0.45652509556542625
+      "flatShare": 0.629564371856129
     },
     "better": {
       "total": 50,
       "soft": {
-        "better": 17,
+        "better": 12,
         "worse": 0,
-        "MUSes": 33,
+        "MUSes": 38,
         "discordant": 0
       },
       "hard": {
         "better": 0,
-        "worse": 17,
-        "MUSes": 33,
+        "worse": 12,
+        "MUSes": 38,
         "discordant": 0
       }
     },
     "objective": {
       "better": 0,
       "equal": 0,
-      "worse": 10,
-      "globalTO": 40
+      "worse": 5,
+      "globalTO": 45
     }
   }
 }
