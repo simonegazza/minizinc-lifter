@@ -7,6 +7,8 @@ from pathlib import Path
 
 # Label for the first column and for the two compared methods
 DIFF_LABEL = "Diff"
+# Value of the metrics that cannot be computed (see compute_metrics.py)
+ERROR_VALUE = "N/A"
 # (in the order of the columns: solving each instance independently, then IINGL)
 METHOD_LABELS = ("Independently", r"\iingl")
 
@@ -211,12 +213,108 @@ def generate_flat_status_table(data):
 
     return "\n".join(lines)
 
+# Ablation table: the lifted model solving each instance alone, substituting
+# the assumptions and discarding the nogoods between instances, separates the
+# cost of the lifting (Independently vs Lifted) from the benefit of the nogood
+# reuse (Lifted vs \iingl).
+ABLATION_LABELS = ("Indep.", "Lifted", r"\iingl")
+
+# Each group: (data key, group title, [(ratio key, ratio label), ...])
+ABLATION_GROUPS = [
+    ("solveTime", "Mean Time", [
+        ("liftingSpeedup", "Lift"),
+        ("speedupOverAssumptions", "Nogood"),
+    ]),
+    ("solveTimeCumulative", "Cumulative Time", [
+        ("liftingSpeedupCumulative", "Lift"),
+        ("speedupOverAssumptionsCumulative", "Nogood"),
+    ]),
+    ("failuresCumulative", "Cumulative Failures", [
+        ("liftingFailureRatio", "Lift"),
+        ("failureReductionRatioOverAssumptions", "Nogood"),
+    ]),
+]
+
+def has_ablation(problem_data, i):
+    return problem_data["solveTime"]["assumptions"][i] != ERROR_VALUE
+
+def generate_ablation_table(data):
+    """Rows only for the problems and percentages where the ablation was run,
+    None if it was never run."""
+    rows = {
+        problem: [i for i in range(len(DIFFS)) if has_ablation(problem_data, i)]
+        for problem, problem_data in data.items()
+    }
+    rows = {problem: indices for problem, indices in rows.items() if indices}
+    if not rows:
+        return None
+
+    lifted_statuses = present_statuses(
+        {problem: data[problem] for problem in rows}, "assumptions"
+    )
+    widths = [len(ABLATION_LABELS) + len(ratios) for _, _, ratios in ABLATION_GROUPS]
+    widths.append(len(lifted_statuses))
+
+    lines = [
+        r"\begin{table*}[t]",
+        r"\centering",
+        r"\resizebox{\textwidth}{!}{%",
+        r"\begin{tabular}{cc|" + "|".join("c" * w for w in widths) + "}",
+    ]
+
+    titles = [r"\multirow{2}{*}{Problem}", rf"\multirow{{2}}{{*}}{{{DIFF_LABEL}}}"]
+    for (_, title, _), width in zip(ABLATION_GROUPS, widths):
+        titles.append(rf"\multicolumn{{{width}}}{{c|}}{{{title}}}")
+    titles.append(rf"\multicolumn{{{widths[-1]}}}{{c}}{{Status Lifted}}")
+    lines.append(" & ".join(titles) + r" \\")
+
+    subs = ["", ""]
+    for _, _, ratios in ABLATION_GROUPS:
+        subs.extend(ABLATION_LABELS)
+        subs.extend(label for _, label in ratios)
+    subs.extend(title for _, title in lifted_statuses)
+    lines.append(" & ".join(subs) + r" \\")
+    lines.append(r"\hline")
+
+    for problem, indices in rows.items():
+        problem_data = data[problem]
+        for n, i in enumerate(indices):
+            values = [
+                rf"\multirow{{{len(indices)}}}{{*}}{{{problem}}}" if n == 0 else "",
+                DIFFS[i],
+            ]
+            for key, _, ratios in ABLATION_GROUPS:
+                values.extend(
+                    problem_data[key][method][i]
+                    for method in ("1by1", "assumptions", "chain")
+                )
+                values.extend(problem_data[ratio][i] for ratio, _ in ratios)
+            statuses = problem_data["statuses"]["assumptions"][i]
+            values.extend(statuses.get(status, 0) for status, _ in lifted_statuses)
+            lines.append(row(values))
+        lines.append(r"\hline")
+
+    lines.append(r"\end{tabular}}")
+    lines.append(
+        r"\caption{Ablation of the nogood reuse. \emph{Indep.} solves each instance "
+        r"with the original model, \emph{Lifted} with the lifted model substituting "
+        r"the assumptions of that instance and discarding the nogoods between "
+        r"instances, \iingl with the lifted model reusing the nogoods along the "
+        r"chain. \emph{Lift} is the ratio Indep./Lifted (below 1 when the lifting "
+        r"costs), \emph{Nogood} the ratio Lifted/\iingl (above 1 when the nogood "
+        r"reuse helps): their product is the overall ratio Indep./\iingl.}"
+    )
+    lines.append(r"\label{tab:iingl-ablation}")
+    lines.append(r"\end{table*}")
+
+    return "\n".join(lines)
+
 def main(data):
     result = {
         problem: generate_table(problem, problem_data, MAIN_TABLE_GROUPS, "main")
         for problem, problem_data in data.items()
     }
-    return result, generate_flat_status_table(data)
+    return result, generate_flat_status_table(data), generate_ablation_table(data)
 
 def round_floats(obj, digits=3):
     if isinstance(obj, float):
@@ -244,7 +342,7 @@ if __name__ == "__main__":
     with open(args.input) as f:
         data = json.load(f)
 
-    tables, flat_status_table = main(round_floats(data))
+    tables, flat_status_table, ablation_table = main(round_floats(data))
 
     output_dir = Path(args.output)
     output_dir.mkdir(exist_ok=True)
@@ -255,3 +353,7 @@ if __name__ == "__main__":
 
     with open(os.path.join(output_dir, "flat_status_table.tex"), "w") as f:
         f.write(flat_status_table)
+
+    if ablation_table is not None:
+        with open(output_dir / "ablation_table.tex", "w") as f:
+            f.write(ablation_table)

@@ -102,6 +102,7 @@ def main(folder: Path):
         chain(
             folder.rglob("chain.txt"),
             folder.rglob("one-by-one.txt"),
+            folder.rglob("assumptions.txt"),
         )
     )
 
@@ -110,7 +111,7 @@ def main(folder: Path):
         rel = path.relative_to(folder)
 
         # Structure:
-        # folder/problems/<problem>/<repetition>/<percentage>/{chain.txt|one-by-one.txt}
+        # folder/problems/<problem>/<repetition>/<percentage>/{chain.txt|one-by-one.txt|assumptions.txt}
         problem = rel.parts[0]
         repetition = int(rel.parts[1])
         percentage = rel.parts[2]
@@ -125,10 +126,11 @@ def main(folder: Path):
 
         if path.name == "chain.txt":
             entry = parse_chain(path)
-            results[problem][repetition][percentage]["chain.txt"] = entry
         else:
+            # The ablation (lifted model, one instance at a time, nogoods not
+            # reused) has the same layout of the one-by-one output
             entry = parse_one_by_one(path)
-            results[problem][repetition][percentage]["one-by-one.txt"] = entry
+        results[problem][repetition][percentage][path.name] = entry
 
     return results
 

@@ -98,5 +98,5 @@ array[instances] of var int: objective_lifted :: output_var = [
 output ["current_instance = \(current_instance)"] ++ ["\noriginal graph = \(graph_instances[fix(current_instance), .., ..])\nlifted   graph = \(graph_lifted)\n\n"];
 
 
-array[1..35, 1..35] of bool: graph;
-array[instances, 1..35, 1..35] of bool: graph_instances = array3d(instances, 1..35, 1..35, graph);
+array[Custs, Custs] of bool: graph;
+array[instances, Custs, Custs] of bool: graph_instances = array3d(instances, Custs, Custs, graph);

@@ -140,5 +140,5 @@ array[instances] of var int: objective_lifted :: output_var = [
 output ["current_instance = \(current_instance)"] ++ ["\noriginal Intensity = \(Intensity_instances[fix(current_instance), .., ..])\nlifted   Intensity = \(Intensity_lifted)\n\n"];
 
 
-array[1..15, 1..12,] of int: Intensity;
-array[instances, 1..15, 1..12] of int: Intensity_instances = array3d(instances, 1..15, 1..12, Intensity);
+array[Rows, Columns] of int: Intensity;
+array[instances, Rows, Columns] of int: Intensity_instances = array3d(instances, Rows, Columns, Intensity);

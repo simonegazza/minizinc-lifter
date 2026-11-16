@@ -639,13 +639,41 @@ done
 ```
 
 ## Execution
+`run.sbatch` takes the following arguments:
+1. the problem name (the folder in `target/iingl/problems/`);
+2. the repetition (the folder in the problem folder);
+3. the original model;
+4. the assumptions model in `src/test/resources/iingl/`: the lifted model of `chain.mzn` with a single instance, run on one `.dzn` at a time, so that the assumptions are substituted and the nogoods are not reused between instances.
+
+For each percentage (the Slurm array), it runs in order three configurations, writing their output in the percentage folder:
+* `one-by-one`: the original model on one `.dzn` at a time (`one-by-one.txt`);
+* `assumptions`: the assumptions model on one `.dzn` at a time (`assumptions.txt`);
+* `chain`: `chain.mzn`, all the instances in a row reusing the nogoods (`chain.txt`).
+
+### Optional parameters
+* `MODES` (environment variable): space separated subset of the configurations to run (default: `one-by-one assumptions chain`). The 4th argument is needed only when `assumptions` is selected.
+* `--array` (Slurm option): subset of the percentages to run (default: `1,2,5,10,20,50%1`).
+
+For example, to run only the `assumptions` configuration on some percentages:
+```bash
+for r in `ls target/iingl/problems/knapsack`; do
+    sbatch --array=1,10,50%1 --export=ALL,MODES=assumptions \
+        src/test/sh/iingl/run.sbatch \
+        knapsack \
+        $r \
+        src/test/resources/problems/knapsack/k.mzn \
+        src/test/resources/iingl/knapsack.mzn;
+done
+```
+
 ### Graph Coloring
 ```bash
 for r in `ls target/iingl/problems/colouring`; do
     sbatch src/test/sh/iingl/run.sbatch \
         colouring \
         $r \
-        src/test/resources/problems/graph/gc-simplified.mzn;
+        src/test/resources/problems/graph/gc-simplified.mzn \
+        src/test/resources/iingl/gc-simplified.mzn;
 done
 ```
 
@@ -655,7 +683,8 @@ for r in `ls target/iingl/problems/knapsack`; do
     sbatch src/test/sh/iingl/run.sbatch \
         knapsack \
         $r \
-        src/test/resources/problems/knapsack/k.mzn;
+        src/test/resources/problems/knapsack/k.mzn \
+        src/test/resources/iingl/knapsack.mzn;
 done
 ```
 
@@ -665,7 +694,8 @@ for r in `ls target/iingl/problems/radiation`; do
     sbatch src/test/sh/iingl/run.sbatch \
         radiation \
         $r \
-        src/test/resources/problems/radiation/radiation.mzn;
+        src/test/resources/problems/radiation/radiation.mzn \
+        src/test/resources/iingl/radiation.mzn;
 done
 ```
 
@@ -675,7 +705,8 @@ for r in `ls target/iingl/problems/mosp`; do
     sbatch src/test/sh/iingl/run.sbatch \
         mosp \
         $r \
-        src/test/resources/problems/mosp/mosp.mzn;
+        src/test/resources/problems/mosp/mosp.mzn \
+        src/test/resources/iingl/mosp.mzn;
 done
 ```
 
@@ -685,9 +716,18 @@ for r in `ls target/iingl/problems/FREEDA`; do
     sbatch src/test/sh/iingl/run.sbatch \
         FREEDA \
         $r \
-        src/test/resources/problems/FREEDA/freeda-model-v0.3.mzn;
+        src/test/resources/problems/FREEDA/freeda-model-v0.3.mzn \
+        src/test/resources/iingl/FREEDA.mzn;
 done
 ```
+
+## Analysis
+```bash
+python3 src/test/python/iingl/iingl.py target/iingl/problems target/iingl/run.json
+python3 src/test/python/iingl/compute_metrics.py target/iingl/run.json target/iingl/results.json
+python3 src/test/python/iingl/generate_tables.py target/iingl/results.json -o target/iingl/tables
+```
+This generates a table per problem and `flat_status_table.tex`. If the `assumptions` configuration was run, `ablation_table.tex` compares the three configurations: the overall speedup of `chain` over `one-by-one` is the product of `liftingSpeedup` (`one-by-one` / `assumptions`, the cost of the lifting) and `speedupOverAssumptions` (`assumptions` / `chain`, the benefit of reusing the nogoods). The `assumptions` metrics are computed only for the problems and percentages where it was run on every repetition; elsewhere they are `N/A`.
 
 ## Directory structure
 The experiments will be saved with following structure:
@@ -703,6 +743,7 @@ target/
                     ├─ 00.dzn
                     ├─ ...
                     ├─ 19.dzn
+                    ├─ assumptions.txt
                     ├─ chain.mzn
                     ├─ chain.txt
                     └─ one-by-one.txt
