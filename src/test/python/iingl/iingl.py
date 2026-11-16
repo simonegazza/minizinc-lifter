@@ -72,7 +72,8 @@ def parse_one_by_one(path):
             if current is None:
                 continue
 
-            t = obj["type"]
+            # Skip JSON lines that are not MiniZinc json-stream messages
+            t = obj.get("type") if isinstance(obj, dict) else None
 
             if t == "statistics":
                 stats = obj["statistics"]
@@ -127,7 +128,7 @@ def main(folder: Path):
         if path.name == "chain.txt":
             entry = parse_chain(path)
         else:
-            # The ablation (lifted model, one instance at a time, nogoods not
+            # The assumptions run (lifted model, one instance at a time, nogoods not
             # reused) has the same layout of the one-by-one output
             entry = parse_one_by_one(path)
         results[problem][repetition][percentage][path.name] = entry

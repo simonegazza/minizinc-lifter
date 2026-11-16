@@ -213,14 +213,14 @@ def generate_flat_status_table(data):
 
     return "\n".join(lines)
 
-# Ablation table: the lifted model solving each instance alone, substituting
+# Assumptions table: the lifted model solving each instance alone, substituting
 # the assumptions and discarding the nogoods between instances, separates the
 # cost of the lifting (Independently vs Lifted) from the benefit of the nogood
 # reuse (Lifted vs \iingl).
-ABLATION_LABELS = ("Indep.", "Lifted", r"\iingl")
+ASSUMPTIONS_LABELS = ("Indep.", "Lifted", r"\iingl")
 
 # Each group: (data key, group title, [(ratio key, ratio label), ...])
-ABLATION_GROUPS = [
+ASSUMPTIONS_GROUPS = [
     ("solveTime", "Mean Time", [
         ("liftingSpeedup", "Lift"),
         ("speedupOverAssumptions", "Nogood"),
@@ -235,14 +235,14 @@ ABLATION_GROUPS = [
     ]),
 ]
 
-def has_ablation(problem_data, i):
+def has_assumptions(problem_data, i):
     return problem_data["solveTime"]["assumptions"][i] != ERROR_VALUE
 
-def generate_ablation_table(data):
-    """Rows only for the problems and percentages where the ablation was run,
+def generate_assumptions_table(data):
+    """Rows only for the problems and percentages where the assumptions configuration was run,
     None if it was never run."""
     rows = {
-        problem: [i for i in range(len(DIFFS)) if has_ablation(problem_data, i)]
+        problem: [i for i in range(len(DIFFS)) if has_assumptions(problem_data, i)]
         for problem, problem_data in data.items()
     }
     rows = {problem: indices for problem, indices in rows.items() if indices}
@@ -252,7 +252,7 @@ def generate_ablation_table(data):
     lifted_statuses = present_statuses(
         {problem: data[problem] for problem in rows}, "assumptions"
     )
-    widths = [len(ABLATION_LABELS) + len(ratios) for _, _, ratios in ABLATION_GROUPS]
+    widths = [len(ASSUMPTIONS_LABELS) + len(ratios) for _, _, ratios in ASSUMPTIONS_GROUPS]
     widths.append(len(lifted_statuses))
 
     lines = [
@@ -263,14 +263,14 @@ def generate_ablation_table(data):
     ]
 
     titles = [r"\multirow{2}{*}{Problem}", rf"\multirow{{2}}{{*}}{{{DIFF_LABEL}}}"]
-    for (_, title, _), width in zip(ABLATION_GROUPS, widths):
+    for (_, title, _), width in zip(ASSUMPTIONS_GROUPS, widths):
         titles.append(rf"\multicolumn{{{width}}}{{c|}}{{{title}}}")
     titles.append(rf"\multicolumn{{{widths[-1]}}}{{c}}{{Status Lifted}}")
     lines.append(" & ".join(titles) + r" \\")
 
     subs = ["", ""]
-    for _, _, ratios in ABLATION_GROUPS:
-        subs.extend(ABLATION_LABELS)
+    for _, _, ratios in ASSUMPTIONS_GROUPS:
+        subs.extend(ASSUMPTIONS_LABELS)
         subs.extend(label for _, label in ratios)
     subs.extend(title for _, title in lifted_statuses)
     lines.append(" & ".join(subs) + r" \\")
@@ -283,7 +283,7 @@ def generate_ablation_table(data):
                 rf"\multirow{{{len(indices)}}}{{*}}{{{problem}}}" if n == 0 else "",
                 DIFFS[i],
             ]
-            for key, _, ratios in ABLATION_GROUPS:
+            for key, _, ratios in ASSUMPTIONS_GROUPS:
                 values.extend(
                     problem_data[key][method][i]
                     for method in ("1by1", "assumptions", "chain")
@@ -296,7 +296,7 @@ def generate_ablation_table(data):
 
     lines.append(r"\end{tabular}}")
     lines.append(
-        r"\caption{Ablation of the nogood reuse. \emph{Indep.} solves each instance "
+        r"\caption{Cost of the lifting and benefit of the nogood reuse. \emph{Indep.} solves each instance "
         r"with the original model, \emph{Lifted} with the lifted model substituting "
         r"the assumptions of that instance and discarding the nogoods between "
         r"instances, \iingl with the lifted model reusing the nogoods along the "
@@ -304,7 +304,7 @@ def generate_ablation_table(data):
         r"costs), \emph{Nogood} the ratio Lifted/\iingl (above 1 when the nogood "
         r"reuse helps): their product is the overall ratio Indep./\iingl.}"
     )
-    lines.append(r"\label{tab:iingl-ablation}")
+    lines.append(r"\label{tab:iingl-assumptions}")
     lines.append(r"\end{table*}")
 
     return "\n".join(lines)
@@ -314,7 +314,7 @@ def main(data):
         problem: generate_table(problem, problem_data, MAIN_TABLE_GROUPS, "main")
         for problem, problem_data in data.items()
     }
-    return result, generate_flat_status_table(data), generate_ablation_table(data)
+    return result, generate_flat_status_table(data), generate_assumptions_table(data)
 
 def round_floats(obj, digits=3):
     if isinstance(obj, float):
@@ -342,7 +342,7 @@ if __name__ == "__main__":
     with open(args.input) as f:
         data = json.load(f)
 
-    tables, flat_status_table, ablation_table = main(round_floats(data))
+    tables, flat_status_table, assumptions_table = main(round_floats(data))
 
     output_dir = Path(args.output)
     output_dir.mkdir(exist_ok=True)
@@ -354,6 +354,6 @@ if __name__ == "__main__":
     with open(os.path.join(output_dir, "flat_status_table.tex"), "w") as f:
         f.write(flat_status_table)
 
-    if ablation_table is not None:
-        with open(output_dir / "ablation_table.tex", "w") as f:
-            f.write(ablation_table)
+    if assumptions_table is not None:
+        with open(output_dir / "assumptions_table.tex", "w") as f:
+            f.write(assumptions_table)

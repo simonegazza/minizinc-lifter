@@ -36,11 +36,11 @@ def speedup(slow, fast):
 # - chain: lifted model, all the instances in a row reusing the nogoods (IINGL)
 # - 1by1: original model, one instance at a time
 # - assumptions: lifted model, one instance at a time, with the assumptions
-#   substituted and the nogoods discarded between instances (ablation: it
+#   substituted and the nogoods discarded between instances (it
 #   isolates the cost of the lifting from the benefit of the nogood reuse)
 METHODS = ["chain", "1by1", "assumptions"]
 
-# The ablation is optional: it may be run only on some problems and
+# The assumptions configuration is optional: it may be run only on some problems and
 # percentages. Its metrics are ERROR_VALUE where it is missing.
 OPTIONAL_METHODS = {"assumptions"}
 
@@ -229,7 +229,7 @@ def main(file):
         ]
 
         # -------------------------------------------------------------
-        # Ablation: the overall speedup of the chain over 1by1 splits into
+        # The overall speedup of the chain over 1by1 splits into
         #   speedupOver1by1 = liftingSpeedup * speedupOverAssumptions
         # where
         #   liftingSpeedup = 1by1 / assumptions  (< 1: the lifting costs)

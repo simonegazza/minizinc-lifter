@@ -651,13 +651,13 @@ For each percentage (the Slurm array), it runs in order three configurations, wr
 * `chain`: `chain.mzn`, all the instances in a row reusing the nogoods (`chain.txt`).
 
 ### Optional parameters
-* `MODES` (environment variable): space separated subset of the configurations to run (default: `one-by-one assumptions chain`). The 4th argument is needed only when `assumptions` is selected.
+* `modes` (environment variable): space separated subset of the configurations to run (default: `one-by-one assumptions chain`). The 4th argument is needed only when `assumptions` is selected.
 * `--array` (Slurm option): subset of the percentages to run (default: `1,2,5,10,20,50%1`).
 
 For example, to run only the `assumptions` configuration on some percentages:
 ```bash
 for r in `ls target/iingl/problems/knapsack`; do
-    sbatch --array=1,10,50%1 --export=ALL,MODES=assumptions \
+    sbatch --array=1,10,50%1 --export=ALL,modes=assumptions \
         src/test/sh/iingl/run.sbatch \
         knapsack \
         $r \
@@ -727,7 +727,7 @@ python3 src/test/python/iingl/iingl.py target/iingl/problems target/iingl/run.js
 python3 src/test/python/iingl/compute_metrics.py target/iingl/run.json target/iingl/results.json
 python3 src/test/python/iingl/generate_tables.py target/iingl/results.json -o target/iingl/tables
 ```
-This generates a table per problem and `flat_status_table.tex`. If the `assumptions` configuration was run, `ablation_table.tex` compares the three configurations: the overall speedup of `chain` over `one-by-one` is the product of `liftingSpeedup` (`one-by-one` / `assumptions`, the cost of the lifting) and `speedupOverAssumptions` (`assumptions` / `chain`, the benefit of reusing the nogoods). The `assumptions` metrics are computed only for the problems and percentages where it was run on every repetition; elsewhere they are `N/A`.
+This generates a table per problem and `flat_status_table.tex`. If the `assumptions` configuration was run, `assumptions_table.tex` compares the three configurations: the overall speedup of `chain` over `one-by-one` is the product of `liftingSpeedup` (`one-by-one` / `assumptions`, the cost of the lifting) and `speedupOverAssumptions` (`assumptions` / `chain`, the benefit of reusing the nogoods). The `assumptions` metrics are computed only for the problems and percentages where it was run on every repetition; elsewhere they are `N/A`.
 
 ## Directory structure
 The experiments will be saved with following structure:

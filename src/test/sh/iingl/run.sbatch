@@ -23,30 +23,30 @@ shopt -s nullglob
 #    Required only by the assumptions configuration.
 # $SLURM_ARRAY_TASK_ID is the percentage
 #
-# $MODES (optional, environment) selects the configurations to run, as a
+# $modes (optional, environment) selects the configurations to run, as a
 # space separated list among:
 #   one-by-one   original model, one instance at a time
 #   assumptions  lifted model, one instance at a time: assumptions are
 #                substituted with the instance values and nogoods are
-#                discarded between instances (ablation of the chain)
+#                discarded between instances (no nogood reuse)
 #   chain        lifted model, all instances in a row reusing nogoods
-# Default: all of them. To run only the ablation:
-#   sbatch --export=ALL,MODES=assumptions src/test/sh/iingl/run.sbatch ...
+# Default: all of them. To run only the assumptions configuration:
+#   sbatch --export=ALL,modes=assumptions src/test/sh/iingl/run.sbatch ...
 
 TARGET="target/iingl/problems/$1/$2/$SLURM_ARRAY_TASK_ID"
-MODES="${MODES:-one-by-one assumptions chain}"
+modes="${modes:-one-by-one assumptions chain}"
 
 CHAIN_MODEL="/minizinc-lifter/$TARGET/chain.mzn"
 ONE_BY_ONE_MODEL="/minizinc-lifter/$3"
 ASSUMPTIONS_MODEL="${4:+/minizinc-lifter/$4}"
 
 has_mode() {
-    [[ " $MODES " == *" $1 "* ]]
+    [[ " $modes " == *" $1 "* ]]
 }
 
 # Fail before running anything if the assumptions model is missing
 if has_mode assumptions && [[ -z "$ASSUMPTIONS_MODEL" ]]; then
-    echo "Missing assumptions model (4th argument): set MODES to skip the assumptions configuration" >&2
+    echo "Missing assumptions model (4th argument): set modes to skip the assumptions configuration" >&2
     exit 1
 fi
 
