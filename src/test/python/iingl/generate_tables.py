@@ -9,15 +9,37 @@ from pathlib import Path
 DIFF_LABEL = "Diff"
 # Value of the metrics that cannot be computed (see compute_metrics.py)
 ERROR_VALUE = "N/A"
-# (in the order of the columns: solving each instance independently, then IINGL)
-METHOD_LABELS = ("Independently", r"\iingl")
+# Compared methods, in the order of the columns: (data key, column label).
+# No Reuse is the lifted model solving each instance alone, with the assumptions
+# of that instance and without reusing the nogoods: it is "N/A" where the
+# assumptions configuration was not run.
+METHODS = [
+    ("1by1", "Independently"),
+    ("assumptions", "No Reuse"),
+    ("chain", r"\iingl"),
+]
+METHOD_LABELS = tuple(label for _, label in METHODS)
 
-# Each group: (data key, group title, ratio key or None, ratio label or None)
-# The ratio column, if present, is placed inside the group after the two methods.
+# Short labels of the methods in the per-problem tables
+SHORT_LABELS = {
+    "1by1": "Ind.",
+    "assumptions": "No Reuse",
+    "chain": r"\iingl",
+}
+
+# Each group: (data key, group title, [method, ...], [(ratio key, ratio label), ...])
+# The ratio columns are placed inside the group after the methods; each ratio is
+# the value of a method over the value of \iingl (above 1 when \iingl is better).
 MAIN_TABLE_GROUPS = [
-    ("solveTime",           "Mean Time",           "speedupOver1by1",       "Speedup"),
-    ("solveTimeCumulative", "Cumulative Time",     "speedupOver1by1Cumulative", "Speedup"),
-    ("failuresCumulative",  "Cumulative Failures", "failureReductionRatio", "Ratio"),
+    ("solveTime", "Mean Time", ["1by1", "assumptions", "chain"], [
+        ("speedupOver1by1", "Speedup"),
+    ]),
+    ("solveTimeCumulative", "Cumulative Time", ["1by1", "chain"], [
+        ("speedupOver1by1Cumulative", "Speedup"),
+    ]),
+    ("failuresCumulative", "Cumulative Failures", ["1by1", "chain"], [
+        ("failureReductionRatio", "Ratio"),
+    ]),
 ]
 
 # Select statuses to show
@@ -31,8 +53,8 @@ STATUS_KEYS = [
 DIFFS = ["1\\%", "2\\%", "5\\%", "10\\%", "20\\%", "50\\%"]
 
 def group_width(group):
-    _, _, ratio_key, _ = group
-    return 2 + (1 if ratio_key else 0)
+    _, _, methods, ratios = group
+    return len(methods) + len(ratios)
 
 def latex_header(groups):
     tabular = "c|" + "|".join("c" * group_width(g) for g in groups)
@@ -50,12 +72,11 @@ def latex_header(groups):
         cells.append(rf"\multicolumn{{{group_width(g)}}}{{{align}}}{{{g[1]}}}")
     lines.append("\n& ".join(cells) + r" \\")
 
-    # Sub-headers: methods, plus ratio label where present
+    # Sub-headers: methods, then the ratio labels
     subs = [""]
-    for _, _, ratio_key, ratio_label in groups:
-        subs.extend(METHOD_LABELS)
-        if ratio_key:
-            subs.append(ratio_label)
+    for _, _, methods, ratios in groups:
+        subs.extend(SHORT_LABELS[method] for method in methods)
+        subs.extend(label for _, label in ratios)
     lines.append(" & ".join(subs) + r" \\")
     lines.append(r"\hline")
 
@@ -73,11 +94,9 @@ def generate_table(problem, data, groups, suffix):
     lines = [latex_header(groups)]
     for i, diff in enumerate(DIFFS):
         values = [diff]
-        for key, _, ratio_key, _ in groups:
-            values.append(data[key]["1by1"][i])
-            values.append(data[key]["chain"][i])
-            if ratio_key:
-                values.append(data[ratio_key][i])
+        for key, _, methods, ratios in groups:
+            values.extend(data[key][method][i] for method in methods)
+            values.extend(data[ratio][i] for ratio, _ in ratios)
         lines.append(row(values))
     lines.append(latex_footer(problem, suffix))
     return "\n".join(lines)
@@ -124,38 +143,48 @@ def fmt_share(value):
         return str(value)
 
 def generate_flat_status_table(data):
-    chain_statuses = present_statuses(data, "chain")
-    onebyone_statuses = present_statuses(data, "1by1")
+    # Status columns of each method: statuses never reached have no column, and a
+    # method without any status (e.g. No Reuse never run) has no status group
+    status_groups = [
+        (method, label, statuses)
+        for method, label in METHODS
+        if (statuses := present_statuses(data, method))
+    ]
+    n = len(METHODS)
     rule = lambda char: (
-        rf"\hhline{{{char * 2}|{char * 2}|{char * 2}|{char * len(onebyone_statuses)}"
-        rf"|{char * len(chain_statuses)}}}"
+        rf"\hhline{{{char * 2}|{char * n}|{char * n}|"
+        + "|".join(char * len(statuses) for _, _, statuses in status_groups)
+        + "}"
     )
 
     lines = []
 
     lines.append(r"\begin{table*}[t]")
     lines.append(r"\centering")
+    lines.append(r"\resizebox{\textwidth}{!}{%")
 
     lines.append(
-        r"\begin{tabular}{cc|cc|cc|" + "c" * len(onebyone_statuses)
-        + "|" + "c" * len(chain_statuses) + "}"
+        r"\begin{tabular}{cc|" + "c" * n + "|" + "c" * n + "|"
+        + "|".join("c" * len(statuses) for _, _, statuses in status_groups) + "}"
     )
     lines.append(rule("~"))
 
-    lines.append(
-        r"\multirow{2}{*}{\centering Problem} & "
-        r"\multirow{2}{*}{\centering Diff} & "
-        r"\multicolumn{2}{c|}{Flat Time} & "
-        r"\multicolumn{2}{c|}{Flat Time Share} & "
-        rf"\multicolumn{{{len(onebyone_statuses)}}}{{c|}}{{Status Independently}} & "
-        rf"\multicolumn{{{len(chain_statuses)}}}{{c}}{{Status \iingl}}\\"
-    )
+    titles = [
+        r"\multirow{2}{*}{\centering Problem}",
+        r"\multirow{2}{*}{\centering Diff}",
+        rf"\multicolumn{{{n}}}{{c|}}{{Flat Time}}",
+        rf"\multicolumn{{{n}}}{{c|}}{{Flat Time Share}}",
+    ]
+    for idx, (_, label, statuses) in enumerate(status_groups):
+        align = "c|" if idx < len(status_groups) - 1 else "c"
+        titles.append(rf"\multicolumn{{{len(statuses)}}}{{{align}}}{{Status {label}}}")
+    lines.append(" & ".join(titles) + r"\\")
 
     lines.append(rule("~"))
 
     lines.append(
-        r"& & Independently & \iingl & Independently & \iingl & "
-        + " & ".join(title for _, title in onebyone_statuses + chain_statuses)
+        "& & " + " & ".join(METHOD_LABELS * 2) + " & "
+        + " & ".join(title for _, _, statuses in status_groups for _, title in statuses)
         + r"\\"
     )
 
@@ -175,33 +204,32 @@ def generate_flat_status_table(data):
             row.append(diff)
 
             # Flat times per percentage
-            row.extend([
-                problem_data["flatTime"]["1by1"][i],
-                problem_data["flatTime"]["chain"][i],
-            ])
+            row.extend(problem_data["flatTime"][method][i] for method, _ in METHODS)
 
             # Flat shares (percentages) per percentage
             row.extend(
-                fmt_share(problem_data["flatShare"][type_name][i])
-                for type_name in ("1by1", "chain")
+                fmt_share(problem_data["flatShare"][method][i]) for method, _ in METHODS
             )
 
             # Statuses per percentage
-            onebyone_status = problem_data["statuses"]["1by1"][i]
-            row.extend(onebyone_status.get(status, 0) for status, _ in onebyone_statuses)
-
-            chain_status = problem_data["statuses"]["chain"][i]
-            row.extend(chain_status.get(status, 0) for status, _ in chain_statuses)
+            for method, _, statuses in status_groups:
+                counts = problem_data["statuses"][method][i]
+                # No counts at all: the configuration was not run (N/A, not 0)
+                row.extend(
+                    counts.get(status, 0) if counts else ERROR_VALUE
+                    for status, _ in statuses
+                )
 
             lines.append(" & ".join(str(value) for value in row) + r"\\")
 
         lines.append(r"\hline")
 
-    lines.append(r"\end{tabular}")
+    lines.append(r"\end{tabular}}")
     lines.append(
         r"\caption{Flattening time and final status of the \iingl experiments for each "
         r"perturbation rate. \emph{Flat Time} is the flattening time of each chain of 20 "
-        r"instances, \ie of the lifted model once for \iingl and of the 20 instances of "
+        r"instances, \ie of the lifted model once for \iingl, of the lifted model for "
+        r"each of the 20 instances, summed, for No Reuse, and of the 20 instances of "
         r"the original model, summed, for the baseline, aggregated over the five chains "
         r"by geometric mean; \emph{Flat Time Share} is the fraction of the overall time "
         r"(flattening and search), summed over the 100 instances of each configuration, "

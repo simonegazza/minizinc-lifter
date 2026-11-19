@@ -50,13 +50,37 @@ if has_mode assumptions && [[ -z "$ASSUMPTIONS_MODEL" ]]; then
     exit 1
 fi
 
+# sbatch exports the login node environment, including
+# XDG_RUNTIME_DIR=/run/user/<uid>. On the compute node that directory exists
+# only while the user has a login session there, and logind removes it when
+# the session ends, killing the running containers. Give podman a runtime
+# directory owned by this job instead, and drop the other session variables
+# of the login node (D-Bus address and logind session), so that podman never
+# touches /run/user/<uid>
+export XDG_RUNTIME_DIR="${TMPDIR:-/tmp}/podman-runtime-${SLURM_JOB_ID:-$$}"
+mkdir -p -m 700 "$XDG_RUNTIME_DIR"
+unset DBUS_SESSION_BUS_ADDRESS XDG_SESSION_ID XDG_SESSION_TYPE XDG_SESSION_CLASS
+
+# Global podman flags: Slurm jobs have no systemd user session, so use
+# cgroupfs and file events instead of systemd. Add --log-level=debug to see
+# podman's own log in the output files
+PODMAN=(podman --cgroup-manager=cgroupfs --events-backend=file)
+
+# Log the podman configuration actually used by this job
+{
+    echo "Podman configuration on $(hostname):"
+    "${PODMAN[@]}" --log-level=error info --format 'graphRoot={{.Store.GraphRoot}} runRoot={{.Store.RunRoot}} runtime={{.Host.OCIRuntime.Name}} {{.Host.OCIRuntime.Version}} cgroups={{.Host.CgroupManager}} version={{.Version.Version}}'
+    echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-unset}"
+    ls -ld "$XDG_RUNTIME_DIR"
+} >&2 || true
+
 # Same container and solver flags for every configuration; the arguments are
 # the time limit followed by the MiniZinc model (and data) arguments
 run_minizinc() {
     local time_limit="$1"
     shift
 
-    podman run --rm \
+    "${PODMAN[@]}" run --rm \
         -v ../huub:/huub \
         -v ../huub/share/minizinc/huub/huub.msc:/usr/share/minizinc/solvers/huub.msc \
         -v ./:/minizinc-lifter \
@@ -76,6 +100,13 @@ run_minizinc() {
         "$@"
 }
 
+# A failed run is recorded (exit code in the output file and in the job
+# stdout/stderr) without stopping the job: the parser marks the instance as ERROR
+log_failure() {
+    echo "Failed for $2 (exit code $1)" | tee -a "$3" >&2
+    echo "Failed for $2 (exit code $1)"
+}
+
 # ------------------------------------------------------------------
 # ONE-BY-ONE RUN
 # ------------------------------------------------------------------
@@ -83,10 +114,12 @@ if has_mode one-by-one; then
     for data in "$TARGET"/*.dzn; do
         echo "$data" >> "$TARGET/one-by-one.txt"
 
-        run_minizinc 300s "$ONE_BY_ONE_MODEL" -d "/minizinc-lifter/$data" \
-            >> "$TARGET/one-by-one.txt" 2>&1
-
-        echo "Done for $data"
+        if run_minizinc 300s "$ONE_BY_ONE_MODEL" -d "/minizinc-lifter/$data" \
+            >> "$TARGET/one-by-one.txt" 2>&1; then
+            echo "Done for $data"
+        else
+            log_failure $? "$data" "$TARGET/one-by-one.txt"
+        fi
     done
 fi
 
@@ -97,10 +130,12 @@ if has_mode assumptions; then
     for data in "$TARGET"/*.dzn; do
         echo "$data" >> "$TARGET/assumptions.txt"
 
-        run_minizinc 300s "$ASSUMPTIONS_MODEL" -d "/minizinc-lifter/$data" \
-            >> "$TARGET/assumptions.txt" 2>&1
-
-        echo "Done for $data"
+        if run_minizinc 300s "$ASSUMPTIONS_MODEL" -d "/minizinc-lifter/$data" \
+            >> "$TARGET/assumptions.txt" 2>&1; then
+            echo "Done for $data"
+        else
+            log_failure $? "$data" "$TARGET/assumptions.txt"
+        fi
     done
 fi
 
@@ -110,7 +145,9 @@ fi
 if has_mode chain; then
     echo "$CHAIN_MODEL" > "$TARGET/chain.txt"
 
-    run_minizinc 300s "$CHAIN_MODEL" >> "$TARGET/chain.txt" 2>&1
-
-    echo "Done for $CHAIN_MODEL"
+    if run_minizinc 300s "$CHAIN_MODEL" >> "$TARGET/chain.txt" 2>&1; then
+        echo "Done for $CHAIN_MODEL"
+    else
+        log_failure $? "$CHAIN_MODEL" "$TARGET/chain.txt"
+    fi
 fi
