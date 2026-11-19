@@ -132,7 +132,7 @@ def generate_table(results):
     table = "\n".join(lines)
     table += (
         "\n\\caption{Results of the comparison with CMPCS. "
-        f"Over all the problems, the points are {totals['lifted']:.2f} for Lifted "
+        f"Over all the problems, the scores are {totals['lifted']:.2f} for Lifted "
         f"and {totals['soft']:.2f} for CMPCS.}}\n"
         "\\label{tab:comparison}\n"
         "\\end{table*}"
